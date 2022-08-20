@@ -1,0 +1,177 @@
+import style from '../styles/dashboard.module.css'
+import Image from 'next/image'
+
+export default function Dashboard() {
+    
+
+    return (
+        <div className='h-100 min-vh-100' style={{background: "linear-gradient(rgb(36, 36, 36), rgb(34, 34, 36))"}}>
+            <style jsx>{`
+            .dropdown-center:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+
+            .scrollbar-primary::-webkit-scrollbar-thumb {
+                border-radius: 10px;
+                -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+                background-color: #4285F4;
+            }
+
+            .bi-discord:hover {
+                color: rgb(114,137,218);
+            }
+
+            .bi-instagram:hover {
+                color: #E1306C; 
+            }
+
+            .bi-youtube:hover {
+                color: red;
+            }
+            
+            ::-webkit-scrollbar {
+                background: transparent;
+                width: 10px;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: rgb(74, 74, 74);
+                border-radius: 10px;
+            }
+
+            ::-webkit-scrollbar-corner {
+                border-radius: 2xpx;
+                background: rgb(74, 74, 74);
+            }
+            
+            `}</style>
+            <nav className="navbar navbar-expand-lg navbar-light">
+                <div className="container-fluid">
+                    <ul className="navbar-nav ms-auto">
+                        <li className="nav-item dropdown-center">
+                            <a className="nav-link d-flex align-items-center me-5" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                <Image src="/profile.jpeg" className="rounded me-2" height={40} width={48} alt="Portrait of a Woman" />
+                                <h4 className='text-white text-center align-middle'>100</h4>
+                            </a>
+                            <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" aria-labelledby="navbarDropdownMenuLink">
+                                <li>
+                                    <a className="dropdown-item" href="#">My profile</a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="#">Settings</a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="#">Logout</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <div className="container">
+                <div className="row p-3 mb-4 rounded-3" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                    <div className='container-fluid mb-4'>
+                        <button className='btn btn-outline-danger' style={{float: "right"}}>
+                            {"Berikutnya "}
+                            <i className='bi bi-arrow-right'></i>
+                        </button>
+                        <button className='me-4 btn btn-outline-success' style={{float: "right"}}>Latihan</button>
+                        <button className='btn btn-outline-secondary fs-6 me-4'>Tags</button>
+                        <span className='text-warning bg-transparent fs-5'>Status: MEDIUM</span>
+                    </div>
+                    <div style={{height: "200px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
+                        <a href='#!' className="fs-4 fw-bold text-black text-decoration-none text-white">Jumlah appel</a>
+                        <p className="fs-5" style={{whiteSpace: "pre-wrap", color: "rgb(196, 196, 196)"}}>
+                        {`You are given an odd-length array of integers, in which all of them are the same, except for one single number.
+Complete the method which accepts such an array, and returns that single different number.
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+The input array will always be valid! (odd-length >= 3)
+`}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="row align-items-md-stretch mb-4">
+                    <div className="col-md-6">
+                        <div className="h-90 p-5 text-white rounded-3 text-center" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                            <h2>Total soal yang sudah dikerjakan</h2>
+                            <span className='text-success me-5 fs-4'>Soal Easy: 0</span>
+                            <span className='text-warning me-5 fs-4'>Soal Medium: 0</span>
+                            <span className='text-danger fs-4'>Soal Susah: 0</span>
+                            <div className='mb-4'></div>
+                            <button className="btn btn-outline-success" type="button">Kerjakan soal lainnya!</button>
+                        </div>
+                    </div>
+                    <div className="col-md-6">
+                        <div className="h-100 p-5 rounded-3 text-white text-center" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                            <h2>Discussion</h2>
+                            <a href="#!" className='fs-3 me-4' style={{color: "white"}} target="_blank" rel="noopener noreferrer"><i className='bi bi-discord' style={{transition: ".2s"}}></i></a>
+                            <a href="https://instagram.com/dhyrbfy" className='fs-3 me-4' style={{color: "white"}} target="_blank" rel="noopener noreferrer"><i className='bi bi-instagram' style={{transition: ".2s"}}></i></a>
+                            <a href="https://youtube.com/" className='fs-3 me-4' style={{color: "white"}} target="_blank" rel="noopener noreferrer"><i className='bi bi-youtube' style={{transition: ".2s"}}></i></a>
+                            <div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="row p-3 mb-4 rounded-3" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                    <div className='table-responsive'>
+                        <table className="table text-white">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style={{width: "4.6%"}}>Status</th>
+                                    <th scope="col" style={{width: "30.6%"}}>Judul</th>
+                                    <th scope="col" style={{width: "40.6%"}}>Deskripsi</th>
+                                    <th scope="col" style={{width: "15%"}}>Tingkat Kesulitan</th>
+                                    <th scope="col">Pembuat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th scope="row" className='text-center'><i className='bi bi-check-lg text-success'></i></th>
+                                    <td>
+                                        <a href="#!" className='text-decoration-none text-white'>Siapa Menang</a>
+                                    </td>
+                                    <td>Baris yang paling banyak dia pemenang!</td>
+                                    <td className='text-success'>Mudah</td>
+                                    <td>rapithon39125346</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" className='text-center'><i className='bi bi-dash-lg'></i></th>
+                                    <td>Jacob</td>
+                                    <td>Thornton</td>
+                                    <td className='text-warning'>Lumayan</td>
+                                    <td>rapithon39125346</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" className='text-center'><i className='bi bi-dash-lg'></i></th>
+                                    <td colSpan={2}>Larry the Bird</td>
+                                    <td className='text-danger'>Susah</td>
+                                    <td>rapithon39125346</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}

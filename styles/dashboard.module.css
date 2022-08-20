@@ -1,0 +1,8 @@
+.dropdown-toggle::after {
+    content: none;
+}
+
+.dropdown-center:hover .dropdown-menu {
+    display: block;
+    margin-top: 0;
+}
