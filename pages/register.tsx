@@ -1,6 +1,26 @@
-import Link from "next/link"
+import Link from "next/link";
+import axios from 'axios';
+import { SyntheticEvent, useState } from "react";
 
 export default function Register() {
+    const [AdaError, setAdaError] = useState('');
+
+    const KumpulinData = async (e: SyntheticEvent) => {
+        e.preventDefault();
+        setAdaError('');
+        const { username, email, password } = e.target as any;
+
+        const data = await axios.post("/api/register", {
+            username: username.value,
+            email: email.value,
+            password: password.value
+        }).then(d => d.data);
+
+        if(data.kondisi === "Email sudah dipakai") {
+            setAdaError("Email sudah dipakai!");
+        }
+    }
+
     return (
         <div className='h-100 min-vh-100' style={{background: "linear-gradient(rgb(36, 36, 36), rgb(34, 34, 36))"}}>
             <div className="container">
@@ -9,21 +29,25 @@ export default function Register() {
                         <div className="card border-0 shadow rounded-3 my-5" style={{backgroundColor: "rgb(34, 35, 36)"}}>
                             <div className="card-body p-4 p-sm-5">
                                 <h3 className="card-title text-center text-white mb-5">Soalkoding.com</h3>
-                                <form method='POST' action='/api/login'>
+                                <form onSubmit={KumpulinData}>
                                     <div className="form-floating mb-3">
-                                        <input type="email" name='email' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingInput" placeholder="name@example.com" required/>
+                                        <input type="email" name='email' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingInput" placeholder="name@example.com" maxLength={30} required/>
                                         <label htmlFor="floatingInput" style={{color: "grey"}}>Email</label>
                                     </div>
 
                                     <div className="form-floating mb-3">
-                                        <input type="text" name='username' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingInput" placeholder="Username" required/>
-                                        <label htmlFor="floatingInput" style={{color: "grey"}}>Username</label>
+                                        <input type="text" name='username' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingEmail" placeholder="Username" minLength={8} maxLength={15} required/>
+                                        <label htmlFor="floatingEmail" style={{color: "grey"}}>Username</label>
                                     </div>
                                     
                                     <div className="form-floating mb-3">
-                                        <input type="password" name='password' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingPassword" placeholder="Password" required/>
+                                        <input type="password" name='password' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingPassword" placeholder="Password" minLength={12} maxLength={20} required/>
                                         <label htmlFor="floatingPassword" style={{color: "grey"}}>Password</label>
                                     </div>
+
+                                    {AdaError !== "" &&
+                                    <h5 className="text-danger text-center mb-4">{AdaError}</h5>
+                                    }
                                     
                                     <div className="d-grid">
                                         <input className="btn btn-success" type="submit" value={"Masuk"} />

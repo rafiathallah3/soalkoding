@@ -11,11 +11,11 @@ export default function Login() {
                                 <h3 className="card-title text-center text-white mb-5">Soalkoding.com</h3>
                                 <form method='POST' action='/api/login'>
                                     <div className="form-floating mb-3">
-                                        <input type="email" name='email' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingInput" placeholder="name@example.com" required/>
+                                        <input type="email" name='email' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingInput" placeholder="name@example.com" maxLength={30} required/>
                                         <label htmlFor="floatingInput" style={{color: "grey"}}>Email</label>
                                     </div>
                                     <div className="form-floating mb-1">
-                                        <input type="password" name='password' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingPassword" placeholder="Password" required/>
+                                        <input type="password" name='password' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingPassword" placeholder="Password" maxLength={20} required/>
                                         <label htmlFor="floatingPassword" style={{color: "grey"}}>Password</label>
                                     </div>
 
