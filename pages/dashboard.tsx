@@ -1,17 +1,18 @@
-import style from '../styles/dashboard.module.css'
+import axios from 'axios';
 import Image from 'next/image'
+import { BaseSyntheticEvent } from 'react';
+import Background from '../components/background';
+import Navbar from '../components/navbar';
 
 export default function Dashboard() {
-    
+    const TombolLogout = async (e: BaseSyntheticEvent) => {
+        e.preventDefault();
+        await axios.post('api/logout');
+    }
 
     return (
-        <div className='h-100 min-vh-100' style={{background: "linear-gradient(rgb(36, 36, 36), rgb(34, 34, 36))"}}>
+        <Background>
             <style jsx>{`
-            .dropdown-center:hover .dropdown-menu {
-                display: block;
-                margin-top: 0;
-            }
-
             .scrollbar-primary::-webkit-scrollbar-thumb {
                 border-radius: 10px;
                 -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
@@ -46,32 +47,10 @@ export default function Dashboard() {
             }
             
             `}</style>
-            <nav className="navbar navbar-expand-lg navbar-light">
-                <div className="container-fluid">
-                    <ul className="navbar-nav ms-auto">
-                        <li className="nav-item dropdown-center">
-                            <a className="nav-link d-flex align-items-center me-5" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-                                <Image src="/profile.jpeg" className="rounded me-2" height={40} width={48} alt="Portrait of a Woman" />
-                                <h4 className='text-white text-center align-middle'>100</h4>
-                            </a>
-                            <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" aria-labelledby="navbarDropdownMenuLink">
-                                <li>
-                                    <a className="dropdown-item" href="#">My profile</a>
-                                </li>
-                                <li>
-                                    <a className="dropdown-item" href="#">Settings</a>
-                                </li>
-                                <li>
-                                    <a className="dropdown-item" href="#">Logout</a>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <Navbar />
             
             <div className="container">
-                <div className="row p-3 mb-4 rounded-3" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                <div className="row p-3 mb-4" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
                     <div className='container-fluid mb-4'>
                         <button className='btn btn-outline-danger' style={{float: "right"}}>
                             {"Berikutnya "}
@@ -172,6 +151,6 @@ The input array will always be valid! (odd-length >= 3)
                     </div>
                 </div>
             </div>
-        </div>
+        </Background>
     )
 }

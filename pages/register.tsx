@@ -1,6 +1,8 @@
 import Link from "next/link";
 import axios from 'axios';
 import { SyntheticEvent, useState } from "react";
+import Router from "next/router";
+import Background from "../components/background";
 
 export default function Register() {
     const [AdaError, setAdaError] = useState('');
@@ -18,11 +20,13 @@ export default function Register() {
 
         if(data.kondisi === "Email sudah dipakai") {
             setAdaError("Email sudah dipakai!");
+        } else {
+            Router.push('/login');
         }
     }
 
     return (
-        <div className='h-100 min-vh-100' style={{background: "linear-gradient(rgb(36, 36, 36), rgb(34, 34, 36))"}}>
+        <Background>
             <div className="container">
                 <div className="row">
                     <div className="col-sm-9 col-md-7 col-lg-4 mx-auto">
@@ -41,7 +45,7 @@ export default function Register() {
                                     </div>
                                     
                                     <div className="form-floating mb-3">
-                                        <input type="password" name='password' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingPassword" placeholder="Password" minLength={12} maxLength={20} required/>
+                                        <input type="password" name='password' className="form-control border-secondary text-white" style={{backgroundColor: "rgb(43, 43, 43)"}} id="floatingPassword" placeholder="Password" minLength={8} maxLength={20} required/>
                                         <label htmlFor="floatingPassword" style={{color: "grey"}}>Password</label>
                                     </div>
 
@@ -69,6 +73,6 @@ export default function Register() {
                     </div>
                 </div>
             </div>
-        </div>
+        </Background>
     )
 }

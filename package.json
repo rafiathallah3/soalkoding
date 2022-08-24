@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "ace-builds": "^1.9.6",
     "axios": "^0.27.2",
+    "bcrypt": "^5.0.1",
     "bootstrap": "^5.2.0",
     "bootstrap-icons": "^1.9.1",
     "cookie": "^0.5.0",
@@ -18,9 +20,11 @@
     "mysql2": "^2.3.3",
     "next": "12.2.5",
     "react": "18.2.0",
+    "react-ace": "^10.1.0",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/cookie": "^0.5.1",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/node": "18.7.6",
