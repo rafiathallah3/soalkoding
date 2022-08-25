@@ -35,20 +35,25 @@ export default async function KirimKode(req: NextApiRequest, res: NextApiRespons
     }
 
     const hasilDecode = await axios.request(optionsDecode).then(d => d.data);
-
-    if(hasilDecode.stdout !== null) {
-        return res.json({
-            status: "Sukses",
-            output: new Buffer(hasilDecode.stdout.replace("\n", "")).toString('utf-8')
-        });
+    console.log(hasilDecode);
+    
+    const error = hasilDecode.compile_output === null ? hasilDecode.stderr : hasilDecode.compile_output;
+    if(error !== null) {
+        return res.status(200).json({
+            status: "Error",
+            error: new Buffer(error.replace("\n", ""), 'base64').toString('utf-8'),
+            waktu: hasilDecode.time
+        })
     }
 
-    const error = hasilDecode.compile_output === null ? hasilDecode.stderr : hasilDecode.compile_output;
-    // console.log(hasilDecode)
-    return res.json({
-        status: "error",
-        error: new Buffer(error.replace("\n", ""), 'base64').toString('utf-8')
-    })
-    // console.log(new Buffer(hasilDecode.compile_output.replace("\n", ""), 'base64').toString('utf-8'));
+    const Output = hasilDecode.stdout !== null ? new Buffer(hasilDecode.stdout.replace("\n", ""), 'base64').toString('utf-8').replace("\n", "") : "None";
 
+    return res.status(200).json({
+        status: "Sukses",
+        output: Output,
+        waktu: hasilDecode.time
+    })
+
+    // console.log(hasilDecode)
+    // console.log(new Buffer(hasilDecode.compile_output.replace("\n", ""), 'base64').toString('utf-8'));
 }

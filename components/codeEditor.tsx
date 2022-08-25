@@ -14,7 +14,7 @@ import "ace-builds/src-noconflict/theme-monokai";
 import 'ace-builds/src-noconflict/snippets/python';
 import "ace-builds/src-noconflict/ext-language_tools";
 
-export default function CodeEditor({ refData, mode, value }: { refData: any, mode: string, value: string }) {
+export default function CodeEditor({ refData, mode, value, onChange }: { refData: any, mode: string, value: string, onChange: any }) {
     return (
         <AceEditor
             placeholder="Tunjukkin kepintaran mu!"
@@ -23,6 +23,7 @@ export default function CodeEditor({ refData, mode, value }: { refData: any, mod
             name="kodingeditor"
             value={value}
             showGutter={true}
+            onChange={onChange}
             showPrintMargin={false}
             style={{ height: '100%', width: "100%" }}
             ref={refData}

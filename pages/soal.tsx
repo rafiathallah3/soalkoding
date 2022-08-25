@@ -9,6 +9,13 @@ const CodeEditor = dynamic(import('../components/codeEditor'), {ssr: false});
 
 export default function Soal() {
     const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
+    const [Output, setOutput] = useState<{error: string, waktu: string, output: string, status: string}>({
+        error: "",
+        waktu: "",
+        output: "",
+        status: ""
+    });
+    const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
     const [Kode, setKode] = useState(`def Solusi():
     print("Solusi")`);
 
@@ -49,6 +56,7 @@ end`
     }
 
     const KlikOutput = () => {
+        setStatusTekananSoalOutput('output');
         const pertanyaanElement = document.getElementById('tombolpertanyaan')!;
         const outputElement = document.getElementById('tomboloutput')!;
 
@@ -60,12 +68,11 @@ end`
             outputElement.classList.remove("tombol_aktif");
             outputElement.classList.remove("bg-transparent");
             outputElement.classList.add("tombolBerikutnya");
-            document.getElementById("output")!.style.display = "block";
-            document.getElementById("soal")!.style.display = "none";
         }
     }
 
     const KlikPertanyaan = () => {
+        setStatusTekananSoalOutput('soal');
         const pertanyaanElement = document.getElementById('tombolpertanyaan')!;
         const outputElement = document.getElementById('tomboloutput')!;
 
@@ -77,8 +84,6 @@ end`
             pertanyaanElement.classList.remove("tombol_aktif");
             pertanyaanElement.classList.remove("bg-transparent");
             pertanyaanElement.classList.add("tombolBerikutnya");
-            document.getElementById("output")!.style.display = "none";
-            document.getElementById("soal")!.style.display = "block";
         }
     }
 
@@ -90,20 +95,34 @@ end`
     }
 
     const StatusKirimOutput = () => {
-        document.getElementById("hasilKode")!.style.display = "none";
-        document.getElementById("KirimStatusKode")!.style.display = "block";
+        setStatusTekananSoalOutput('output');
+        setOutput({...Output, status: "mengirim"});
     }
 
     const KirimTest = async (e: BaseSyntheticEvent) => {
+        e.preventDefault();
         KlikOutput();
         StatusKirimOutput();
 
-        const hasil = await axios.post("/api/kirimkode", {
-            kode: kodeEditor!.editor.getValue(),
+        const hasil: {status: string, output: string | undefined, error: string | undefined, waktu: string} = await axios.post("/api/kirimkode", {
+            kode: kodeEditor!.editor.getValue() + '\nSolusi()',
             idBahasaProgram: IdBahasaProgram
-        });
-        console.log("ROblox");
+        }).then(d => d.data);
         console.log(hasil);
+        
+        switch (hasil.status) {
+            case "Error":
+                setOutput({
+                    error: hasil.error!,
+                    output: "",
+                    waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
+                    status: hasil.status
+                });
+                break;
+            case "Sukses":
+
+                break;
+        }
     }
 
     return (
@@ -133,12 +152,33 @@ end`
             .tombolBerikutnya:hover {
                 background: rgb(40, 40, 40);
             }
+
+            .scrollbar-primary::-webkit-scrollbar-thumb {
+                border-radius: 10px;
+                -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+                background-color: #4285F4;
+            }
+
+            ::-webkit-scrollbar {
+                background: transparent;
+                width: 10px;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: rgb(74, 74, 74);
+                border-radius: 10px;
+            }
+
+            ::-webkit-scrollbar-corner {
+                border-radius: 2xpx;
+                background: rgb(74, 74, 74);
+            }
             `}</style>
             <div className="container-fluid">
-                <div className="row justify-content-center min-vh-100">
+                <div className="row min-vh-100">
                     <div className="col">
                         <div className="d-flex flex-column h-100 ms-4">
-                            <div className="row justify-content-center mb-3" style={{background: "transparent"}}>
+                            <div className="row mb-3" style={{background: "transparent"}}>
                                 <div className="text-white">
                                     <div style={{height: "55px"}}>
                                         <h5>Starlight Anya</h5>
@@ -156,7 +196,7 @@ end`
                                     </div>
                                 </div>
                             </div>
-                            <div className="row justify-content-center">
+                            <div className="row">
                                 <div className="text-white">
                                     <div style={{height: "50px"}}>
                                         <button id="tombolpertanyaan" className='me-3 tombolBerikutnya border-0' onClick={KlikPertanyaan}>Pertanyaan</button>
@@ -164,8 +204,10 @@ end`
                                     </div>
                                 </div>
                             </div>
-                            <div id="soal" className="justify-content-center mb-2" style={{background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", height: "80%", whiteSpace: "pre-wrap"}}>
-                                <div className="text-white px-3">{`
+                            {StatusTekananSoalOutput === 'soal' ?
+                            <div id="soal" className="mb-2" style={{background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px",whiteSpace: "pre-wrap"}}>
+                                <div className="px-3 text-white" style={{overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin", height: "64.1rem"}}>
+                                    {`
 <h1>Deskripsi Masalah</h1>
 Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
 tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
@@ -177,30 +219,59 @@ dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan menda
 Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
 banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
 mereka!
-
-Format Masukan dan Keluaran
-Masukan diawali dengan sebuah bilangan bulat N yang memenuhi 1 ≤ 𝑁 ≤ 1000. Kemudian
-untuk N baris berikutnya, akan terdapat sebuah kata tanpa spasi di tiap baris. Panjang kata tersebut
-tidak melebihi 20 karakter. Baris pertama setelah N adalah kata yang disebut Andi, baris setelahnya
-merupakan kata yang disebut Budi, dan begitu seterusnya.
-Keluaran terdiri dari sebaris kalimat. Keluaran akan berupa “Andi menang” jika poin Andi lebih
-banyak dari Budi, “Budi menang” jika poin Budi lebih banyak dari Andi, dan “Gaada yang
-menang” jika poin Andi dan Budi berjumlah sama.
-                                
-                                `}</div>
-                            </div>
-                            <div id="output" className="justify-content-center mb-2" style={{background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", height: "80%", whiteSpace: "pre-wrap", display: "none"}}>
-                                <div id="hasilKode" style={{display: "none"}}>
-                                    <div className="text-white px-3 mt-2">
-                                        <span className="me-5">Waktu: 10ms</span>
-                                        <span style={{color: "rgb(219, 18, 18)"}}>Error: 1</span>
-                                    </div>
-                                    <hr className="text-white" />
-                                    <div className="text-white px-3">STDERror: </div>
+                                    `}
                                 </div>
-                                <div id="KirimStatusKode" className="text-white px-3 mt-2">Menigrim kode ke server...</div>
                             </div>
-                            <div className="row justify-content-center">
+                            :
+                            <div id="output" className="mb-2" style={{background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
+                                <div className="text-white px-3 mt-2">
+                                    <span className="me-3">Waktu: 200ms</span>
+                                    <span className="me-3 text-success">Lulus: 1</span>
+                                    <span className="me-3 text-danger">Gagal: 1</span>
+                                    <span className="me-3 text-danger">Error: 1</span>
+                                </div>
+                                <hr className="text-white" style={{marginBottom: "0px"}} />
+                                <div className="px-3" style={{overflowX: "hidden", overflowY: "auto", scrollbarWidth: "thin", height: "61rem"}}>
+                                    <div className="text-white mb-3 mt-3">Hasil test:</div>
+                                    <div>
+                                        <details className="mb-2 panah text-danger">
+                                            <summary className="mb-2">Test #1: Gagal</summary>
+                                            <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                                Output: None, Jawaban: 30
+                                            </div>
+                                        </details>
+                                        <details className="mb-3 panah text-success">
+                                            <summary className="mb-2">Test #2: Success</summary>
+                                            <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                                Output: 30, Jawaban: 30
+                                            </div>
+                                        </details>
+                                    </div>
+                                </div>
+                                {/* {Output.status !== "" &&
+                                <div>
+                                    <div>
+                                        <div className="text-white px-3 mt-2">
+                                            <span className="me-3">Waktu: {Output.waktu}</span>
+                                        </div>
+                                        <hr className="text-white" />
+                                        {Output.status === "Error" &&
+                                        <div className="px-3 text-white">
+                                            <div className="mb-3">Output Error:</div>
+                                            <div className="px-3 py-2 rounded-2" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                                {Output.output}
+                                            </div>
+                                        </div>
+                                        }
+                                    </div>
+                                    {Output.status === 'mengirim' &&
+                                    <div id="KirimStatusKode" className="text-white px-3 mt-2">Menigrim kode ke server...</div>
+                                    }
+                                </div>
+                                } */}
+                            </div>
+                            }
+                            <div className="row">
                                 <div className="text-white">
                                     <div style={{height: "50px"}}>
                                         <button className="text-white tombolBerikutnya">
@@ -214,13 +285,13 @@ menang” jika poin Andi dan Budi berjumlah sama.
                     </div>
                     <div className="col-7">
                         <div className="d-flex flex-column h-100 ms-4">
-                            <div className="row justify-content-center mb-3" style={{background: "transparent"}}>
+                            <div className="row mb-3" style={{background: "transparent"}}>
                                 <div className="text-white">
                                     <div style={{height: "55px"}}>
                                     </div>
                                 </div>
                             </div>
-                            <div className="row justify-content-center">
+                            <div className="row">
                                 <div className="text-white">
                                     <div style={{height: "50px"}}>
                                         <select onChange={GantiBahasaProgram} className={styles.bahasaSelect}>
@@ -237,16 +308,17 @@ menang” jika poin Andi dan Budi berjumlah sama.
                                     </div>
                                 </div>
                             </div>
-                            <div className="row justify-content-center mb-2" style={{height: "80%"}}>
+                            <div className="row mb-2" style={{height: "80%"}}>
                                 <div>
                                     <CodeEditor
                                     mode={ListBahasaProgram[IdBahasaProgram as keyof typeof ListBahasaProgram]}
                                     value={Kode}
+                                    onChange={() => setKode(kodeEditor!.editor.getValue())}
                                     refData={(ins: ReactAce) => {kodeEditor = ins}}
                                     />
                                 </div>
                             </div>
-                            <div className="row justify-content-center">
+                            <div className="row">
                                 <div className="text-white">
                                     <div style={{height: "50px"}}>
                                         <button className="text-white tombolBerikutnya">
