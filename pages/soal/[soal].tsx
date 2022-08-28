@@ -2,25 +2,19 @@ import axios from "axios";
 import dynamic from "next/dynamic";
 import { BaseSyntheticEvent, useState } from "react";
 import ReactAce from "react-ace/lib/ace";
-import Background from "../components/background";
-import Navbar from "../components/navbar";
-import styles from '../styles/soal.module.css';
-const CodeEditor = dynamic(import('../components/codeEditor'), {ssr: false});
+import Background from "../../components/background";
+import Navbar from "../../components/navbar";
+import styles from '../../styles/soal.module.css';
+const CodeEditor = dynamic(import('../../components/codeEditor'), {ssr: false});
+
+type HasilJawaban = {
+    koreksi: "lulus" | "gagal" | "",
+    status: "Sukses" | "Error" | "",
+    hasil: any,
+    jawaban: any
+}
 
 export default function Soal() {
-    const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
-    const [Output, setOutput] = useState<{error: string, waktu: string, output: string, status: string}>({
-        error: "",
-        waktu: "",
-        output: "",
-        status: ""
-    });
-    const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
-    const [Kode, setKode] = useState(`def Solusi():
-    print("Solusi")`);
-
-    let kodeEditor: ReactAce | undefined = undefined;
-
     const ListBahasaProgram = {
         "71": "python",
         "63": "javascript",
@@ -32,8 +26,23 @@ export default function Soal() {
     }
 
     const ListKode = {
-        "71": `def Solusi():
-    print("Solusi")`,
+        "71": `def Solusi(x, y):
+    if y == 2:
+        return z
+    return x * y
+    
+if __name__ == "__main__":
+    def ApakahSama(fungsi, parameter, jawaban):
+        try:
+            hasil = fungsi(*parameter)
+            return {"hasil": str(hasil) if hasil == None else hasil, "jawaban": jawaban, "status": "Sukses"}
+        except Exception as e:
+            import base64
+            return {"hasil": base64.b64encode(str(e).encode('utf-8')).decode('utf-8'), "jawaban": jawaban, "status": "Error"}
+    
+    print(ApakahSama(Solusi, (5, 6), 30))
+    print(ApakahSama(Solusi, (3, 10), 30))
+    print(ApakahSama(Solusi, (5, 2), 30))`,
         "63": `function Solusi() {
     console.log("Solusi");
 }`,
@@ -54,6 +63,25 @@ end`,
     puts "Solusi"     
 end`
     }
+
+    const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
+    const [Output, setOutput] = useState<{error: string, waktu: string, output: HasilJawaban[], status: "Mengirim" | "Error" | "Sukses" | "", lulus: number, gagal: number}>({
+        error: "",
+        waktu: "",
+        status: "",
+        lulus: 0,
+        gagal: 0,
+        output: [{
+            status: "",
+            koreksi: "",
+            hasil: "",
+            jawaban: ""
+        }],
+    });
+    const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
+    const [Kode, setKode] = useState(ListKode['71']);
+
+    let kodeEditor: ReactAce | undefined = undefined;
 
     const KlikOutput = () => {
         setStatusTekananSoalOutput('output');
@@ -96,7 +124,7 @@ end`
 
     const StatusKirimOutput = () => {
         setStatusTekananSoalOutput('output');
-        setOutput({...Output, status: "mengirim"});
+        setOutput({...Output, status: "Mengirim"});
     }
 
     const KirimTest = async (e: BaseSyntheticEvent) => {
@@ -104,8 +132,8 @@ end`
         KlikOutput();
         StatusKirimOutput();
 
-        const hasil: {status: string, output: string | undefined, error: string | undefined, waktu: string} = await axios.post("/api/kirimkode", {
-            kode: kodeEditor!.editor.getValue() + '\nSolusi()',
+        const hasil: {status: string, output: HasilJawaban[] | undefined, error: string | undefined, waktu: string, lulus: number, gagal: number} = await axios.post("/api/kirimkode", {
+            kode: kodeEditor!.editor.getValue(),
             idBahasaProgram: IdBahasaProgram
         }).then(d => d.data);
         console.log(hasil);
@@ -113,14 +141,21 @@ end`
         switch (hasil.status) {
             case "Error":
                 setOutput({
+                    ...Output,
+                    status: hasil.status,
                     error: hasil.error!,
-                    output: "",
                     waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
-                    status: hasil.status
                 });
                 break;
             case "Sukses":
-
+                setOutput({
+                    ...Output,
+                    status: hasil.status,
+                    output: hasil.output!,
+                    waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
+                    lulus: hasil.lulus,
+                    gagal: hasil.gagal
+                });
                 break;
         }
     }
@@ -223,52 +258,61 @@ mereka!
                                 </div>
                             </div>
                             :
-                            <div id="output" className="mb-2" style={{background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
-                                <div className="text-white px-3 mt-2">
-                                    <span className="me-3">Waktu: 200ms</span>
-                                    <span className="me-3 text-success">Lulus: 1</span>
-                                    <span className="me-3 text-danger">Gagal: 1</span>
-                                    <span className="me-3 text-danger">Error: 1</span>
-                                </div>
-                                <hr className="text-white" style={{marginBottom: "0px"}} />
-                                <div className="px-3" style={{overflowX: "hidden", overflowY: "auto", scrollbarWidth: "thin", height: "61rem"}}>
-                                    <div className="text-white mb-3 mt-3">Hasil test:</div>
-                                    <div>
-                                        <details className="mb-2 panah text-danger">
-                                            <summary className="mb-2">Test #1: Gagal</summary>
-                                            <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                                Output: None, Jawaban: 30
-                                            </div>
-                                        </details>
-                                        <details className="mb-3 panah text-success">
-                                            <summary className="mb-2">Test #2: Success</summary>
-                                            <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                                Output: 30, Jawaban: 30
-                                            </div>
-                                        </details>
-                                    </div>
-                                </div>
-                                {/* {Output.status !== "" &&
+                            <div id="output" className="mb-2" style={{background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", height: "64.1rem"}}>
+                                {(Output.status !== "" && Output.status !== "Mengirim") &&
                                 <div>
-                                    <div>
-                                        <div className="text-white px-3 mt-2">
-                                            <span className="me-3">Waktu: {Output.waktu}</span>
-                                        </div>
-                                        <hr className="text-white" />
+                                    <div className="text-white px-3 mt-2">
+                                        <span className="me-3">Waktu: {Output.waktu}</span>
+                                        <span className="me-3 text-success">Lulus: {Output.lulus}</span>
+                                        <span className="me-3 text-danger">Gagal: {Output.gagal}</span>
+                                    </div>
+                                    <hr className="text-white" style={{marginBottom: "0px"}} />
+                                </div>
+                                }
+                                <div className="px-3" style={{overflowX: "hidden", overflowY: "auto", scrollbarWidth: "thin"}}>
+                                    {Output.status !== "Mengirim" &&
+                                    <div className="mt-2">
                                         {Output.status === "Error" &&
                                         <div className="px-3 text-white">
                                             <div className="mb-3">Output Error:</div>
                                             <div className="px-3 py-2 rounded-2" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                                {Output.output}
+                                                {Output.error}
                                             </div>
                                         </div>
                                         }
+                                        {Output.status === "Sukses" &&
+                                        (Output.output.map((v, i) => {
+                                            if(v.koreksi === "lulus") {
+                                                return (
+                                                <details className="mb-3 panah text-success">
+                                                    <summary className="mb-2">Test #{i+1}: Success</summary>
+                                                    <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                                        Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                    </div>
+                                                </details>
+                                                )
+                                            } else if(v.koreksi === "gagal") {
+                                                return (
+                                                <details className="mb-2 panah text-danger">
+                                                    <summary className="mb-2">Test #{i+1}: Gagal</summary>
+                                                    <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                                        {v.status === "Error" ?
+                                                        <p>{new Buffer(v.hasil, 'base64').toString('utf-8')}</p>
+                                                        :
+                                                        <p>Output: {v.hasil}, Jawaban: {v.jawaban}</p> 
+                                                        }
+                                                    </div>
+                                                </details>
+                                                )
+                                            }
+                                        }))
+                                        }
                                     </div>
-                                    {Output.status === 'mengirim' &&
-                                    <div id="KirimStatusKode" className="text-white px-3 mt-2">Menigrim kode ke server...</div>
+                                    }
+                                    {Output.status === "Mengirim" &&
+                                        <div className="text-white mt-2">Menigrim kode ke server...</div>
                                     }
                                 </div>
-                                } */}
                             </div>
                             }
                             <div className="row">

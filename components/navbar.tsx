@@ -31,7 +31,7 @@ export default function Navbar() {
                         </a>
                         <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black"}}>
                             <li>
-                                <a className="dropdown-item" href="#"><i className='bi bi-person-circle'></i> My profile</a>
+                                <a className="dropdown-item" href="/profile"><i className='bi bi-person-circle'></i> My profile</a>
                             </li>
                             <li>
                                 <a className="dropdown-item" href="#"><i className='bi bi-gear-fill'></i> Settings</a>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import Image from 'next/image'
+import Link from 'next/link';
 import { BaseSyntheticEvent } from 'react';
 import Background from '../components/background';
 import Navbar from '../components/navbar';
@@ -61,7 +61,9 @@ export default function Dashboard() {
                         <span className='text-warning bg-transparent fs-5'>Status: MEDIUM</span>
                     </div>
                     <div style={{height: "200px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
-                        <a href='#!' className="fs-4 fw-bold text-black text-decoration-none text-white">Jumlah appel</a>
+                        <Link href={"/soal"}>
+                        <a className="fs-4 fw-bold text-black text-decoration-none text-white">Jumlah appel</a>
+                        </Link>
                         <p className="fs-5" style={{whiteSpace: "pre-wrap", color: "rgb(196, 196, 196)"}}>
                         {`You are given an odd-length array of integers, in which all of them are the same, except for one single number.
 Complete the method which accepts such an array, and returns that single different number.
@@ -89,9 +91,9 @@ The input array will always be valid! (odd-length >= 3)
                     </div>
                 </div>
 
-                <div className="row align-items-md-stretch mb-4">
+                <div className="row mb-4">
                     <div className="col-md-6">
-                        <div className="h-90 p-5 text-white rounded-3 text-center" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                        <div className="p-2 text-white rounded-3 text-center h-100" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
                             <h2>Total soal yang sudah dikerjakan</h2>
                             <span className='text-success me-5 fs-4'>Soal Easy: 0</span>
                             <span className='text-warning me-5 fs-4'>Soal Medium: 0</span>
@@ -101,12 +103,21 @@ The input array will always be valid! (odd-length >= 3)
                         </div>
                     </div>
                     <div className="col-md-6">
-                        <div className="h-100 p-5 rounded-3 text-white text-center" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
-                            <h2>Discussion</h2>
+                        <div className="p-3 rounded-3 d-flex flex-row h-100" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                            <div className='text-white me-4' style={{fontSize: "50px"}}>
+                                <i className='bi bi-box-seam-fill'></i>
+                            </div>
+                            <div className='text-white'>
+                                <h4>Mau Membuat soal?</h4>
+                                <p>Kalian mempunyai ide soal yang kreatif bahkan tidak ada satupun orang yang bisa menjawab selain kamu? Buat sekarang dan kirim ke orang lain!</p>
+                                <a href='/soal/buat' className='btn btn-outline-info'>Buat!</a>
+                            </div>
+
+                            {/* <h2>Discussion</h2>
                             <a href="#!" className='fs-3 me-4' style={{color: "white"}} target="_blank" rel="noopener noreferrer"><i className='bi bi-discord' style={{transition: ".2s"}}></i></a>
                             <a href="https://instagram.com/dhyrbfy" className='fs-3 me-4' style={{color: "white"}} target="_blank" rel="noopener noreferrer"><i className='bi bi-instagram' style={{transition: ".2s"}}></i></a>
                             <a href="https://youtube.com/" className='fs-3 me-4' style={{color: "white"}} target="_blank" rel="noopener noreferrer"><i className='bi bi-youtube' style={{transition: ".2s"}}></i></a>
-                            <div></div>
+                            <div></div> */}
                         </div>
                     </div>
                 </div>

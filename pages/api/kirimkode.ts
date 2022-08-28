@@ -46,12 +46,37 @@ export default async function KirimKode(req: NextApiRequest, res: NextApiRespons
         })
     }
 
-    const Output = hasilDecode.stdout !== null ? new Buffer(hasilDecode.stdout.replace("\n", ""), 'base64').toString('utf-8').replace("\n", "") : "None";
+    // const Output = hasilDecode.stdout !== null ? new Buffer(hasilDecode.stdout.replace("\n", ""), 'base64').toString('utf-8').replaceAll("\n", "") : "None";
+    let ListOutput: {koreksi: string, hasil: string, jawaban: string, status: "Sukses" | "Error"}[] = [];
+    let nilaiLulus = {gagal: 0, lulus: 0};
+    console.log(new Buffer(hasilDecode.stdout, 'base64').toString("utf-8"))
+    for(const i of new Buffer(hasilDecode.stdout, 'base64').toString('utf-8').split('\n')) {
+        if(i !== "") {
+            const hasilJson: {hasil: any, jawaban: any, status: "Sukses" | "Error"} = JSON.parse(i.replaceAll('\'', "\""));
+            let koreksi: "gagal" | "lulus" = "gagal";
+
+            if((hasilJson.jawaban instanceof Array && JSON.stringify(hasilJson.hasil) === JSON.stringify(hasilJson.jawaban)) || (hasilJson.hasil === hasilJson.jawaban)) {
+                koreksi = "lulus"
+            }
+
+            nilaiLulus[koreksi]++;
+            ListOutput.push({...hasilJson, koreksi, status: hasilJson.status})
+        }
+    }
+
+    console.log(ListOutput);
+    // for(const i of hasilDecode.stdout.split("\n")) {
+    //     const outputDecode = new Buffer(i, 'base64').toString("utf-8");
+    //     if(outputDecode !== "") {
+    //         console.log(outputDecode, 'ww');
+    //     }
+    // }
 
     return res.status(200).json({
         status: "Sukses",
-        output: Output,
-        waktu: hasilDecode.time
+        output: ListOutput,
+        waktu: hasilDecode.time,
+        ...nilaiLulus
     })
 
     // console.log(hasilDecode)
