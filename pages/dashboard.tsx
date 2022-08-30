@@ -110,7 +110,9 @@ The input array will always be valid! (odd-length >= 3)
                             <div className='text-white'>
                                 <h4>Mau Membuat soal?</h4>
                                 <p>Kalian mempunyai ide soal yang kreatif bahkan tidak ada satupun orang yang bisa menjawab selain kamu? Buat sekarang dan kirim ke orang lain!</p>
-                                <a href='/soal/buat' className='btn btn-outline-info'>Buat!</a>
+                                <Link href='/soal/buat'>
+                                    <a className='btn btn-outline-info'>Buat!</a>
+                                </Link>
                             </div>
 
                             {/* <h2>Discussion</h2>

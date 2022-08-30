@@ -1,6 +1,7 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 import AceEditor from 'react-ace';
+import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-typescript";
@@ -23,6 +24,7 @@ export default function CodeEditor({ refData, mode, value, onChange }: { refData
             name="kodingeditor"
             value={value}
             showGutter={true}
+            readOnly={false}
             onChange={onChange}
             showPrintMargin={false}
             style={{ height: '100%', width: "100%" }}
