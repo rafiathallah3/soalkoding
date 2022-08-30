@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import ReactAce from "react-ace/lib/ace";
 import Kode from "../../components/KodeSnippets";
 import React from "react";
-import JsxParser from 'react-jsx-parser';
 
 const CodeEditor = dynamic(import('../../components/codeEditor'), {ssr: false});
 
@@ -24,9 +23,16 @@ export default function Buat() {
 
             if(z !== -1) {
                 const [bahasa, ...text] = x.substring(s, z).trim().split('\n');
-                console.log(text.toString().replace(',', '\n'));
+                console.log();
+                return (
+                    <Kode bahasa={bahasa}>
+                        {text.toString().replaceAll(',', '\n')}
+                    </Kode>
+                )
             }
         }
+
+        return (<div>Belum</div>)
     }
 
     const TambahinTags = (e: BaseSyntheticEvent) => {
@@ -94,8 +100,6 @@ export default function Buat() {
                             <div style={{height: "25rem"}}>
                                 {StatusSoal === "soal" &&
                                     <div style={{height: "100%"}}>
-                                        {/* <textarea className="w-100 bg-dark text-white px-3" onChange={(e) => setSoal(e.target.value)} defaultValue={Soal} style={{height: "30rem", resize: "none", border: "none", overflow: "auto", outline: "none"}}>
-                                        </textarea> */}
                                         <CodeEditor
                                             mode={"html"}
                                             value={Soal}
@@ -107,14 +111,7 @@ export default function Buat() {
                                 {StatusSoal === "preview" &&
                                     // dangerouslySetInnerHTML={{__html: Soal}}
                                     <div className="p-3 text-white fs-6" style={{height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
-                                        {/* <JsxParser
-                                            components={{ Kode }}
-                                            jsx={Soal}
-                                            showWarnings={true}
-                                        /> */}
-                                        {/* <Kode bahasa="js">
-                                            var roblox = 0;
-                                        </Kode> */}
+                                        {UbahSoal(Soal)}
                                     </div>
                                 }
                                 {StatusSoal === "bantuan" && 

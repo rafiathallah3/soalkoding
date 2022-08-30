@@ -5,7 +5,7 @@ export default function Kode({bahasa, children}: {bahasa: any, children: any}) {
     console.log(children)
     return (
         <CodeBlock
-            text={children.props.children.trim()}
+            text={children}
             language={bahasa}
             showLineNumbers={false}
             theme={monokai}
