@@ -1,6 +1,7 @@
 import React from 'react';
 
 import AceEditor from 'react-ace';
+import "ace-builds/src-noconflict/mode-markdown";
 import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/mode-javascript";
@@ -12,15 +13,16 @@ import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-rust";
 import "ace-builds/src-noconflict/mode-ruby";
 import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/theme-tomorrow_night_eighties";
 import 'ace-builds/src-noconflict/snippets/python';
 import "ace-builds/src-noconflict/ext-language_tools";
 
-export default function CodeEditor({ refData, mode, value, onChange }: { refData: any, mode: string, value: string, onChange: any }) {
+export default function CodeEditor({ refData, mode, value, onChange, autoComplete }: { refData: any, mode: string, value: string, onChange: any, autoComplete: boolean }) {
     return (
         <AceEditor
             placeholder="Tunjukkin kepintaran mu!"
             mode={mode}
-            theme="monokai"
+            theme="tomorrow_night_eighties"
             name="kodingeditor"
             value={value}
             showGutter={true}
@@ -32,8 +34,8 @@ export default function CodeEditor({ refData, mode, value, onChange }: { refData
             // ref={instance => { ace = instance; }} // Let's put things into scope
             editorProps={{$blockScrolling: Infinity}}
             setOptions={{
-                enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
+                enableBasicAutocompletion: autoComplete,
+                enableLiveAutocompletion: autoComplete,
                 highlightActiveLine: false, 
                 enableSnippets: true,
                 showLineNumbers: true,

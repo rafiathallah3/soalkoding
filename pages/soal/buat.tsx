@@ -5,6 +5,9 @@ import dynamic from "next/dynamic";
 import ReactAce from "react-ace/lib/ace";
 import Kode from "../../components/KodeSnippets";
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 
 const CodeEditor = dynamic(import('../../components/codeEditor'), {ssr: false});
 
@@ -23,7 +26,6 @@ export default function Buat() {
 
             if(z !== -1) {
                 const [bahasa, ...text] = x.substring(s, z).trim().split('\n');
-                console.log();
                 return (
                     <Kode bahasa={bahasa}>
                         {text.toString().replaceAll(',', '\n')}
@@ -101,28 +103,52 @@ export default function Buat() {
                                 {StatusSoal === "soal" &&
                                     <div style={{height: "100%"}}>
                                         <CodeEditor
-                                            mode={"html"}
+                                            mode={"markdown"}
                                             value={Soal}
                                             onChange={() => {setSoal(kodeEditor!.editor.getValue()); UbahSoal(kodeEditor!.editor.getValue())}}
                                             refData={(ins: ReactAce) => {kodeEditor = ins}}
+                                            autoComplete={false}
                                         />
                                     </div>
                                 }
                                 {StatusSoal === "preview" &&
                                     // dangerouslySetInnerHTML={{__html: Soal}}
-                                    <div className="p-3 text-white fs-6" style={{height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
-                                        {UbahSoal(Soal)}
+                                    <div className="p-3 text-white fs-5" style={{height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
+                                        <ReactMarkdown
+                                            // eslint-disable-next-line react/no-children-prop
+                                            children={ Soal }
+                                            components={{
+                                            code({node, inline, className, children, ...props}) {
+                                                const match = /language-(\w+)/.exec(className || '')
+                                                return !inline && match ? (
+                                                <SyntaxHighlighter
+                                                    // eslint-disable-next-line react/no-children-prop
+                                                    children={String(children).replace(/\n$/, '')}
+                                                    style={tomorrow as any}
+                                                    language={match[1]}
+                                                    PreTag="div"
+                                                    {...props}
+                                                />
+                                                ) : (
+                                                <code className={className} {...props}>
+                                                    {children}
+                                                </code>
+                                                )
+                                            }
+                                            }}
+                                        />
+                                        {/* {UbahSoal(Soal)} */}
                                     </div>
                                 }
                                 {StatusSoal === "bantuan" && 
-                                    <div className="text-white p-3" style={{height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
+                                    <div className="text-white p-3 fs-5" style={{height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
                                         <h3>Pembuatan Soal</h3>
-                                        <p className="fs-5">{`Dalam pembuatan soal, Bisa dibuat dengan HTML Code dan untuk menggunakan Code snippet bisa menggunakan Tag (\`\`\`), Contohnya: `}</p>
-                                        <pre className="fs-5 p-3" style={{background: "rgb(30, 30, 30)", whiteSpace: "pre-wrap", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>{`\`\`\`javascript
+                                        <p className="fs-5">{`Dalam pembuatan soal, Bisa dibuat dengan bahasa Markdown dan untuk menggunakan Code snippet bisa menggunakan Tag (~~~), Contohnya: `}</p>
+                                        <pre className="fs-5 p-3" style={{background: "rgb(30, 30, 30)", whiteSpace: "pre-wrap", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>{`~~~javascript
 function Solusi() {
     return "Solusinya mana";
 }
-\`\`\``}</pre>
+~~~`}</pre>
                                     </div>
                                 }
                             </div>

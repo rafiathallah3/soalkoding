@@ -359,6 +359,7 @@ mereka!
                                     value={Kode}
                                     onChange={() => setKode(kodeEditor!.editor.getValue())}
                                     refData={(ins: ReactAce) => {kodeEditor = ins}}
+                                    autoComplete={true}
                                     />
                                 </div>
                             </div>
