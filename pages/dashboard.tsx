@@ -50,7 +50,7 @@ export default function Dashboard() {
             <Navbar />
             
             <div className="container">
-                <div className="row p-3 mb-4" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                <div className="row p-3 mb-4 rounded-3" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
                     <div className='container-fluid mb-4'>
                         <button className='btn btn-outline-danger' style={{float: "right"}}>
                             {"Berikutnya "}

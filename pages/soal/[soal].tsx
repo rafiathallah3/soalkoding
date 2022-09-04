@@ -164,9 +164,12 @@ end`
         <Background>
             <Navbar />
             <style>{`
+            /*
             body {
-                overflow: hidden
+                height: 100%;
+                overflow: hidden;
             }
+            */
 
             .tombol_aktif {
                 color: white;
@@ -240,8 +243,7 @@ end`
                                 </div>
                             </div>
                             {StatusTekananSoalOutput === 'soal' ?
-                            <div id="soal" className="mb-2" style={{background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px",whiteSpace: "pre-wrap"}}>
-                                <div className="px-3 text-white" style={{overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin", height: "64.1rem"}}>
+                            <div id="soal" className="mb-2 px-3 text-white" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
                                     {`
 <h1>Deskripsi Masalah</h1>
 Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
@@ -254,11 +256,55 @@ dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan menda
 Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
 banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
 mereka!
+<h1>Deskripsi Masalah</h1>
+Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
+tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
+maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
+dengan palindrom ini.
+
+Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
+dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
+Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
+banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
+mereka!
+<h1>Deskripsi Masalah</h1>
+Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
+tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
+maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
+dengan palindrom ini.
+
+Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
+dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
+Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
+banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
+mereka!
+
+<h1>Deskripsi Masalah</h1>
+Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
+tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
+maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
+dengan palindrom ini.
+
+Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
+dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
+Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
+banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
+mereka!
+<h1>Deskripsi Masalah</h1>
+Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
+tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
+maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
+dengan palindrom ini.
+
+Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
+dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
+Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
+banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
+mereka!
                                     `}
-                                </div>
                             </div>
                             :
-                            <div id="output" className="mb-2" style={{background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", height: "64.1rem"}}>
+                            <div id="output" className="mb-2" style={{height: "80%", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
                                 {(Output.status !== "" && Output.status !== "Mengirim") &&
                                 <div>
                                     <div className="text-white px-3 mt-2">
