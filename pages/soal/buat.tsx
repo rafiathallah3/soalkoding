@@ -8,35 +8,79 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Router from "next/router";
+import axios from "axios";
 
 const CodeEditor = dynamic(import('../../components/codeEditor'), {ssr: false});
 
 const _contohKodeJawaban = `
-def Solusi():
-    print('Solusi')
+def Solusi(angka, bulatan, list_bulatan):        
+    hasil = [0]*bulatan
+    for i,v in enumerate(list_bulatan): 
+        total = 0
+        t = False
+        listc = [] 
+        for j in angka:
+            if((v / j).is_integer()):
+                total = v//j
+                t = True
+                listc.append(total)
+
+        if t: 
+            hasil[i] = min(listc)
+            continue
+
+        while v >= hasil[i]:
+            if(hasil[i] + max(angka) > v):
+                c = (hasil[i]+max(angka)) - v
+                if c in angka:
+                    total += 1
+                    hasil[i] = total
+                else: 
+                    hasil[i] = 0
+
+                break      
+            hasil[i] += max(angka)
+            total += 1
+        hasil[i] = total
+        
+    return hasil
 `.trim();
 
 const _contohKodeListJawaban = `
 from soalkoding import ApakahSama
 from solusi import Solusi
+
+ApakahSama(Solusi, ([2, 3, 5], 3, [10, 9, 17]), [2, 3, 4])
+ApakahSama(Solusi, ([5, 8, 9], 2, [6, 13]), [3, 5, 6])
 `.trim();
 
-// Can we get much higher
+const _contohSoal = `
+Diberikan kalkulator, tetapi kalkulator tersebut hanya memiliki 3 angka yaitu a, b, dan c.
+Kalkulator tersebut **hanya** bisa menggunakan operasi tambah. Kemudian diberikan sejumlah Q
+bilangan bulat n. Tantangannya mudah saja. Dari bilangan bulat n tersebut, carilah jumlah
+minimum angka yang perlu ditekan agar kalkulator bisa menampilkan bilangan bulat n.
 
-// ~~~javascript
-// function MInecraft() {
-//     console.log("Roblox")
-// }
-// ~~~
+Catatan: Kalau angka kalkulator tidak bisa menghasilkan angka yang ditentukan maka return 0
 
-// So high high
+Input: 
+1. List angka kalkulator
+2. Length list jawaban
+3. List angka yang ditentukan dari angka kalkulator
 
-// woa wao wa
+Contohnya:
+~~~python
+Solusi([2, 3, 5], 3, [10, 9, 17]) # -> [2, 3, 4]
+# Baris pertama dapat 10 dapat dibentuk minimum dengan 2 nomor (5 + 5)
+# Baris kedua dapat 9 dapat dibentuk minimum dengan 3 nomor (3 + 3 + 3)
+# Baris Ketiga 17 dapat dibentuk minimum dengan 4 nomor (5 + 5 + 5 + 2)
 
+Solusi([5, 8, 9], 2, [6, 13]) # -> [3, 5, 6]
+# Baris pertama dapat 0 karena tidak ada angka yang bisa menghasilkan 6
+# Baris kedua 13 dapat dibentuk minimum dengan 2 nomor (5 + 9)
 
-// woa wao wa
-
-// can we get mich higher
+~~~
+ 
+`.trim();
 
 export default function Buat() {
     const [StatusSoal, setStatusSoal] = useState<"preview" | "soal" | "bantuan">('soal');
@@ -68,6 +112,11 @@ export default function Buat() {
         if(!hasil) return;
         setKodeJawaban(_contohKodeJawaban);
         setKodeListJawaban(_contohKodeListJawaban);
+        setSoal(_contohSoal);
+    }
+
+    const KonfirmasiJawaban = async () => {
+        await axios.post("/api/buat/kirimjawaban");
     }
 
     useEffect(() => {
@@ -161,6 +210,31 @@ export default function Buat() {
             .modalContoh {
                 background-color: green;
             }
+
+            .footer_a {
+                color: white;
+                transition: .2s;
+            }
+
+            .footer_a:hover {
+                color: rgb(200, 200, 200);
+            }
+
+            ::-webkit-scrollbar {
+                background: rgb(36, 36, 36);
+                opacity: 1;
+                width: 10px;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: rgb(74, 74, 74);
+                border-radius: 10px;
+            }
+
+            ::-webkit-scrollbar-corner {
+                border-radius: 2xpx;
+                background: rgb(74, 74, 74);
+            }
             `}</style>
             <div className="container-fluid">
                 <div className="mb-4 fs-6">
@@ -177,17 +251,18 @@ export default function Buat() {
                         </div>
                         <div style={{height: "85%"}}>
                             {StatusSoal === "soal" &&
-                                <CodeEditor
-                                    mode={"markdown"}
-                                    value={Soal}
-                                    onChange={() => setSoal(SoalKodeEditor!.editor.getValue())}
-                                    refData={(ins: ReactAce) => {SoalKodeEditor = ins}}
-                                    autoComplete={false}
-                                />
+                                <div style={{height: "420px", minHeight: "200px"}}>
+                                    <CodeEditor
+                                        mode={"markdown"}
+                                        value={Soal}
+                                        onChange={() => setSoal(SoalKodeEditor!.editor.getValue())}
+                                        refData={(ins: ReactAce) => {SoalKodeEditor = ins}}
+                                        autoComplete={false}
+                                    />
+                                </div>
                             }
                             {StatusSoal === "preview" &&
-                                // dangerouslySetInnerHTML={{__html: Soal}}
-                                <div className="p-3 text-white fs-5" style={{height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
+                                <div className="p-3 text-white" style={{height: "420px", minHeight: "200px", fontSize: "18px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
                                     <ReactMarkdown
                                         // eslint-disable-next-line react/no-children-prop
                                         children={ Soal }
@@ -271,32 +346,138 @@ return "Solusinya mana";
                         <i className="bi bi-journal-code"></i>
                         {` Contoh Soal`}
                     </button>
-                    <button className="btn btn-outline-success float-end me-3">
+                    <button className="btn btn-outline-success float-end me-3" onClick={KonfirmasiJawaban}>
                         <i className="bi bi-check-all"></i>
                         {` Konfirmasi Jawaban`}
                     </button>
                 </div>
-                <div className="row" style={{height: "30rem"}}>
+                <div className="mb-3" style={{height: "17rem", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin", display: "none"}}>
+                    <div className="px-3">
+                        <div className="mt-2">
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-success">
+                                <summary className="mb-2">Test 1: Success</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                    Output: 10, Jawaban: 10
+                                </div>
+                            </details>
+                            <details className="mb-2 panah text-danger">
+                                <summary className="mb-2">Test 2: Gagal</summary>
+                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                    Output: 2, Jawaban: 3
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+                <div className="row mb-5" style={{height: "30rem"}}>
                     <div className="col-6">
                         <div className="mb-3">
                             <button className={'me-3 border-0 ' + (StatusKodeJawaban === "kodejawaban" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("kodejawaban")}><i className="bi bi-code-square"></i> Kode Jawaban</button>
                             <button className={"tombol_aktif border-0 " + (StatusKodeJawaban === "bantuan" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("bantuan")}><i className="bi bi-question-circle-fill"></i> Bantuan</button>
                         </div>
-                        {StatusKodeJawaban === "kodejawaban" &&
-                            <CodeEditor
-                                mode={"python"}
-                                value={KodeJawaban}
-                                onChange={() => setKodeJawaban(JawabanKodeEditor!.editor.getValue())}
-                                refData={(ins: ReactAce) => {JawabanKodeEditor = ins}}
-                                autoComplete={true}
-                            />
-                        }
-                        {StatusKodeJawaban === "bantuan" &&
-                            <div className="h-100 text-white p-3 fs-5" style={{backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
-                                <h3>Cara kerja kode jawaban</h3>
-                                <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
-                            </div>
-                        }
+                        <div style={{height: "85%"}}>
+                            {StatusKodeJawaban === "kodejawaban" &&
+                                <div style={{height: "420px", minHeight: "200px"}}>
+                                    <CodeEditor
+                                        mode={"python"}
+                                        value={KodeJawaban}
+                                        onChange={() => setKodeJawaban(JawabanKodeEditor!.editor.getValue())}
+                                        refData={(ins: ReactAce) => {JawabanKodeEditor = ins}}
+                                        autoComplete={true}
+                                    />
+                                </div>
+                            }
+                            {StatusKodeJawaban === "bantuan" &&
+                                <div className="text-white p-3 fs-5" style={{height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
+                                    <h3>Cara kerja kode jawaban</h3>
+                                    <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
+                                </div>
+                            }
+                        </div>
                     </div>
                     <div className="col-6">
                         <div className="mb-3">
@@ -304,32 +485,46 @@ return "Solusinya mana";
                             <button className={"me-3 border-0 " + (StatusJawaban === "contohjawaban" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStatusJawaban("contohjawaban")}><i className="bi bi-exclamation-octagon-fill"></i> Contoh Jawaban</button>
                             <button className={"tombol_aktif border-0 " + (StatusJawaban === "bantuan" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStatusJawaban("bantuan")}><i className="bi bi-question-circle-fill"></i> Bantuan</button>
                         </div>
-                        {StatusJawaban === "listjawaban" &&
-                            <CodeEditor
-                                mode={"python"}
-                                value={KodeListJawaban}
-                                onChange={() => setKodeListJawaban(JawabanListEditor!.editor.getValue())}
-                                refData={(ins: ReactAce) => {JawabanListEditor = ins}}
-                                autoComplete={true}
-                            />
-                        }
-                        {StatusJawaban === "contohjawaban" &&
-                            <CodeEditor
-                                mode={"python"}
-                                value={KodeContohJawaban}
-                                onChange={() => setKodeContohJawaban(ContohJawabanEditor!.editor.getValue())}
-                                refData={(ins: ReactAce) => {ContohJawabanEditor = ins}}
-                                autoComplete={true}
-                            />
-                        }
-                        {StatusJawaban === "bantuan" &&
-                            <div className="h-100 text-white p-3 fs-5" style={{backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
-                                <h3>Cara kerja kode jawaban</h3>
-                                <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
-                            </div>
-                        }
+                        <div style={{height: "85%"}}>
+                            {StatusJawaban === "listjawaban" &&
+                                <div style={{height: "420px"}}>
+                                    <CodeEditor
+                                        mode={"python"}
+                                        value={KodeListJawaban}
+                                        onChange={() => setKodeListJawaban(JawabanListEditor!.editor.getValue())}
+                                        refData={(ins: ReactAce) => {JawabanListEditor = ins}}
+                                        autoComplete={true}
+                                    />
+                                </div>
+                            }
+                            {StatusJawaban === "contohjawaban" &&
+                                <div style={{height: "420px"}}>
+                                    <CodeEditor
+                                        mode={"python"}
+                                        value={KodeContohJawaban}
+                                        onChange={() => setKodeContohJawaban(ContohJawabanEditor!.editor.getValue())}
+                                        refData={(ins: ReactAce) => {ContohJawabanEditor = ins}}
+                                        autoComplete={true}
+                                    />
+                                </div>
+                            }
+                            {StatusJawaban === "bantuan" &&
+                                <div className="text-white p-3 fs-5" style={{height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
+                                    <h3>Cara kerja kode jawaban</h3>
+                                    <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
+                <footer className="text-white text-center p-2">
+                    <ul className="list-unstyled">
+                        <li className="d-inline me-3">(C) 2022 Soalkoding</li>
+                        <li className="d-inline me-3"><a className="text-decoration-none text-white" href="#">Dashboard</a></li>
+                        <li className="d-inline me-3"><a className="text-decoration-none text-white" href="#">Utama</a></li>
+                        <li className="d-inline me-3"><a className="text-decoration-none text-white" href="#">Kontak</a></li>
+                    </ul>
+                </footer>
             </div>
         </Background>
     )

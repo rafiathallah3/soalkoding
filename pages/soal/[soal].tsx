@@ -132,7 +132,7 @@ end`
         KlikOutput();
         StatusKirimOutput();
 
-        const hasil: {status: string, output: HasilJawaban[] | undefined, error: string | undefined, waktu: string, lulus: number, gagal: number} = await axios.post("/api/kirimkode", {
+        const hasil: {status: string, output: HasilJawaban[] | undefined, error: string | undefined, waktu: string, lulus: number, gagal: number} = await axios.post("/api/soal/kirimkode", {
             kode: kodeEditor!.editor.getValue(),
             idBahasaProgram: IdBahasaProgram
         }).then(d => d.data);
@@ -164,12 +164,10 @@ end`
         <Background>
             <Navbar />
             <style>{`
-            /*
             body {
                 height: 100%;
                 overflow: hidden;
             }
-            */
 
             .tombol_aktif {
                 color: white;
@@ -244,7 +242,7 @@ end`
                             </div>
                             {StatusTekananSoalOutput === 'soal' ?
                             <div id="soal" className="mb-2 px-3 text-white" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
-                                    {`
+                                {`
 <h1>Deskripsi Masalah</h1>
 Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
 tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
@@ -301,10 +299,10 @@ dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan menda
 Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
 banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
 mereka!
-                                    `}
+                                `}
                             </div>
                             :
-                            <div id="output" className="mb-2" style={{height: "80%", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap"}}>
+                            <div id="output" className="mb-2" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
                                 {(Output.status !== "" && Output.status !== "Mengirim") &&
                                 <div>
                                     <div className="text-white px-3 mt-2">
@@ -315,7 +313,7 @@ mereka!
                                     <hr className="text-white" style={{marginBottom: "0px"}} />
                                 </div>
                                 }
-                                <div className="px-3" style={{overflowX: "hidden", overflowY: "auto", scrollbarWidth: "thin"}}>
+                                <div className="px-3">
                                     {Output.status !== "Mengirim" &&
                                     <div className="mt-2">
                                         {Output.status === "Error" &&
@@ -330,7 +328,7 @@ mereka!
                                         (Output.output.map((v, i) => {
                                             if(v.koreksi === "lulus") {
                                                 return (
-                                                <details className="mb-3 panah text-success">
+                                                <details className="mb-2 panah text-success">
                                                     <summary className="mb-2">Test #{i+1}: Success</summary>
                                                     <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
                                                         Output: {v.hasil}, Jawaban: {v.jawaban}
@@ -398,7 +396,7 @@ mereka!
                                     </div>
                                 </div>
                             </div>
-                            <div className="row mb-2" style={{height: "80%"}}>
+                            <div className="row mb-2" style={{height: "calc(100vh - 250px)", minHeight: "200px"}}>
                                 <div>
                                     <CodeEditor
                                     mode={ListBahasaProgram[IdBahasaProgram as keyof typeof ListBahasaProgram]}
