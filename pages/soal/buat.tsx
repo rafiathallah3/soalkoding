@@ -10,11 +10,19 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Router from "next/router";
 import axios from "axios";
 
+interface TipeKonfirmasiJawaban {
+    hasil: any
+    jawaban: any
+    koreksi: boolean
+    status: "Sukses" | "Error"
+    error?: string
+}
+
 const CodeEditor = dynamic(import('../../components/codeEditor'), {ssr: false});
 
 const _contohKodeJawaban = `
-def Solusi(angka, bulatan, list_bulatan):        
-    hasil = [0]*bulatan
+def Solusi(angka, list_bulatan):        
+    hasil = [0]*len(list_bulatan)
     for i,v in enumerate(list_bulatan): 
         total = 0
         t = False
@@ -29,6 +37,7 @@ def Solusi(angka, bulatan, list_bulatan):
             hasil[i] = min(listc)
             continue
 
+        d = False
         while v >= hasil[i]:
             if(hasil[i] + max(angka) > v):
                 c = (hasil[i]+max(angka)) - v
@@ -37,44 +46,50 @@ def Solusi(angka, bulatan, list_bulatan):
                     hasil[i] = total
                 else: 
                     hasil[i] = 0
+                    d = True
 
-                break      
+                break
+            
             hasil[i] += max(angka)
             total += 1
-        hasil[i] = total
         
+        if not d:
+            hasil[i] = total
+
     return hasil
 `.trim();
 
 const _contohKodeListJawaban = `
-from soalkoding import ApakahSama
-from solusi import Solusi
-
-ApakahSama(Solusi, ([2, 3, 5], 3, [10, 9, 17]), [2, 3, 4])
-ApakahSama(Solusi, ([5, 8, 9], 2, [6, 13]), [3, 5, 6])
+ApakahSama(Solusi, ([2, 3, 5], [10, 9, 17]), [2, 3, 4])
+ApakahSama(Solusi, ([5, 8, 9], [6, 13]), [0, 2])
+ApakahSama(Solusi, ([10,10,10], [20, 35, 50]), [2, 0, 5])
 `.trim();
+
+const _contohJawaban = `
+ApakahSama(Solusi, ([2, 3, 5], [10, 9, 17]), [2, 3, 4])
+ApakahSama(Solusi, ([10,10,10], [20, 35, 50])
+`.trim()
 
 const _contohSoal = `
 Diberikan kalkulator, tetapi kalkulator tersebut hanya memiliki 3 angka yaitu a, b, dan c.
-Kalkulator tersebut **hanya** bisa menggunakan operasi tambah. Kemudian diberikan sejumlah Q
+Kalkulator tersebut hanya bisa menggunakan operasi tambah. Kemudian diberikan sejumlah Q
 bilangan bulat n. Tantangannya mudah saja. Dari bilangan bulat n tersebut, carilah jumlah
 minimum angka yang perlu ditekan agar kalkulator bisa menampilkan bilangan bulat n.
 
-Catatan: Kalau angka kalkulator tidak bisa menghasilkan angka yang ditentukan maka return 0
+Catatan: Kalau angka kalkulator tidak bisa menghasilkan angka yang ditentukan maka return 0 dan angka kalkulator tidak akan berisi 0.
 
 Input: 
 1. List angka kalkulator
-2. Length list jawaban
-3. List angka yang ditentukan dari angka kalkulator
+2. List angka yang ditentukan dari angka kalkulator
 
 Contohnya:
 ~~~python
-Solusi([2, 3, 5], 3, [10, 9, 17]) # -> [2, 3, 4]
+Solusi([2, 3, 5], [10, 9, 17]) # -> [2, 3, 4]
 # Baris pertama dapat 10 dapat dibentuk minimum dengan 2 nomor (5 + 5)
 # Baris kedua dapat 9 dapat dibentuk minimum dengan 3 nomor (3 + 3 + 3)
 # Baris Ketiga 17 dapat dibentuk minimum dengan 4 nomor (5 + 5 + 5 + 2)
 
-Solusi([5, 8, 9], 2, [6, 13]) # -> [3, 5, 6]
+Solusi([5, 8, 9], [6, 13]) # -> [0, 2]
 # Baris pertama dapat 0 karena tidak ada angka yang bisa menghasilkan 6
 # Baris kedua 13 dapat dibentuk minimum dengan 2 nomor (5 + 9)
 
@@ -82,30 +97,45 @@ Solusi([5, 8, 9], 2, [6, 13]) # -> [3, 5, 6]
  
 `.trim();
 
+const _contohLiatajawaban = `
+def Solusi(angka, list_bulatan):
+    ...
+`.trim();
+
 export default function Buat() {
     const [StatusSoal, setStatusSoal] = useState<"preview" | "soal" | "bantuan">('soal');
-    const [StatusKodeJawaban, setStastusKodeJawaban] = useState<"kodejawaban" | "bantuan">('kodejawaban');
+    const [StatusKodeJawaban, setStastusKodeJawaban] = useState<"kodejawaban" | "liatkode" | "output" | "bantuan">('kodejawaban');
     const [StatusJawaban, setStatusJawaban] = useState<"listjawaban" | "contohjawaban" | "bantuan">('listjawaban');
     const [Soal, setSoal] = useState('');
     const [KodeJawaban, setKodeJawaban] = useState('');
+    const [LiatanKodeJawaban, setLiatanKodeJawaban] = useState('');
     const [KodeListJawaban, setKodeListJawaban] = useState('');
     const [KodeContohJawaban, setKodeContohJawaban] = useState('');
+    const [OutputKonfirmasiJawaban, setOutputKonfirmasiJawaban] = useState<TipeKonfirmasiJawaban[]>();
+    const [TagsDitambahin, setTagsDitambahin] = useState<string[]>([]);
+    const [KurangData, setKurangData] = useState('');
 
     let SoalKodeEditor: ReactAce | undefined = undefined;
     let JawabanKodeEditor: ReactAce | undefined = undefined;
     let JawabanListEditor: ReactAce | undefined = undefined;
     let ContohJawabanEditor: ReactAce | undefined = undefined;
-
+    let LiatanKodeJawabanEditor: ReactAce | undefined = undefined;
+    
     const TambahinTags = (e: BaseSyntheticEvent) => {
+        e.preventDefault();
+        
         const Element = e.target as HTMLButtonElement;
         
         if(Element.className.includes("tombol-tags-aktif")) {
+            const listBaru = TagsDitambahin.filter((v) => v != Element.innerText);
+            setTagsDitambahin(listBaru);
             Element.classList.remove("tombol-tags-aktif");
         } else {
+            if(TagsDitambahin.length >= 3) return;
+
+            setTagsDitambahin([...TagsDitambahin, Element.innerText])
             Element.classList.add("tombol-tags-aktif");
         }
-
-        e.preventDefault();
     }
 
     const UbahJawabanKeContoh = (hasil: boolean) => {
@@ -113,10 +143,50 @@ export default function Buat() {
         setKodeJawaban(_contohKodeJawaban);
         setKodeListJawaban(_contohKodeListJawaban);
         setSoal(_contohSoal);
+        setLiatanKodeJawaban(_contohLiatajawaban);
+        setKodeContohJawaban(_contohJawaban);
     }
 
     const KonfirmasiJawaban = async () => {
-        await axios.post("/api/buat/kirimjawaban");
+        const d: {data: TipeKonfirmasiJawaban[]} = await axios.post("/api/soal/buat/kirimjawaban", {
+            kode: KodeJawaban,
+            listJawaban: KodeListJawaban,
+            eksekusiKode: "" //Nanti kita buatkan untuk security reason
+        }).then(v => v.data);
+
+        setOutputKonfirmasiJawaban(d.data);
+        setStastusKodeJawaban("output");
+    }
+
+    const KirimBuatanSoal = async () => {
+        const NamaSoal = (document.getElementById("NamaSoal") as HTMLInputElement).value;
+        const Level = (document.getElementById("LevelSoal") as HTMLInputElement).value;
+        if(NamaSoal === "" || Level === "0" || TagsDitambahin.length <= 0) {
+            setKurangData("Form tidak boleh kosong");
+            return
+        }
+
+        if(Soal === "") {
+            setKurangData("Soal tidak boleh kosong");
+        }
+
+        const d: { id: string } = await axios.post("/api/soal/buat/buatsoal", {
+            NamaSoal,
+            Level,
+            Tags: TagsDitambahin,
+            Soal
+        }).then(d => d.data);
+
+        location.href = `/soal/${d.id}/latihan`
+    }
+
+    const UlangSoal = () => {
+        setKodeJawaban("");
+        setKodeListJawaban("");
+        setSoal("");
+        setLiatanKodeJawaban("");
+        setKodeContohJawaban("");
+        setOutputKonfirmasiJawaban(undefined);
     }
 
     useEffect(() => {
@@ -237,9 +307,17 @@ export default function Buat() {
             }
             `}</style>
             <div className="container-fluid">
+                {KurangData !== "" &&
+                    <div className="p-2 fs-6 text-white" style={{background: "#e35252"}}>
+                        {KurangData}
+                        <button className="float-end me-2 bg-transparent border-0 text-white" onClick={() => setKurangData("")}>
+                            <i className="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                }
                 <div className="mb-4 fs-6">
-                    <button className="tombol-menu"><i className="bi bi-download"></i> Simpan</button>
-                    <button className="tombol-menu"><i className="bi bi-arrow-counterclockwise"></i> Ulang</button>
+                    <button className="tombol-menu" onClick={KirimBuatanSoal}><i className="bi bi-download"></i> Simpan</button>
+                    <button className="tombol-menu" onClick={UlangSoal}><i className="bi bi-arrow-counterclockwise"></i> Ulang</button>
                     <button className="tombol-menu"><i className="bi bi-trash-fill"></i> Hapus</button>
                 </div>
                 <div className="row mb-3" style={{height: "30rem"}}>
@@ -305,11 +383,11 @@ return "Solusinya mana";
                     <div className="col-lg-6">
                         <form>
                             <div className="form-floating mb-3">
-                                <input type="text" className="form-control text-white" placeholder="contoh@gmail.com" style={{height: "calc(2.5rem + 2px)", lineHeight: "3", backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)"}}/>
+                                <input type="text" id="NamaSoal" className="form-control text-white" placeholder="Soal" style={{height: "calc(2.5rem + 2px)", lineHeight: "3", backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)"}}/>
                                 <label className="text-white-50" htmlFor="floatingInput" style={{padding: "0.5rem 0.75rem"}}>Nama soal</label>
                             </div>
                             <div className="mb-3">
-                                <select defaultValue="0" className="form-control text-white" style={{backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)"}}>
+                                <select defaultValue="0" id="LevelSoal" className="form-control text-white" style={{backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)"}}>
                                     <option value="0" hidden>Level</option>
                                     <option value="1">Level 1</option>
                                     <option value="2">Level 2</option>
@@ -329,6 +407,7 @@ return "Solusinya mana";
                                 <button type="button" className="me-2 tombol-tags" onClick={TambahinTags}>RegEx</button>
                                 <button type="button" className="me-2 tombol-tags" onClick={TambahinTags}>String</button>
                             </div>
+                            <p className="text-white-50">Maximum 3 tags</p>
                         </form>
                     </div>
                 </div>
@@ -351,112 +430,12 @@ return "Solusinya mana";
                         {` Konfirmasi Jawaban`}
                     </button>
                 </div>
-                <div className="mb-3" style={{height: "17rem", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin", display: "none"}}>
-                    <div className="px-3">
-                        <div className="mt-2">
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-success">
-                                <summary className="mb-2">Test 1: Success</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                    Output: 10, Jawaban: 10
-                                </div>
-                            </details>
-                            <details className="mb-2 panah text-danger">
-                                <summary className="mb-2">Test 2: Gagal</summary>
-                                <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                    Output: 2, Jawaban: 3
-                                </div>
-                            </details>
-                        </div>
-                    </div>
-                </div>
                 <div className="row mb-5" style={{height: "30rem"}}>
                     <div className="col-6">
                         <div className="mb-3">
                             <button className={'me-3 border-0 ' + (StatusKodeJawaban === "kodejawaban" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("kodejawaban")}><i className="bi bi-code-square"></i> Kode Jawaban</button>
+                            <button className={'me-3 border-0 ' + (StatusKodeJawaban === "liatkode" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("liatkode")}><i className="bi bi-bullseye"></i> Liatan kode</button>
+                            <button className={'me-3 border-0 ' + (StatusKodeJawaban === "output" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("output")}><i className="bi bi-patch-exclamation-fill"></i> Output</button>
                             <button className={"tombol_aktif border-0 " + (StatusKodeJawaban === "bantuan" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("bantuan")}><i className="bi bi-question-circle-fill"></i> Bantuan</button>
                         </div>
                         <div style={{height: "85%"}}>
@@ -467,8 +446,44 @@ return "Solusinya mana";
                                         value={KodeJawaban}
                                         onChange={() => setKodeJawaban(JawabanKodeEditor!.editor.getValue())}
                                         refData={(ins: ReactAce) => {JawabanKodeEditor = ins}}
-                                        autoComplete={true}
                                     />
+                                </div>
+                            }
+                            {StatusKodeJawaban === "liatkode" &&
+                                <div style={{height: "420px", minHeight: "200px"}}>
+                                    <CodeEditor
+                                        mode={"python"}
+                                        value={LiatanKodeJawaban}
+                                        onChange={() => setLiatanKodeJawaban(LiatanKodeJawabanEditor!.editor.getValue())}
+                                        refData={(ins: ReactAce) => {LiatanKodeJawabanEditor = ins}}
+                                    />
+                                </div>
+                            }
+                            {StatusKodeJawaban === "output" &&
+                                <div className="mb-3" style={{height: "420px", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
+                                    <div className="px-3">
+                                        <div className="mt-2">
+                                            {OutputKonfirmasiJawaban?.map((v, i) => {
+                                                if(v.status === "Sukses") {
+                                                    return (v.koreksi ?
+                                                    <details className="mb-2 panah text-success">
+                                                        <summary className="mb-2">Test {i+1}: Success</summary>
+                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                        </div>
+                                                    </details>
+                                                    :
+                                                    <details className="mb-2 panah text-danger">
+                                                        <summary className="mb-2">Test {i+1}: Gagal</summary>
+                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                        </div>
+                                                    </details>
+                                                    );
+                                                }
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             }
                             {StatusKodeJawaban === "bantuan" &&
@@ -493,7 +508,6 @@ return "Solusinya mana";
                                         value={KodeListJawaban}
                                         onChange={() => setKodeListJawaban(JawabanListEditor!.editor.getValue())}
                                         refData={(ins: ReactAce) => {JawabanListEditor = ins}}
-                                        autoComplete={true}
                                     />
                                 </div>
                             }
@@ -504,7 +518,6 @@ return "Solusinya mana";
                                         value={KodeContohJawaban}
                                         onChange={() => setKodeContohJawaban(ContohJawabanEditor!.editor.getValue())}
                                         refData={(ins: ReactAce) => {ContohJawabanEditor = ins}}
-                                        autoComplete={true}
                                     />
                                 </div>
                             }

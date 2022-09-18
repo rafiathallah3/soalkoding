@@ -17,10 +17,10 @@ import "ace-builds/src-noconflict/theme-tomorrow_night_eighties";
 import 'ace-builds/src-noconflict/snippets/python';
 import "ace-builds/src-noconflict/ext-language_tools";
 
-export default function CodeEditor({ refData, mode, value, onChange, autoComplete }: { refData: any, mode: string, value: string, onChange: any, autoComplete: boolean }) {
+export default function CodeEditor({ refData, mode, value, onChange, autoComplete = true, placeholder = "" }: { refData: any, mode: string, value: string, onChange: any, autoComplete?: boolean, placeholder?: string }) {
     return (
         <AceEditor
-            placeholder="Tunjukkin kepintaran mu!"
+            placeholder={placeholder}
             mode={mode}
             theme="tomorrow_night_eighties"
             name="kodingeditor"
@@ -39,7 +39,7 @@ export default function CodeEditor({ refData, mode, value, onChange, autoComplet
                 highlightActiveLine: false, 
                 enableSnippets: true,
                 showLineNumbers: true,
-                wrap: true,
+                wrap: false,
                 fontSize: "12pt",
                 tabSize: 4
             }}

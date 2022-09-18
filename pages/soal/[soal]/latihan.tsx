@@ -2,10 +2,10 @@ import axios from "axios";
 import dynamic from "next/dynamic";
 import { BaseSyntheticEvent, useState } from "react";
 import ReactAce from "react-ace/lib/ace";
-import Background from "../../components/background";
-import Navbar from "../../components/navbar";
+import Background from "../../../components/background";
+import Navbar from "../../../components/navbar";
 import styles from '../../styles/soal.module.css';
-const CodeEditor = dynamic(import('../../components/codeEditor'), {ssr: false});
+const CodeEditor = dynamic(import('../../../components/codeEditor'), {ssr: false});
 
 type HasilJawaban = {
     koreksi: "lulus" | "gagal" | "",
@@ -399,11 +399,12 @@ mereka!
                             <div className="row mb-2" style={{height: "calc(100vh - 250px)", minHeight: "200px"}}>
                                 <div>
                                     <CodeEditor
-                                    mode={ListBahasaProgram[IdBahasaProgram as keyof typeof ListBahasaProgram]}
-                                    value={Kode}
-                                    onChange={() => setKode(kodeEditor!.editor.getValue())}
-                                    refData={(ins: ReactAce) => {kodeEditor = ins}}
-                                    autoComplete={true}
+                                        mode={ListBahasaProgram[IdBahasaProgram as keyof typeof ListBahasaProgram]}
+                                        value={Kode}
+                                        placeholder={"Tunjukkin kepintaran mu!"}
+                                        onChange={() => setKode(kodeEditor!.editor.getValue())}
+                                        refData={(ins: ReactAce) => {kodeEditor = ins}}
+                                        autoComplete={true}
                                     />
                                 </div>
                             </div>
