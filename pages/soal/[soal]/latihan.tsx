@@ -4,7 +4,7 @@ import { BaseSyntheticEvent, useState } from "react";
 import ReactAce from "react-ace/lib/ace";
 import Background from "../../../components/background";
 import Navbar from "../../../components/navbar";
-import styles from '../../styles/soal.module.css';
+import styles from '../../../styles/latihan.module.css'
 const CodeEditor = dynamic(import('../../../components/codeEditor'), {ssr: false});
 
 type HasilJawaban = {
