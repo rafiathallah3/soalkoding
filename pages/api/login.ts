@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import jwt from 'jsonwebtoken';
 import kue from 'cookie'
 import bcrypt from 'bcrypt';
+import { encrypt, decrypt } from "../../database/UbahKeHash";
 import { DapatinSQL } from '../../database/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -21,11 +22,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
 		if(await bcrypt.compare(password, data[0].password)) {
-			console.log("Ayo login")
-			const token = jwt.sign({
-				email,
-				username: data[0].username,
-			}, process.env.SECRET!);
+			console.log("Ayo login");
+			const EncryptData = encrypt(JSON.stringify({email, username: data[0].username}));
+						
+			const token = jwt.sign({datanya: EncryptData}, process.env.SECRET!);
 
 			const encode = kue.serialize("infoakun", token, {
 				httpOnly: true,
@@ -36,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			});
 
 			res.setHeader("Set-Cookie", encode);
-			console.log("kondisi")
 			return res.json({kondisi: "benar"});
 		}
 

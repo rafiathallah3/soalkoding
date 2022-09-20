@@ -3,7 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   env: {
-    SECRET: "私はアニメを見るのが好きです"
+    SECRET: "私はアニメを見るのが好きです",
+    SECRETKUE: "wenaimetchuindasama" //我不会原谅你
   }
 }
 

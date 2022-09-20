@@ -9,6 +9,7 @@ export default async function Register(req: NextApiRequest, res: NextApiResponse
         if(data.length <= 0) {
             const garam = await bcrypt.genSalt();
             const hasPass = await bcrypt.hash(password, garam);
+
             await DapatinSQL("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", [username, email, hasPass]);
             return res.json({kondisi: "sukses"});
         }

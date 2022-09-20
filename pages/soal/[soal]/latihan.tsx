@@ -1,6 +1,7 @@
 import axios from "axios";
 import dynamic from "next/dynamic";
-import { BaseSyntheticEvent, useState } from "react";
+import { BaseSyntheticEvent, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import ReactAce from "react-ace/lib/ace";
 import Background from "../../../components/background";
 import Navbar from "../../../components/navbar";
@@ -12,6 +13,19 @@ type HasilJawaban = {
     status: "Sukses" | "Error" | "",
     hasil: any,
     jawaban: any
+}
+
+export async function getServerSideProps(konteks: { params: { soal: string } }) {
+    const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
+        idsoal: konteks.params.soal
+    }).then(d => d.data)
+    console.log(data)
+
+    return {
+        props: {
+
+        }
+    }
 }
 
 export default function Soal() {
@@ -80,6 +94,9 @@ end`
     });
     const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
     const [Kode, setKode] = useState(ListKode['71']);
+
+    const router = useRouter();
+    const { soal } = router.query;
 
     let kodeEditor: ReactAce | undefined = undefined;
 

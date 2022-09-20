@@ -102,7 +102,7 @@ def Solusi(angka, list_bulatan):
     ...
 `.trim();
 
-export default function Buat() {
+export default function Buat({ mode, idsoal }: { mode: "buat" | "edit", idsoal?: string }) {
     const [StatusSoal, setStatusSoal] = useState<"preview" | "soal" | "bantuan">('soal');
     const [StatusKodeJawaban, setStastusKodeJawaban] = useState<"kodejawaban" | "liatkode" | "output" | "bantuan">('kodejawaban');
     const [StatusJawaban, setStatusJawaban] = useState<"listjawaban" | "contohjawaban" | "bantuan">('listjawaban');
@@ -406,6 +406,8 @@ return "Solusinya mana";
                                 <button type="button" className="me-2 tombol-tags" onClick={TambahinTags}>Logika</button>
                                 <button type="button" className="me-2 tombol-tags" onClick={TambahinTags}>RegEx</button>
                                 <button type="button" className="me-2 tombol-tags" onClick={TambahinTags}>String</button>
+                                <button type="button" className="me-2 tombol-tags" onClick={TambahinTags}>Inggris</button>
+                                <button type="button" className="me-2 tombol-tags" onClick={TambahinTags}>Bahasa Indonesia</button>
                             </div>
                             <p className="text-white-50">Maximum 3 tags</p>
                         </form>

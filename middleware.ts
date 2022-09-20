@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verify } from './services/jwt_sign';
-import { serialize } from "cookie";
 
 const secret = process.env.SECRET!;
 
@@ -10,7 +9,8 @@ export default async function middleware(req: NextRequest) {
     if(req.nextUrl.pathname.startsWith("/dashboard")) {
         if(infoakun === undefined) return NextResponse.redirect(new URL("/login", req.url));
         try {
-            const hasilToken = await verify(infoakun, secret);
+            const hasilToken = await verify(infoakun, secret) as { datanya: string };
+
             if(!hasilToken) throw 'Waduh token tidak SOLID SOLID SOLID'
             return NextResponse.next();
         } catch (e) {

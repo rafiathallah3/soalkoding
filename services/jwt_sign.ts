@@ -16,8 +16,8 @@ export async function verify(token: string, secret: string) {
     try {
         const {payload} = await jwtVerify(token, new TextEncoder().encode(secret));
         return payload;
-    } catch {
-        console.log("Token tidak VALID")
+    } catch(e) {
+        console.log(e)
         return false;
     }
 }
