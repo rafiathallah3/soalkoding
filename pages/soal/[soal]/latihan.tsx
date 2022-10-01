@@ -1,19 +1,17 @@
 import axios from "axios";
 import dynamic from "next/dynamic";
-import { BaseSyntheticEvent, useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import Router from "next/router";
+import { BaseSyntheticEvent, useState } from "react";
 import ReactAce from "react-ace/lib/ace";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Background from "../../../components/background";
 import Navbar from "../../../components/navbar";
 import styles from '../../../styles/latihan.module.css'
-const CodeEditor = dynamic(import('../../../components/codeEditor'), {ssr: false});
+import { DataSoal, HasilJawaban } from "../../../types/tipe";
 
-type HasilJawaban = {
-    koreksi: "lulus" | "gagal" | "",
-    status: "Sukses" | "Error" | "",
-    hasil: any,
-    jawaban: any
-}
+const CodeEditor = dynamic(import('../../../components/codeEditor'), {ssr: false});
 
 export async function getServerSideProps(konteks: { params: { soal: string } }) {
     const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
@@ -23,80 +21,122 @@ export async function getServerSideProps(konteks: { params: { soal: string } }) 
 
     return {
         props: {
-
+            data: data.length <= 0 ? {} : data[0] 
         }
     }
 }
 
-export default function Soal() {
-    const ListBahasaProgram = {
-        "71": "python",
-        "63": "javascript",
-        "74": "typescript",
-        "54": "c_cpp",
-        "64": "lua",
-        "73": "rust",
-        "72": "ruby"
-    }
+const ListBahasaProgram = {
+    "71": "python",
+    "63": "javascript",
+    "74": "typescript",
+    "54": "c_cpp",
+    "64": "lua",
+    "73": "rust",
+    "72": "ruby"
+}
 
-    const ListKode = {
-        "71": `def Solusi(x, y):
-    if y == 2:
-        return z
-    return x * y
+const ListKode = {
+    "71": `def Solusi(angka, list_bulatan):
+    hasil = [0]*len(list_bulatan)
+    for i,v in enumerate(list_bulatan): 
+        total = 0
+        t = False
+        listc = [] 
+        for j in angka:
+            if((v / j).is_integer()):
+                total = v//j
+                t = True
+                listc.append(total)
+
+        if t: 
+            hasil[i] = min(listc)
+            continue
+
+        d = False
+        while v >= hasil[i]:
+            if(hasil[i] + max(angka) > v):
+                c = (hasil[i]+max(angka)) - v
+                if c in angka:
+                    total += 1
+                    hasil[i] = total
+                else: 
+                    hasil[i] = 0
+                    d = True
+
+                break
+            
+            hasil[i] += max(angka)
+            total += 1
+        
+        if not d:
+            hasil[i] = total
+
+    return hasil
+
+    # if __name__ == "__main__":
+    # def ApakahSama(fungsi, parameter, jawaban):
+    #     try:
+    #         hasil = fungsi(*parameter)
+    #         return {"hasil": str(hasil) if hasil == None else hasil, "jawaban": jawaban, "status": "Sukses"}
+    #     except Exception as e:
+    #         import base64
+    #         return {"hasil": base64.b64encode(str(e).encode('utf-8')).decode('utf-8'), "jawaban": jawaban, "status": "Error"}
     
-if __name__ == "__main__":
-    def ApakahSama(fungsi, parameter, jawaban):
-        try:
-            hasil = fungsi(*parameter)
-            return {"hasil": str(hasil) if hasil == None else hasil, "jawaban": jawaban, "status": "Sukses"}
-        except Exception as e:
-            import base64
-            return {"hasil": base64.b64encode(str(e).encode('utf-8')).decode('utf-8'), "jawaban": jawaban, "status": "Error"}
-    
-    print(ApakahSama(Solusi, (5, 6), 30))
-    print(ApakahSama(Solusi, (3, 10), 30))
-    print(ApakahSama(Solusi, (5, 2), 30))`,
-        "63": `function Solusi() {
+    # print(ApakahSama(Solusi, (5, 6), 30))
+    # print(ApakahSama(Solusi, (3, 10), 30))
+    # print(ApakahSama(Solusi, (5, 2), 30))`,
+    "63": `function Solusi() {
     console.log("Solusi");
 }`,
-        "74": `function Solusi() {
+    "74": `function Solusi() {
     console.log("Solusi");
 }`,
-        "54": `#include <string>
-void Solusi() {
+    "54": `#include <string>
+    void Solusi() {
     std::cout << "Solusi";
 }`,
-        "64": `function Solusi()
+    "64": `function Solusi()
     print("Solusi");
 end`,
-        "73": `fn Solusi() {
+    "73": `fn Solusi() {
     println!("Solusi");
 }`,
-        "72": `def Solusi()
+    "72": `def Solusi()
     puts "Solusi"     
 end`
-    }
+}
 
+export default function Soal({ data }: { data: DataSoal }) {
     const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
-    const [Output, setOutput] = useState<{error: string, waktu: string, output: HasilJawaban[], status: "Mengirim" | "Error" | "Sukses" | "", lulus: number, gagal: number}>({
-        error: "",
-        waktu: "",
-        status: "",
-        lulus: 0,
-        gagal: 0,
-        output: [{
-            status: "",
-            koreksi: "",
+    const [Output, setOutput] = useState<{data: HasilJawaban[], lulus: number, gagal: number, waktu: string, status: "Mengirim" | "Sukses" | ""}>({
+        data: [{
             hasil: "",
-            jawaban: ""
+            jawaban: "",
+            koreksi: false,
+            status: "Sukses"
         }],
+        lulus: 0,
+        gagal: 1,
+        waktu: "",
+        status: ""
     });
+    // const [Output, setOutput] = useState<{error: string, waktu: string, output: HasilJawaban[], status: "Mengirim" | "Error" | "Sukses" | "", lulus: number, gagal: number}>({
+    //     error: "",
+    //     waktu: "",
+    //     status: "",
+    //     lulus: 0,
+    //     gagal: 0,
+    //     output: [{
+    //         status: "",
+    //         koreksi: "",
+    //         hasil: "",
+    //         jawaban: ""
+    //     }],
+    // });
     const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
     const [Kode, setKode] = useState(ListKode['71']);
-
-    const router = useRouter();
-    const { soal } = router.query;
+    const [KodeBenar, setKodeBenar] = useState<string>();
 
     let kodeEditor: ReactAce | undefined = undefined;
 
@@ -132,11 +172,24 @@ end`
         }
     }
 
+    const FavoritSoal = () => {
+        
+    }
+
+    const KirimSolusi = async (e: BaseSyntheticEvent) => {
+        const _data = await axios.post("/api/soal/kirimsolusi", {
+            kode: KodeBenar,
+            idsoal: data.idsoal
+        });
+
+        if(_data.status === 200) {
+            Router.push(`/soal/${data.idsoal}/solusi`);
+        }
+    }
+
     const GantiBahasaProgram = (e: BaseSyntheticEvent) => {
-        console.log(ListBahasaProgram[e.target.value as keyof typeof ListBahasaProgram])
         setIdBahasaProgram(e.target.value);
         setKode(ListKode[e.target.value as keyof typeof ListKode]);
-        console.log(Kode);
     }
 
     const StatusKirimOutput = () => {
@@ -144,46 +197,87 @@ end`
         setOutput({...Output, status: "Mengirim"});
     }
 
-    const KirimTest = async (e: BaseSyntheticEvent) => {
+    const KirimJawaban = async (e: BaseSyntheticEvent, statusKlik: "test" | "jawaban") => {
         e.preventDefault();
         KlikOutput();
         StatusKirimOutput();
+        const KodeSoal = kodeEditor!.editor.getValue();
 
-        const hasil: {status: string, output: HasilJawaban[] | undefined, error: string | undefined, waktu: string, lulus: number, gagal: number} = await axios.post("/api/soal/kirimkode", {
-            kode: kodeEditor!.editor.getValue(),
-            idBahasaProgram: IdBahasaProgram
+        // const hasil: {status: string, output: HasilJawaban[] | undefined, error: string | undefined, waktu: string, lulus: number, gagal: number} = await axios.post("/api/soal/kirimkode", {
+        //     kode: kodeEditor!.editor.getValue(),
+        //     idBahasaProgram: IdBahasaProgram,
+        //     idsoal: data.idsoal
+        // }).then(d => d.data);
+        const hasil: {data: HasilJawaban[], lulus: number, gagal: number, waktu: string} = await axios.post("/api/soal/kirimkode", {
+            kode: KodeSoal,
+            idBahasaProgram: IdBahasaProgram,
+            idsoal: data.idsoal,
+            w: statusKlik
         }).then(d => d.data);
-        console.log(hasil);
-        
-        switch (hasil.status) {
-            case "Error":
-                setOutput({
-                    ...Output,
-                    status: hasil.status,
-                    error: hasil.error!,
-                    waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
-                });
-                break;
-            case "Sukses":
-                setOutput({
-                    ...Output,
-                    status: hasil.status,
-                    output: hasil.output!,
-                    waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
-                    lulus: hasil.lulus,
-                    gagal: hasil.gagal
-                });
-                break;
+
+        if(statusKlik === "jawaban") {
+            if(hasil.lulus >= hasil.data.map((v) => v.koreksi).length) {
+                console.log(KodeSoal)
+                setKodeBenar(KodeSoal);
+            }
         }
+
+        setOutput({
+            data: hasil.data,
+            waktu: hasil.waktu,
+            lulus: hasil.lulus,
+            gagal: hasil.gagal,
+            status: "Sukses"
+        });
+
+        // switch (hasil.status) {
+        //     case "Error":
+        //         setOutput({
+        //             ...Output,
+        //             status: hasil.status,
+        //             error: hasil.error!,
+        //             waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
+        //         });
+        //         break;
+        //     case "Sukses":
+        //         setOutput({
+        //             ...Output,
+        //             status: hasil.status,
+        //             output: hasil.output!,
+        //             waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
+        //             lulus: hasil.lulus,
+        //             gagal: hasil.gagal
+        //         });
+        //         break;
+        // }
+    }
+
+    if(Object.keys(data).length <= 0) {
+        return (
+            <div style={{height: "100%"}}>
+                <Navbar />
+                <style>{`
+                #__next {
+                    height: 100%;
+                }
+                `}</style>
+                <div className="d-flex align-items-center justify-content-center" style={{height: "80%"}}>
+                    <div className="text-white fs-1 text-center">
+                        400 + 4 Tidak ketemu
+                        <p className="fs-3 text-white-50">Halaman yang kamu kunjungi itu tidak ada</p>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
         <Background>
             <Navbar />
             <style>{`
-            body {
-                height: 100%;
-                overflow: hidden;
+            .favorit:hover {
+                color: rgb(180, 180, 180);
+                cursor: pointer;
             }
 
             .tombol_aktif {
@@ -199,7 +293,10 @@ end`
                 background: rgb(48, 48, 48);
                 border: 1px solid rgb(48, 48, 48);
                 border-radius: 3px;
-                padding: 7px;
+                padding: 6px;
+                text-transform: uppercase;
+                font-size: 14px;
+                letter-spacing: 1px;
             }
 
             .tombolBerikutnya:hover {
@@ -213,7 +310,7 @@ end`
             }
 
             ::-webkit-scrollbar {
-                background: transparent;
+                background: rgb(50, 50, 50);
                 width: 10px;
             }
 
@@ -228,22 +325,22 @@ end`
             }
             `}</style>
             <div className="container-fluid">
-                <div className="row min-vh-100">
+                <div className="row">
                     <div className="col">
                         <div className="d-flex flex-column h-100 ms-4">
                             <div className="row mb-3" style={{background: "transparent"}}>
                                 <div className="text-white">
                                     <div style={{height: "55px"}}>
-                                        <h5>Starlight Anya</h5>
+                                        <h5>{data.namasoal}</h5>
                                         <div>
-                                            <span className="text-warning me-4">Medium</span>
-                                            <span className="me-4">
-                                                <i className="bi bi-star-fill me-1"></i>
-                                                300
+                                            <span className={"me-4 " + (data.level <= 2 ? "" : data.level > 2 ? data.level > 4 ? "text-danger" : "text-warning" : "text-warning")}>Level {data.level}</span>
+                                            <span className="me-4 favorit" onClick={FavoritSoal}>
+                                                <i className="bi bi-star me-1"></i>
+                                                {JSON.parse(data.suka).length}
                                             </span>
                                             <span>
                                                 <i className="bi bi-person-fill me-2"></i>
-                                                <a className="text-decoration-none text-white" href="#">Rafi Athallah</a>
+                                                <a className="text-decoration-none text-white" href="#">{data.pembuat}</a>
                                             </span>
                                         </div>
                                     </div>
@@ -258,72 +355,49 @@ end`
                                 </div>
                             </div>
                             {StatusTekananSoalOutput === 'soal' ?
-                            <div id="soal" className="mb-2 px-3 text-white" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
-                                {`
-<h1>Deskripsi Masalah</h1>
-Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
-tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
-maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
-dengan palindrom ini.
-
-Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
-dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
-Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
-banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
-mereka!
-<h1>Deskripsi Masalah</h1>
-Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
-tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
-maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
-dengan palindrom ini.
-
-Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
-dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
-Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
-banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
-mereka!
-<h1>Deskripsi Masalah</h1>
-Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
-tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
-maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
-dengan palindrom ini.
-
-Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
-dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
-Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
-banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
-mereka!
-
-<h1>Deskripsi Masalah</h1>
-Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
-tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
-maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
-dengan palindrom ini.
-
-Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
-dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
-Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
-banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
-mereka!
-<h1>Deskripsi Masalah</h1>
-Andi dan Budi merupakan teman yang suka main bersama. Suatu hari, mereka mempelajari
-tentang palindrom di sekolah. Palindrom adalah suatu kata yang serupa baik jika dibaca dari awal
-maupun dari akhir. Contoh palindrom adalah “katak”. Mereka pun memutuskan untuk bermain
-dengan palindrom ini.
-
-Andi dan Budi akan bergantian menyebutkan sebuah kata, dengan Andi mendapat giliran lebih
-dulu. Jika kata yang disebutkan adalah palindrom, maka orang tersebut akan mendapat 1 poin.
-Jumlah poin ini akan dijumlahkan. Pada akhir permainan, orang yang mempunyai poin lebih
-banyak adalah pemenangnya. Bantulah Andi dan Budi menentukan pemenang dari permainan
-mereka!
-                                `}
+                            <div id="soal" className="mb-2 px-3 py-2 fs-5 text-white" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
+                                <ReactMarkdown
+                                    // eslint-disable-next-line react/no-children-prop
+                                    children={ data.soal }
+                                    components={{
+                                    code({node, inline, className, children, ...props}) {
+                                        const match = /language-(\w+)/.exec(className || '')
+                                        return !inline && match ? (
+                                        <SyntaxHighlighter
+                                            // eslint-disable-next-line react/no-children-prop
+                                            children={String(children).replace(/\n$/, '')}
+                                            style={tomorrow as any}
+                                            language={match[1]}
+                                            PreTag="div"
+                                            {...props}
+                                        />
+                                        ) : (
+                                        <code className={className} {...props}>
+                                            {children}
+                                        </code>
+                                        )
+                                    }
+                                    }}
+                                />
+                                
+                                <hr />
+                                <div className="d-flex flex-row">
+                                    <i className="bi bi-tags-fill me-3 fs-4"></i>
+                                    {data.tags.split(',').map((v, i) => {
+                                        return (
+                                            <div key={i} className="me-3 p-2 fs-6" style={{background: "grey"}}>
+                                                {v}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
                             </div>
                             :
-                            <div id="output" className="mb-2" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
-                                {(Output.status !== "" && Output.status !== "Mengirim") &&
+                            <div id="output" className="mb-2" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(38, 38, 38)", border: "1px solid " + (Output.lulus >= Output.data.length ? "rgb(56, 138, 51)" : 'rgb(59, 59, 59)'), borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
+                                {(Output.status !== "Mengirim" && Output.status !== "") &&
                                 <div>
                                     <div className="text-white px-3 mt-2">
-                                        <span className="me-3">Waktu: {Output.waktu}</span>
+                                        <span className="me-3">Waktu: {Number(Output.waktu).toFixed(2) + ' detik'}</span>
                                         <span className="me-3 text-success">Lulus: {Output.lulus}</span>
                                         <span className="me-3 text-danger">Gagal: {Output.gagal}</span>
                                     </div>
@@ -333,40 +407,45 @@ mereka!
                                 <div className="px-3">
                                     {Output.status !== "Mengirim" &&
                                     <div className="mt-2">
-                                        {Output.status === "Error" &&
+                                        {/* {Output.status === "Error" &&
                                         <div className="px-3 text-white">
                                             <div className="mb-3">Output Error:</div>
                                             <div className="px-3 py-2 rounded-2" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                                {Output.error}
+                                                {Output.}
                                             </div>
                                         </div>
-                                        }
+                                        } */}
                                         {Output.status === "Sukses" &&
-                                        (Output.output.map((v, i) => {
-                                            if(v.koreksi === "lulus") {
-                                                return (
-                                                <details className="mb-2 panah text-success">
-                                                    <summary className="mb-2">Test #{i+1}: Success</summary>
-                                                    <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                                        Output: {v.hasil}, Jawaban: {v.jawaban}
-                                                    </div>
-                                                </details>
-                                                )
-                                            } else if(v.koreksi === "gagal") {
-                                                return (
-                                                <details className="mb-2 panah text-danger">
-                                                    <summary className="mb-2">Test #{i+1}: Gagal</summary>
-                                                    <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                                        {v.status === "Error" ?
-                                                        <p>{new Buffer(v.hasil, 'base64').toString('utf-8')}</p>
-                                                        :
-                                                        <p>Output: {v.hasil}, Jawaban: {v.jawaban}</p> 
-                                                        }
-                                                    </div>
-                                                </details>
-                                                )
-                                            }
-                                        }))
+                                            (Output.data.map((v, i) => {
+                                                if(v.koreksi) {
+                                                    return (
+                                                    <details className="mb-2 panah text-success">
+                                                        <summary className="mb-2">Test #{i+1}: Success</summary>
+                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
+                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                        </div>
+                                                    </details>
+                                                    )
+                                                } else {
+                                                    return (
+                                                    <details className="mb-2 panah text-danger">
+                                                        <summary className="mb-2">Test #{i+1}: Gagal</summary>
+                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
+                                                            {v.status === "Error" ?
+                                                            <p>{new Buffer(v.hasil, 'base64').toString('utf-8')}</p>
+                                                            :
+                                                            <p>Output: {v.hasil}, Jawaban: {v.jawaban}</p> 
+                                                            }
+                                                        </div>
+                                                    </details>
+                                                    )
+                                                }
+                                            }))
+                                        }
+                                        {Output.lulus >= Output.data.length &&
+                                            <div style={{color: "#30AD43"}}>
+                                                Selamat, Kamu lulus semua test!
+                                            </div>
                                         }
                                     </div>
                                     }
@@ -378,12 +457,10 @@ mereka!
                             }
                             <div className="row">
                                 <div className="text-white">
-                                    <div style={{height: "50px"}}>
-                                        <button className="text-white tombolBerikutnya">
-                                            <i className="bi bi-skip-forward-fill me-2"></i>
-                                            Berikutnya
-                                        </button>
-                                    </div>
+                                    <button className="tombolBerikutnya">
+                                        <i className="bi bi-play-fill me-1"></i>
+                                        Lewati
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -426,18 +503,21 @@ mereka!
                                 </div>
                             </div>
                             <div className="row">
-                                <div className="text-white">
+                                <div className="">
                                     <div style={{height: "50px"}}>
-                                        <button className="text-white tombolBerikutnya">
-                                            <i className="bi bi-skip-forward-fill me-2"></i>
+                                        <button className="text-white tombolBerikutnya" style={{width: "5%"}}>
                                             Import
                                         </button>
-                                        <button className="text-white tombolBerikutnya" style={{float: "right"}}>
-                                            <i className="bi bi-skip-forward-fill me-2"></i>
-                                            Kirim
-                                        </button>
-                                        <button className="text-white tombolBerikutnya me-4" style={{float: "right"}} onClick={KirimTest}>
-                                            <i className="bi bi-skip-forward-fill me-2"></i>
+                                        {(Kode !== KodeBenar) ? 
+                                            <button className="text-white tombolBerikutnya" style={{float: "right", width: "5%"}} onClick={(e) => KirimJawaban(e, "jawaban")}>
+                                                Coba
+                                            </button>
+                                            :
+                                            <button className="text-white tombolBerikutnya" style={{float: "right", width: "5%", background: "#3c6e2a", borderColor: "#3c6e2a"}} onClick={(e) => KirimSolusi(e)}>
+                                                Kirim
+                                            </button>
+                                        }
+                                        <button className="text-white tombolBerikutnya me-4" style={{float: "right", width: "5%"}} onClick={(e) => KirimJawaban(e, "test")}>
                                             Test
                                         </button>
                                     </div>

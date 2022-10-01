@@ -4,7 +4,7 @@ const nextConfig = {
   swcMinify: true,
   env: {
     SECRET: "私はアニメを見るのが好きです",
-    SECRETKUE: "wenaimetchuindasama" //我不会原谅你
+    SECRETKUE: "wenaimetchuindas" //我不会原谅你
   }
 }
 

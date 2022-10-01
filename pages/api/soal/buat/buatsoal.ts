@@ -1,25 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { DapatinSQL } from '../../../../database/db';
+import { DapatinSQL, parseCookies } from '../../../../database/db';
 import { decrypt } from '../../../../database/UbahKeHash';
 import jwt from 'jsonwebtoken';
 import kuripto from 'crypto';
-
-function parseCookies (request: NextApiRequest) {
-    const list: any = {};
-    const cookieHeader = request.headers?.cookie;
-    if (!cookieHeader) return list;
-
-    cookieHeader.split(`;`).forEach(function(cookie) {
-        let [ name, ...rest] = cookie.split(`=`);
-        name = name?.trim();
-        if (!name) return;
-        const value = rest.join(`=`).trim();
-        if (!value) return;
-        list[name as keyof typeof list] = decodeURIComponent(value);
-    });
-
-    return list;
-}
 
 export default async function KirimJawaban(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {

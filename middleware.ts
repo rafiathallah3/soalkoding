@@ -9,7 +9,7 @@ export default async function middleware(req: NextRequest) {
     if(req.nextUrl.pathname.startsWith("/dashboard")) {
         if(infoakun === undefined) return NextResponse.redirect(new URL("/login", req.url));
         try {
-            const hasilToken = await verify(infoakun, secret) as { datanya: string };
+            const hasilToken = await verify(infoakun, secret) as { datanya: {iv: string, IniDataRahasia: string} };
 
             if(!hasilToken) throw 'Waduh token tidak SOLID SOLID SOLID'
             return NextResponse.next();

@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import jwt from 'jsonwebtoken';
 import kue from 'cookie'
 import bcrypt from 'bcrypt';
-import { encrypt, decrypt } from "../../database/UbahKeHash";
+import { encrypt } from "../../database/UbahKeHash";
 import { DapatinSQL } from '../../database/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
