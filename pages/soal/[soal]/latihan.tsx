@@ -109,6 +109,7 @@ end`
 
 export default function Soal({ data }: { data: DataSoal }) {
     const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
+    const [BahasaProgram, setBahasaProgram] = useState('python');
     const [Output, setOutput] = useState<{data: HasilJawaban[], lulus: number, gagal: number, waktu: string, status: "Mengirim" | "Sukses" | ""}>({
         data: [{
             hasil: "",
@@ -179,7 +180,8 @@ export default function Soal({ data }: { data: DataSoal }) {
     const KirimSolusi = async (e: BaseSyntheticEvent) => {
         const _data = await axios.post("/api/soal/kirimsolusi", {
             kode: KodeBenar,
-            idsoal: data.idsoal
+            idsoal: data.idsoal,
+            bahasa: BahasaProgram
         });
 
         if(_data.status === 200) {
@@ -189,6 +191,7 @@ export default function Soal({ data }: { data: DataSoal }) {
 
     const GantiBahasaProgram = (e: BaseSyntheticEvent) => {
         setIdBahasaProgram(e.target.value);
+        setBahasaProgram(ListBahasaProgram[e.target.value as keyof typeof ListBahasaProgram])
         setKode(ListKode[e.target.value as keyof typeof ListKode]);
     }
 

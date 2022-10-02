@@ -1,6 +1,10 @@
-import Navbar from "../../../components/navbar";
+import Navbar from "../../../../components/navbar";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import axios from "axios";
+import { NextApiRequest } from "next";
+import { DataSolusi } from "../../../../types/tipe";
+import { useState } from "react";
 
 const TemplateKoding = `
 function Roblox() {
@@ -17,7 +21,62 @@ function Roblox() {
 }
 `.trim()
 
-export default function Solusi() {
+export async function getServerSideProps(konteks: { params: { soal: string }, req: NextApiRequest }) {
+    const data = await axios.post(`http://${konteks.req.headers.host}/api/soal/solusi/dapatinSolusi`, {
+        idsoal: konteks.params.soal
+    }, {
+        headers: { cookie: konteks.req.headers.cookie } as any
+    }).then(d => d.data);
+
+    return {
+        props: {
+            data
+        }
+    }
+}
+
+export default function Solusi({ data }: { data: DataSolusi }) {
+    const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
+        suka_ngk: data.suka_ngk,
+        berapa: JSON.parse(data.soal.suka).length
+    });
+    // const [Kepintaran, setKepintaran] = useState<{apakahSudahPintar: boolean, berapa: number, id: string}[]>(
+    //     data.solusi.map((v) => {
+    //         return {
+    //             apakahSudahPintar: v.apakahSudahPintar,
+    //             berapa: JSON.parse(v.pintar).length,
+    //             id: v.id
+    //         }
+    //     })
+    // )
+
+    const FavoritSoal = async () => {
+        const _data = await axios.post("/api/soal/favorit", {
+            idsoal: data.idsoal
+        }).then(d => d.data);
+
+        setFavorit({
+            suka_ngk: _data.suka_ngk,
+            berapa: _data.berapa
+        })
+    }
+
+    const KlikKepintaran = async (elementTombol: MouseEvent, idsolusi: string) => {
+        const _data = await axios.post("/api/soal/solusi/pintar", {
+            idsoal: data.idsoal,
+            idsolusi,
+        }).then(d => d.data);
+
+        if(_data.suka_ngk) {
+            (elementTombol.target as any).style.borderColor = 'white';
+            (elementTombol.target as any).style.color = 'white';
+        } else {
+            (elementTombol.target as any).style.borderColor = 'rgb(150, 150, 150)';
+            (elementTombol.target as any).style.color = 'rgb(170, 170, 170)';
+        }
+        document.getElementById(_data.idsolusi)!.innerText = _data.berapa;
+    }
+
     return (
         <div className="px-3">
             <Navbar />
@@ -59,6 +118,11 @@ export default function Solusi() {
                 background: rgb(50, 50, 50);
                 color: rgb(170, 170, 170);
                 border: 1px solid rgb(150, 150, 150);
+                transition: 0.2s;
+            }
+
+            .tombol-keren:hover { 
+                color: white !important;
             }
 
             .radio-container {
@@ -115,6 +179,11 @@ export default function Solusi() {
                 background: white;
             }
 
+            .favorit:hover {
+                color: rgb(180, 180, 180);
+                cursor: pointer;
+            }
+
             ::-webkit-scrollbar {
                 background: rgb(36, 36, 36);
                 opacity: 1;
@@ -132,23 +201,27 @@ export default function Solusi() {
             }
 
             `}</style>
-            
-            <div className="p-3 text-white rounded-1 mb-2" style={{background: "rgb(48, 48, 48)"}}>
+
+            <div className="p-3 text-white rounded-1 mb-2" style={{ background: "rgb(48, 48, 48)" }}>
                 <div className="row">
                     <div className="col">
                         <div className="mb-2">
-                            <span className="me-3">Starlight anya</span>
-                            <span className="p-2 fs-6 me-2" style={{background: "rgb(55, 55, 55)"}}>Level 1</span>
+                            <span className="me-3">{data.soal.namasoal}</span>
+                            <span className="p-2 fs-6 me-2" style={{ background: "rgb(55, 55, 55)" }}>Level {data.soal.level}</span>
                             <i className="bi bi-check-lg"></i>
                         </div>
                         <div className="mb-1">
                             <span className="me-3">
                                 <i className="bi bi-person-fill me-2"></i>
-                                <a className="text-decoration-none text-white" href="#">Rafi</a>
+                                <a className="text-decoration-none text-white" href="#">{data.soal.pembuat}</a>
                             </span>
-                            <span className="me-4 favorit">
-                                <i className="bi bi-star me-1"></i>
-                                0
+                            <span className="me-4 favorit" onClick={FavoritSoal}>
+                                {Favorit.suka_ngk ?
+                                    <i className="bi bi-star-fill me-1"></i>
+                                    :
+                                    <i className="bi bi-star me-1"></i>
+                                }
+                                {Favorit.berapa}
                             </span>
                         </div>
                     </div>
@@ -160,7 +233,7 @@ export default function Solusi() {
                     </div>
                 </div>
             </div>
-            <div className="p-3 rounded-1 text-white mb-2" style={{background: 'rgb(60, 60, 60)'}}>
+            <div className="p-3 rounded-1 text-white mb-2" style={{ background: 'rgb(60, 60, 60)' }}>
                 <span className="me-3">Seberapa puasnya kamu dengan soal ini?</span>
                 <button className="me-2 tombol-puas">Tidak puas</button>
                 <button className="me-2 tombol-puas">Biasa</button>
@@ -168,72 +241,66 @@ export default function Solusi() {
             </div>
             <div className="row">
                 <div className="col-10">
-                    {Array.from(Array(10).keys()).map((v) => {
+                    {data.solusi.map((v, i) => {
                         return (
-                            <div key={v} className="p-3 mb-3" style={{background: "rgb(48, 48, 48)"}}>
-                                <div className="text-white">
-                                    <i className="bi bi-person me-1"></i>
-                                    Raihan
+                            <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
+                                <div className="d-flex">
+                                    <div className="text-white flex-grow-1">
+                                        <i className="bi bi-person me-1"></i>
+                                        {v.username}
+                                    </div>
+                                    <div className="text-white-50">
+                                        {new Date(v.bikin).getDate() + '/' + new Date(v.bikin).getMonth() + '/' + new Date(v.bikin).getFullYear()}
+                                    </div>
                                 </div>
                                 <div className="px-2 mb-3">
-                                    <SyntaxHighlighter customStyle={{maxHeight: "150px"}} language="javascript" style={tomorrow as any}>{TemplateKoding}</SyntaxHighlighter>
+                                    <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={v.bahasa} style={tomorrow as any}>{v.kode}</SyntaxHighlighter>
                                 </div>
                                 <div>
-                                    <button className="tombol-keren me-3">
-                                        <i className="bi bi-arrow-up-short"></i>
-                                        Keren
-                                        <span className="ms-1">123</span>
-                                    </button>
-                                    <button className="tombol-keren me-3">
+                                    <button className="tombol-keren me-3" style={{"borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)')}} onClick={(e) => KlikKepintaran(e as any, v.id)}>
                                         <i className="bi bi-arrow-up-short"></i>
                                         Pintar
-                                        <span className="ms-1">123</span>
+                                        <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
                                     </button>
-                                    <button className="border-0" style={{background: 'transparent', color: 'rgb(160, 160, 160)'}}>
+                                    <button className="border-0" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
                                         <i className="bi bi-chat-right-fill me-2 fs-5"></i>
-                                        20
+                                        {JSON.parse(v.komentar).length}
                                     </button>
                                 </div>
                             </div>
                         )
                     })}
-                    
                 </div>
                 <div className="col">
                     <div className="p-2 rounded-1 filter-jawaban">
-                        <div className="mb-2 fw-bold" style={{color: "rgb(220, 220, 220)", fontSize: "17px"}}>Lihat</div>
+                        <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Lihat</div>
                         <fieldset className="mb-2" id="lihat">
                             <label className="radio-container">
                                 <input type="radio" name="lihat" value="semua" />
-                                <span style={{marginLeft: "20px"}}>Semua</span>
+                                <span style={{ marginLeft: "20px" }}>Semua</span>
                                 <span className="checkmark"></span>
                             </label>
                             <label className="radio-container">
                                 <input type="radio" name="lihat" value="sendiri" />
-                                <span style={{marginLeft: "20px"}}>Sendiri</span>
+                                <span style={{ marginLeft: "20px" }}>Sendiri</span>
                                 <span className="checkmark"></span>
                             </label>
                         </fieldset>
-                        <div className="mb-2 fw-bold" style={{color: "rgb(220, 220, 220)", fontSize: "17px"}}>Berdasarkan</div>
+                        <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Berdasarkan</div>
                         <fieldset id="berdasarkan">
                             <label className="radio-container">
-                                <input type="radio" name="berdasarkan" value="kekerenan" />
-                                <span style={{marginLeft: "20px"}}>Kekerenan</span>
-                                <span className="checkmark"></span>
-                            </label>
-                            <label className="radio-container">
                                 <input type="radio" name="berdasarkan" value="kepintaran" />
-                                <span style={{marginLeft: "20px"}}>Kepintaran</span>
+                                <span style={{ marginLeft: "20px" }}>Kepintaran</span>
                                 <span className="checkmark"></span>
                             </label>
                             <label className="radio-container">
                                 <input type="radio" name="berdasarkan" value="baru" />
-                                <span style={{marginLeft: "20px"}}>Baru</span>
+                                <span style={{ marginLeft: "20px" }}>Baru</span>
                                 <span className="checkmark"></span>
                             </label>
                             <label className="radio-container">
                                 <input type="radio" name="berdasarkan" value="lama" />
-                                <span style={{marginLeft: "20px"}}>Lama</span>
+                                <span style={{ marginLeft: "20px" }}>Lama</span>
                                 <span className="checkmark"></span>
                             </label>
                         </fieldset>

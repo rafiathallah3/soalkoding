@@ -1,11 +1,11 @@
-export type HasilJawaban = {
+export interface HasilJawaban {
     koreksi: boolean,
     status: "Sukses" | "Error",
     hasil: any,
     jawaban: any
 }
 
-export type DataSoal = {
+export interface DataSoal {
     namasoal: string,
     level: number,
     tags: string,
@@ -14,4 +14,28 @@ export type DataSoal = {
     pembuat: string,
     public: number,
     suka: string
+}
+
+export interface Solusi {
+    idsoal: string,
+    username: string,
+    pintar: string,
+    komentar: string,
+    kode: string,
+    bikin: string,
+    bahasa: string,
+    id: string
+}
+
+export interface DataSolusi {
+    idsoal: string,
+    suka_ngk: boolean,
+    solusi: (Solusi & { apakahSudahPintar: boolean })[],
+    soal: {
+        namasoal: string,
+        level: number,
+        tags: string,
+        pembuat: string,
+        suka: string,
+    }
 }
