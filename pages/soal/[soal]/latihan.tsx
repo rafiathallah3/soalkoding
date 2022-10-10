@@ -1,4 +1,5 @@
 import axios from "axios";
+import { NextApiRequest } from "next";
 import dynamic from "next/dynamic";
 import Router from "next/router";
 import { BaseSyntheticEvent, useState } from "react";
@@ -11,17 +12,18 @@ import Navbar from "../../../components/navbar";
 import styles from '../../../styles/latihan.module.css'
 import { DataSoal, HasilJawaban } from "../../../types/tipe";
 
-const CodeEditor = dynamic(import('../../../components/codeEditor'), {ssr: false});
+const CodeEditor = dynamic(import('../../../components/codeEditor'), { ssr: false });
 
-export async function getServerSideProps(konteks: { params: { soal: string } }) {
+export async function getServerSideProps(konteks: { params: { soal: string }, req: NextApiRequest }) {
     const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
         idsoal: konteks.params.soal
+    }, {
+        headers: { cookie: konteks.req.headers.cookie } as any
     }).then(d => d.data)
-    console.log(data)
 
     return {
         props: {
-            data: data.length <= 0 ? {} : data[0] 
+            data
         }
     }
 }
@@ -107,10 +109,10 @@ end`,
 end`
 }
 
-export default function Soal({ data }: { data: DataSoal }) {
+export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } }) {
     const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
     const [BahasaProgram, setBahasaProgram] = useState('python');
-    const [Output, setOutput] = useState<{data: HasilJawaban[], lulus: number, gagal: number, waktu: string, status: "Mengirim" | "Sukses" | ""}>({
+    const [Output, setOutput] = useState<{ data: HasilJawaban[], lulus: number, gagal: number, waktu: string, status: "Mengirim" | "Sukses" | "" }>({
         data: [{
             hasil: "",
             jawaban: "",
@@ -138,6 +140,10 @@ export default function Soal({ data }: { data: DataSoal }) {
     const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
     const [Kode, setKode] = useState(ListKode['71']);
     const [KodeBenar, setKodeBenar] = useState<string>();
+    const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
+        suka_ngk: data.suka_ngk,
+        berapa: JSON.parse(data.suka).length
+    });
 
     let kodeEditor: ReactAce | undefined = undefined;
 
@@ -146,7 +152,7 @@ export default function Soal({ data }: { data: DataSoal }) {
         const pertanyaanElement = document.getElementById('tombolpertanyaan')!;
         const outputElement = document.getElementById('tomboloutput')!;
 
-        if(outputElement.classList.contains("tombol_aktif")) {
+        if (outputElement.classList.contains("tombol_aktif")) {
             pertanyaanElement.classList.remove("tombolBerikutnya");
             pertanyaanElement.classList.add("tombol_aktif");
             pertanyaanElement.classList.add("bg-transparent");
@@ -162,7 +168,7 @@ export default function Soal({ data }: { data: DataSoal }) {
         const pertanyaanElement = document.getElementById('tombolpertanyaan')!;
         const outputElement = document.getElementById('tomboloutput')!;
 
-        if(pertanyaanElement.classList.contains("tombol_aktif")) {
+        if (pertanyaanElement.classList.contains("tombol_aktif")) {
             outputElement.classList.remove("tombolBerikutnya");
             outputElement.classList.add("tombol_aktif");
             outputElement.classList.add("bg-transparent");
@@ -173,8 +179,15 @@ export default function Soal({ data }: { data: DataSoal }) {
         }
     }
 
-    const FavoritSoal = () => {
-        
+    const FavoritSoal = async () => {
+        const _data = await axios.post("/api/soal/favorit", {
+            idsoal: data.idsoal
+        }).then(d => d.data);
+
+        setFavorit({
+            suka_ngk: _data.suka_ngk,
+            berapa: _data.berapa
+        })
     }
 
     const KirimSolusi = async (e: BaseSyntheticEvent) => {
@@ -184,7 +197,7 @@ export default function Soal({ data }: { data: DataSoal }) {
             bahasa: BahasaProgram
         });
 
-        if(_data.status === 200) {
+        if (_data.status === 200) {
             Router.push(`/soal/${data.idsoal}/solusi`);
         }
     }
@@ -197,7 +210,7 @@ export default function Soal({ data }: { data: DataSoal }) {
 
     const StatusKirimOutput = () => {
         setStatusTekananSoalOutput('output');
-        setOutput({...Output, status: "Mengirim"});
+        setOutput({ ...Output, status: "Mengirim" });
     }
 
     const KirimJawaban = async (e: BaseSyntheticEvent, statusKlik: "test" | "jawaban") => {
@@ -211,15 +224,15 @@ export default function Soal({ data }: { data: DataSoal }) {
         //     idBahasaProgram: IdBahasaProgram,
         //     idsoal: data.idsoal
         // }).then(d => d.data);
-        const hasil: {data: HasilJawaban[], lulus: number, gagal: number, waktu: string} = await axios.post("/api/soal/kirimkode", {
+        const hasil: { data: HasilJawaban[], lulus: number, gagal: number, waktu: string } = await axios.post("/api/soal/kirimkode", {
             kode: KodeSoal,
             idBahasaProgram: IdBahasaProgram,
             idsoal: data.idsoal,
             w: statusKlik
         }).then(d => d.data);
 
-        if(statusKlik === "jawaban") {
-            if(hasil.lulus >= hasil.data.map((v) => v.koreksi).length) {
+        if (statusKlik === "jawaban") {
+            if (hasil.lulus >= hasil.data.map((v) => v.koreksi).length) {
                 console.log(KodeSoal)
                 setKodeBenar(KodeSoal);
             }
@@ -255,16 +268,16 @@ export default function Soal({ data }: { data: DataSoal }) {
         // }
     }
 
-    if(Object.keys(data).length <= 0) {
+    if (Object.keys(data).length <= 0) {
         return (
-            <div style={{height: "100%"}}>
+            <div style={{ height: "100%" }}>
                 <Navbar />
                 <style>{`
                 #__next {
                     height: 100%;
                 }
                 `}</style>
-                <div className="d-flex align-items-center justify-content-center" style={{height: "80%"}}>
+                <div className="d-flex align-items-center justify-content-center" style={{ height: "80%" }}>
                     <div className="text-white fs-1 text-center">
                         400 + 4 Tidak ketemu
                         <p className="fs-3 text-white-50">Halaman yang kamu kunjungi itu tidak ada</p>
@@ -331,15 +344,19 @@ export default function Soal({ data }: { data: DataSoal }) {
                 <div className="row">
                     <div className="col">
                         <div className="d-flex flex-column h-100 ms-4">
-                            <div className="row mb-3" style={{background: "transparent"}}>
+                            <div className="row mb-3" style={{ background: "transparent" }}>
                                 <div className="text-white">
-                                    <div style={{height: "55px"}}>
+                                    <div style={{ height: "55px" }}>
                                         <h5>{data.namasoal}</h5>
                                         <div>
                                             <span className={"me-4 " + (data.level <= 2 ? "" : data.level > 2 ? data.level > 4 ? "text-danger" : "text-warning" : "text-warning")}>Level {data.level}</span>
                                             <span className="me-4 favorit" onClick={FavoritSoal}>
-                                                <i className="bi bi-star me-1"></i>
-                                                {JSON.parse(data.suka).length}
+                                                {Favorit.suka_ngk ?
+                                                    <i className="bi bi-star-fill me-1"></i>
+                                                    :
+                                                    <i className="bi bi-star me-1"></i>
+                                                }
+                                                {Favorit.berapa}
                                             </span>
                                             <span>
                                                 <i className="bi bi-person-fill me-2"></i>
@@ -351,66 +368,66 @@ export default function Soal({ data }: { data: DataSoal }) {
                             </div>
                             <div className="row">
                                 <div className="text-white">
-                                    <div style={{height: "50px"}}>
+                                    <div style={{ height: "50px" }}>
                                         <button id="tombolpertanyaan" className='me-3 tombolBerikutnya border-0' onClick={KlikPertanyaan}>Pertanyaan</button>
                                         <button id="tomboloutput" className="tombol_aktif bg-transparent border-0" onClick={KlikOutput}>Output</button>
                                     </div>
                                 </div>
                             </div>
                             {StatusTekananSoalOutput === 'soal' ?
-                            <div id="soal" className="mb-2 px-3 py-2 fs-5 text-white" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
-                                <ReactMarkdown
-                                    // eslint-disable-next-line react/no-children-prop
-                                    children={ data.soal }
-                                    components={{
-                                    code({node, inline, className, children, ...props}) {
-                                        const match = /language-(\w+)/.exec(className || '')
-                                        return !inline && match ? (
-                                        <SyntaxHighlighter
-                                            // eslint-disable-next-line react/no-children-prop
-                                            children={String(children).replace(/\n$/, '')}
-                                            style={tomorrow as any}
-                                            language={match[1]}
-                                            PreTag="div"
-                                            {...props}
-                                        />
-                                        ) : (
-                                        <code className={className} {...props}>
-                                            {children}
-                                        </code>
-                                        )
-                                    }
-                                    }}
-                                />
-                                
-                                <hr />
-                                <div className="d-flex flex-row">
-                                    <i className="bi bi-tags-fill me-3 fs-4"></i>
-                                    {data.tags.split(',').map((v, i) => {
-                                        return (
-                                            <div key={i} className="me-3 p-2 fs-6" style={{background: "grey"}}>
-                                                {v}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                            :
-                            <div id="output" className="mb-2" style={{height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(38, 38, 38)", border: "1px solid " + (Output.lulus >= Output.data.length ? "rgb(56, 138, 51)" : 'rgb(59, 59, 59)'), borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
-                                {(Output.status !== "Mengirim" && Output.status !== "") &&
-                                <div>
-                                    <div className="text-white px-3 mt-2">
-                                        <span className="me-3">Waktu: {Number(Output.waktu).toFixed(2) + ' detik'}</span>
-                                        <span className="me-3 text-success">Lulus: {Output.lulus}</span>
-                                        <span className="me-3 text-danger">Gagal: {Output.gagal}</span>
+                                <div id="soal" className="mb-2 px-3 py-2 fs-5 text-white" style={{ height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
+                                    <ReactMarkdown
+                                        // eslint-disable-next-line react/no-children-prop
+                                        children={data.soal}
+                                        components={{
+                                            code({ node, inline, className, children, ...props }) {
+                                                const match = /language-(\w+)/.exec(className || '')
+                                                return !inline && match ? (
+                                                    <SyntaxHighlighter
+                                                        // eslint-disable-next-line react/no-children-prop
+                                                        children={String(children).replace(/\n$/, '')}
+                                                        style={tomorrow as any}
+                                                        language={match[1]}
+                                                        PreTag="div"
+                                                        {...props}
+                                                    />
+                                                ) : (
+                                                    <code className={className} {...props}>
+                                                        {children}
+                                                    </code>
+                                                )
+                                            }
+                                        }}
+                                    />
+
+                                    <hr />
+                                    <div className="d-flex flex-row">
+                                        <i className="bi bi-tags-fill me-3 fs-4"></i>
+                                        {data.tags.split(',').map((v, i) => {
+                                            return (
+                                                <div key={i} className="me-3 p-2 fs-6" style={{ background: "grey" }}>
+                                                    {v}
+                                                </div>
+                                            )
+                                        })}
                                     </div>
-                                    <hr className="text-white" style={{marginBottom: "0px"}} />
                                 </div>
-                                }
-                                <div className="px-3">
-                                    {Output.status !== "Mengirim" &&
-                                    <div className="mt-2">
-                                        {/* {Output.status === "Error" &&
+                                :
+                                <div id="output" className="mb-2" style={{ height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(38, 38, 38)", border: "1px solid " + (Output.lulus >= Output.data.length ? "rgb(56, 138, 51)" : 'rgb(59, 59, 59)'), borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
+                                    {(Output.status !== "Mengirim" && Output.status !== "") &&
+                                        <div>
+                                            <div className="text-white px-3 mt-2">
+                                                <span className="me-3">Waktu: {Number(Output.waktu).toFixed(2) + ' detik'}</span>
+                                                <span className="me-3 text-success">Lulus: {Output.lulus}</span>
+                                                <span className="me-3 text-danger">Gagal: {Output.gagal}</span>
+                                            </div>
+                                            <hr className="text-white" style={{ marginBottom: "0px" }} />
+                                        </div>
+                                    }
+                                    <div className="px-3">
+                                        {Output.status !== "Mengirim" &&
+                                            <div className="mt-2">
+                                                {/* {Output.status === "Error" &&
                                         <div className="px-3 text-white">
                                             <div className="mb-3">Output Error:</div>
                                             <div className="px-3 py-2 rounded-2" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
@@ -418,45 +435,45 @@ export default function Soal({ data }: { data: DataSoal }) {
                                             </div>
                                         </div>
                                         } */}
-                                        {Output.status === "Sukses" &&
-                                            (Output.data.map((v, i) => {
-                                                if(v.koreksi) {
-                                                    return (
-                                                    <details className="mb-2 panah text-success">
-                                                        <summary className="mb-2">Test #{i+1}: Success</summary>
-                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
-                                                        </div>
-                                                    </details>
-                                                    )
-                                                } else {
-                                                    return (
-                                                    <details className="mb-2 panah text-danger">
-                                                        <summary className="mb-2">Test #{i+1}: Gagal</summary>
-                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                                            {v.status === "Error" ?
-                                                            <p>{new Buffer(v.hasil, 'base64').toString('utf-8')}</p>
-                                                            :
-                                                            <p>Output: {v.hasil}, Jawaban: {v.jawaban}</p> 
-                                                            }
-                                                        </div>
-                                                    </details>
-                                                    )
+                                                {Output.status === "Sukses" &&
+                                                    (Output.data.map((v, i) => {
+                                                        if (v.koreksi) {
+                                                            return (
+                                                                <details className="mb-2 panah text-success">
+                                                                    <summary className="mb-2">Test #{i + 1}: Success</summary>
+                                                                    <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px" }}>
+                                                                        Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                                    </div>
+                                                                </details>
+                                                            )
+                                                        } else {
+                                                            return (
+                                                                <details className="mb-2 panah text-danger">
+                                                                    <summary className="mb-2">Test #{i + 1}: Gagal</summary>
+                                                                    <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
+                                                                        {v.status === "Error" ?
+                                                                            <p>{new Buffer(v.hasil, 'base64').toString('utf-8')}</p>
+                                                                            :
+                                                                            <p>Output: {v.hasil}, Jawaban: {v.jawaban}</p>
+                                                                        }
+                                                                    </div>
+                                                                </details>
+                                                            )
+                                                        }
+                                                    }))
                                                 }
-                                            }))
-                                        }
-                                        {Output.lulus >= Output.data.length &&
-                                            <div style={{color: "#30AD43"}}>
-                                                Selamat, Kamu lulus semua test!
+                                                {Output.lulus >= Output.data.length &&
+                                                    <div style={{ color: "#30AD43" }}>
+                                                        Selamat, Kamu lulus semua test!
+                                                    </div>
+                                                }
                                             </div>
                                         }
+                                        {Output.status === "Mengirim" &&
+                                            <div className="text-white mt-2">Menigrim kode ke server...</div>
+                                        }
                                     </div>
-                                    }
-                                    {Output.status === "Mengirim" &&
-                                        <div className="text-white mt-2">Menigrim kode ke server...</div>
-                                    }
                                 </div>
-                            </div>
                             }
                             <div className="row">
                                 <div className="text-white">
@@ -470,15 +487,15 @@ export default function Soal({ data }: { data: DataSoal }) {
                     </div>
                     <div className="col-7">
                         <div className="d-flex flex-column h-100 ms-4">
-                            <div className="row mb-3" style={{background: "transparent"}}>
+                            <div className="row mb-3" style={{ background: "transparent" }}>
                                 <div className="text-white">
-                                    <div style={{height: "55px"}}>
+                                    <div style={{ height: "55px" }}>
                                     </div>
                                 </div>
                             </div>
                             <div className="row">
                                 <div className="text-white">
-                                    <div style={{height: "50px"}}>
+                                    <div style={{ height: "50px" }}>
                                         <select onChange={GantiBahasaProgram} className={styles.bahasaSelect}>
                                             <option value="71">Python</option>
                                             <option value="63">Javascript</option>
@@ -488,39 +505,39 @@ export default function Soal({ data }: { data: DataSoal }) {
                                             <option value="73">Rust</option>
                                             <option value="72">Ruby</option>
                                         </select>
-                                        <button className="tombolBerikutnya" style={{float: "right"}}>Settings</button>
-                                        <button className="tombolBerikutnya me-3" style={{float: "right"}}>Reset</button>
+                                        <button className="tombolBerikutnya" style={{ float: "right" }}>Settings</button>
+                                        <button className="tombolBerikutnya me-3" style={{ float: "right" }}>Reset</button>
                                     </div>
                                 </div>
                             </div>
-                            <div className="row mb-2" style={{height: "calc(100vh - 250px)", minHeight: "200px"}}>
+                            <div className="row mb-2" style={{ height: "calc(100vh - 250px)", minHeight: "200px" }}>
                                 <div>
                                     <CodeEditor
                                         mode={ListBahasaProgram[IdBahasaProgram as keyof typeof ListBahasaProgram]}
                                         value={Kode}
                                         placeholder={"Tunjukkin kepintaran mu!"}
                                         onChange={() => setKode(kodeEditor!.editor.getValue())}
-                                        refData={(ins: ReactAce) => {kodeEditor = ins}}
+                                        refData={(ins: ReactAce) => { kodeEditor = ins }}
                                         autoComplete={true}
                                     />
                                 </div>
                             </div>
                             <div className="row">
                                 <div className="">
-                                    <div style={{height: "50px"}}>
-                                        <button className="text-white tombolBerikutnya" style={{width: "5%"}}>
+                                    <div style={{ height: "50px" }}>
+                                        <button className="text-white tombolBerikutnya" style={{ width: "5%" }}>
                                             Import
                                         </button>
-                                        {(Kode !== KodeBenar) ? 
-                                            <button className="text-white tombolBerikutnya" style={{float: "right", width: "5%"}} onClick={(e) => KirimJawaban(e, "jawaban")}>
+                                        {(Kode !== KodeBenar) ?
+                                            <button className="text-white tombolBerikutnya" style={{ float: "right", width: "5%" }} onClick={(e) => KirimJawaban(e, "jawaban")}>
                                                 Coba
                                             </button>
                                             :
-                                            <button className="text-white tombolBerikutnya" style={{float: "right", width: "5%", background: "#3c6e2a", borderColor: "#3c6e2a"}} onClick={(e) => KirimSolusi(e)}>
+                                            <button className="text-white tombolBerikutnya" style={{ float: "right", width: "5%", background: "#3c6e2a", borderColor: "#3c6e2a" }} onClick={(e) => KirimSolusi(e)}>
                                                 Kirim
                                             </button>
                                         }
-                                        <button className="text-white tombolBerikutnya me-4" style={{float: "right", width: "5%"}} onClick={(e) => KirimJawaban(e, "test")}>
+                                        <button className="text-white tombolBerikutnya me-4" style={{ float: "right", width: "5%" }} onClick={(e) => KirimJawaban(e, "test")}>
                                             Test
                                         </button>
                                     </div>

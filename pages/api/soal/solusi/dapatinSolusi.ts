@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { verify } from '../../../../services/jwt_sign';
 import { DapatinSQL, parseCookies } from "../../../../database/db";
 import { decrypt } from "../../../../database/UbahKeHash";
-import { Solusi } from "../../../../types/tipe";
+import { Komentar, Solusi } from "../../../../types/tipe";
 
 export default async function dapatinSolusi(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {
@@ -14,10 +14,24 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
         const Infoomasi = await verify(DataKue.infoakun, process.env.SECRET!) as { datanya: {iv: string, IniDataRahasia: string} };
         const HasilDecrypt: {username: string} = JSON.parse(decrypt(Infoomasi.datanya));
 
-        const { idsoal } = req.body;
+        const { idsoal, idsolusi } = req.body;
         const dataUser = (await DapatinSQL('SELECT id FROM users WHERE username = ?', [HasilDecrypt.username]) as any[])[0];
-        const dataSolusi = await DapatinSQL('SELECT * FROM solusi WHERE idsoal = ?', [idsoal]) as Solusi[];
+
+        let querySolusi = 'SELECT * FROM solusi WHERE idsoal = ?' + (idsolusi !== undefined ? ' AND idsolusi = ?' : '');
+
+        const dataSolusi = await DapatinSQL(querySolusi, [idsoal].concat(idsolusi !== undefined ? [idsolusi] : [])) as Solusi[];
         const dataSoal = (await DapatinSQL('SELECT namasoal, level, tags, pembuat, suka FROM soal WHERE idsoal = ?', [idsoal]) as any[])[0];
+
+        let komentar;
+        if(idsolusi !== undefined) {
+            komentar = await DapatinSQL('SELECT * FROM komentar WHERE idsolusi = ?', [idsolusi]) as Komentar[];
+            komentar = komentar.map((v) => {
+                return {
+                    ...v,
+                    apakahSudahVote: JSON.parse(v.upvote).includes(dataUser.id) ? 'up' : JSON.parse(v.downvote).includes(dataUser.id) ? 'down' : 'biasa'
+                }
+            });
+        }
 
         if(dataSoal.length <= 0) {
             return res.status(404);
@@ -26,6 +40,8 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
         res.json({
             idsoal,
             suka_ngk: JSON.parse(dataSoal.suka).includes(dataUser.id),
+            JumlahSolusi: dataSolusi.length,
+            komentar,
             solusi: dataSolusi.map((v) => {
                 return {
                     ...v,

@@ -40,15 +40,6 @@ export default function Solusi({ data }: { data: DataSolusi }) {
         suka_ngk: data.suka_ngk,
         berapa: JSON.parse(data.soal.suka).length
     });
-    // const [Kepintaran, setKepintaran] = useState<{apakahSudahPintar: boolean, berapa: number, id: string}[]>(
-    //     data.solusi.map((v) => {
-    //         return {
-    //             apakahSudahPintar: v.apakahSudahPintar,
-    //             berapa: JSON.parse(v.pintar).length,
-    //             id: v.id
-    //         }
-    //     })
-    // )
 
     const FavoritSoal = async () => {
         const _data = await axios.post("/api/soal/favorit", {
@@ -80,7 +71,7 @@ export default function Solusi({ data }: { data: DataSolusi }) {
     return (
         <div className="px-3">
             <Navbar />
-            <style>{`
+            <style jsx>{`
             .tombol-kerjakan {
                 background: rgb(45, 45, 45);
                 border: 1px solid #306634;
@@ -223,6 +214,10 @@ export default function Solusi({ data }: { data: DataSolusi }) {
                                 }
                                 {Favorit.berapa}
                             </span>
+                            <span title="Jumlah solusi">
+                                <i className="bi bi-calendar-check me-1"></i>
+                                {data.JumlahSolusi}
+                            </span>
                         </div>
                     </div>
                     <div className="col">
@@ -233,12 +228,12 @@ export default function Solusi({ data }: { data: DataSolusi }) {
                     </div>
                 </div>
             </div>
-            <div className="p-3 rounded-1 text-white mb-2" style={{ background: 'rgb(60, 60, 60)' }}>
+            {/* <div className="p-3 rounded-1 text-white mb-2" style={{ background: 'rgb(60, 60, 60)' }}>
                 <span className="me-3">Seberapa puasnya kamu dengan soal ini?</span>
                 <button className="me-2 tombol-puas">Tidak puas</button>
                 <button className="me-2 tombol-puas">Biasa</button>
                 <button className="me-2 tombol-puas">Sangat puas</button>
-            </div>
+            </div> */}
             <div className="row">
                 <div className="col-10">
                     {data.solusi.map((v, i) => {
@@ -262,10 +257,10 @@ export default function Solusi({ data }: { data: DataSolusi }) {
                                         Pintar
                                         <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
                                     </button>
-                                    <button className="border-0" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
+                                    <a href={`/soal/${v.idsoal}/solusi/${v.idsolusi}`} className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
                                         <i className="bi bi-chat-right-fill me-2 fs-5"></i>
                                         {JSON.parse(v.komentar).length}
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         )

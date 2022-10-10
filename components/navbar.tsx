@@ -1,6 +1,7 @@
-import Image from "next/image"
+import Image from "next/image";
+import Link from "next/link";
 
-export default function Navbar() {
+export default function Navbar({ profile = '' }) {
     return (
         <nav className="navbar navbar-expand-lg navbar-light">
             <style jsx>{`
@@ -12,6 +13,10 @@ export default function Navbar() {
             .barangnavbar:hover {
                 background-color: rgb(41, 41, 41)
             }
+
+            .soalkoding {
+                color: white;
+            }
             
             .dropdown-center:hover .dropdown-menu {
                 display: block;
@@ -20,9 +25,16 @@ export default function Navbar() {
             
             `}</style>
             <div className="container-fluid">
+                <ul className="navbar-nav me-auto px-4 text-white">
+                    <li className="navbar-nav align-self-center">
+                        <Link href="/dashboard">
+                            <a className="text-decoration-none text-white">Soalkoding</a>
+                        </Link>
+                    </li>
+                </ul>
                 <ul className="navbar-nav ms-auto px-4 barangnavbar">
                     <li className='nav-item me-4 align-self-center'>
-                        <i className='bi bi-bell-fill text-white fs-3  '></i>
+                        <i className='bi bi-bell-fill text-white fs-3'></i>
                     </li>
                     <li className="nav-item dropdown-center">
                         <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
@@ -31,7 +43,7 @@ export default function Navbar() {
                         </a>
                         <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black"}}>
                             <li>
-                                <a className="dropdown-item" href="/profile"><i className='bi bi-person-circle'></i> My profile</a>
+                                <a className="dropdown-item" href={"/profile/"+profile}><i className='bi bi-person-circle'></i> My profile</a>
                             </li>
                             <li>
                                 <a className="dropdown-item" href="#"><i className='bi bi-gear-fill'></i> Settings</a>

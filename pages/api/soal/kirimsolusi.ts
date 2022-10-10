@@ -16,7 +16,12 @@ export default async function KirimSolusi(req: NextApiRequest, res: NextApiRespo
         const { kode, idsoal } = req.body;
         const tanggal = new Date();
 
+        const dataUser = (await DapatinSQL('SELECT soalselesai FROM users WHERE username = ?', [HasilDecrypt.username]) as any[])[0];
         await DapatinSQL('INSERT INTO solusi (idsoal, username, pintar, komentar, kode, bikin) VALUES (?, ?, ?, ?, ?, ?)', [idsoal, HasilDecrypt.username, 0, '[]', kode, tanggal.toDateString()])
+        
+        if(!JSON.parse(dataUser.soalselesai).includes(idsoal)) {
+            await DapatinSQL('UDPATE users SET soalselesai = ? WHERE username = ?', [JSON.parse(dataUser.soalselesai).concat([idsoal]), HasilDecrypt.username]);
+        }
         res.redirect(200, 'sukses');
     } else {
         res.redirect(405, 'Method tidak boleh');

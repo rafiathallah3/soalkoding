@@ -5,6 +5,17 @@ export interface HasilJawaban {
     jawaban: any
 }
 
+export interface DataProfile {
+    id: number,
+    username: string,
+    nama: string,
+    soalselesai: { namasoal: string, url: string, level: number, kapan: number }[],
+    bikin: string,
+    bio: string,
+    tinggal: string,
+    githuburl: string
+}
+
 export interface DataSoal {
     namasoal: string,
     level: number,
@@ -18,6 +29,7 @@ export interface DataSoal {
 
 export interface Solusi {
     idsoal: string,
+    idsolusi: string,
     username: string,
     pintar: string,
     komentar: string,
@@ -27,9 +39,20 @@ export interface Solusi {
     id: string
 }
 
+export interface Komentar {
+    id: number,
+    idsoal: string,
+    komen: string,
+    username: string,
+    bikin: string,
+    upvote: string,
+    downvote: string
+}
+
 export interface DataSolusi {
     idsoal: string,
     suka_ngk: boolean,
+    JumlahSolusi: number,
     solusi: (Solusi & { apakahSudahPintar: boolean })[],
     soal: {
         namasoal: string,

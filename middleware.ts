@@ -6,7 +6,7 @@ const secret = process.env.SECRET!;
 export default async function middleware(req: NextRequest) {
     const infoakun = req.cookies.get("infoakun");
 
-    if(req.nextUrl.pathname.startsWith("/dashboard")) {
+    if(req.nextUrl.pathname.startsWith("/dashboard") || req.nextUrl.pathname.startsWith("/profile/edit")) {
         if(infoakun === undefined) return NextResponse.redirect(new URL("/login", req.url));
         try {
             const hasilToken = await verify(infoakun, secret) as { datanya: {iv: string, IniDataRahasia: string} };
