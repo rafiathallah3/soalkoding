@@ -1,6 +1,6 @@
 import Navbar from "../components/navbar";
 import Background from "../components/background";
-import { BaseSyntheticEvent, useEffect, useState} from "react";
+import { BaseSyntheticEvent, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import ReactAce from "react-ace/lib/ace";
 import React from "react";
@@ -18,7 +18,7 @@ interface TipeKonfirmasiJawaban {
     error?: string
 }
 
-const CodeEditor = dynamic(import('../components/codeEditor'), {ssr: false});
+const CodeEditor = dynamic(import('../components/codeEditor'), { ssr: false });
 
 const _contohKodeJawaban = `
 def Solusi(angka, list_bulatan):
@@ -120,18 +120,18 @@ export default function Buat({ mode, idsoal }: { mode: "buat" | "edit", idsoal?:
     let JawabanListEditor: ReactAce | undefined = undefined;
     let ContohJawabanEditor: ReactAce | undefined = undefined;
     let LiatanKodeJawabanEditor: ReactAce | undefined = undefined;
-    
+
     const TambahinTags = (e: BaseSyntheticEvent) => {
         e.preventDefault();
-        
+
         const Element = e.target as HTMLButtonElement;
-        
-        if(Element.className.includes("tombol-tags-aktif")) {
+
+        if (Element.className.includes("tombol-tags-aktif")) {
             const listBaru = TagsDitambahin.filter((v) => v != Element.innerText);
             setTagsDitambahin(listBaru);
             Element.classList.remove("tombol-tags-aktif");
         } else {
-            if(TagsDitambahin.length >= 3) return;
+            if (TagsDitambahin.length >= 3) return;
 
             setTagsDitambahin([...TagsDitambahin, Element.innerText])
             Element.classList.add("tombol-tags-aktif");
@@ -139,7 +139,7 @@ export default function Buat({ mode, idsoal }: { mode: "buat" | "edit", idsoal?:
     }
 
     const UbahJawabanKeContoh = (hasil: boolean) => {
-        if(!hasil) return;
+        if (!hasil) return;
         setKodeJawaban(_contohKodeJawaban);
         setKodeListJawaban(_contohKodeListJawaban);
         setSoal(_contohSoal);
@@ -148,33 +148,38 @@ export default function Buat({ mode, idsoal }: { mode: "buat" | "edit", idsoal?:
     }
 
     const KonfirmasiJawaban = async () => {
-        const d: {data: TipeKonfirmasiJawaban[]} = await axios.post("/api/soal/buat/kirimjawaban", {
-            kode: KodeJawaban,
-            listJawaban: KodeListJawaban,
-            eksekusiKode: "" //Nanti kita buatkan untuk security reason
-        }).then(v => v.data);
+        try {
+            const d: { data: TipeKonfirmasiJawaban[] } = await axios.post("/api/soal/buat/kirimjawaban", {
+                kode: KodeJawaban,
+                listJawaban: KodeListJawaban,
+                eksekusiKode: "" //Nanti kita buatkan untuk security reason
+            }).then(v => v.data);
+            console.log(d);
 
-        setOutputKonfirmasiJawaban(d.data);
-        setStastusKodeJawaban("output");
+            setOutputKonfirmasiJawaban(d.data);
+            setStastusKodeJawaban("output");
+        } catch (e) { }
     }
 
     const KirimBuatanSoal = async () => {
         const NamaSoal = (document.getElementById("NamaSoal") as HTMLInputElement).value;
         const Level = (document.getElementById("LevelSoal") as HTMLInputElement).value;
-        if(NamaSoal === "" || Level === "0" || TagsDitambahin.length <= 0) {
+        if (NamaSoal === "" || Level === "0" || TagsDitambahin.length <= 0) {
             setKurangData("Form tidak boleh kosong");
             return
         }
 
-        if(Soal === "") {
+        if (Soal === "") {
             setKurangData("Soal tidak boleh kosong");
         }
 
         const d: { id: string } = await axios.post("/api/soal/buat/buatsoal", {
             NamaSoal,
-            Level,
-            Tags: TagsDitambahin,
-            Soal
+            Level: parseInt(Level),
+            Tags: JSON.stringify(TagsDitambahin),
+            Soal,
+            ContohJawaban: KodeContohJawaban,
+            ListJawaban: KodeListJawaban
         }).then(d => d.data);
 
         location.href = `/soal/${d.id}/latihan`
@@ -205,7 +210,7 @@ export default function Buat({ mode, idsoal }: { mode: "buat" | "edit", idsoal?:
 
         window.addEventListener('beforeunload', handleWindowClose);
         Router.events.on('routeChangeStart', handleBrowseAway);
-        
+
         return () => {
             window.removeEventListener('beforeunload', handleWindowClose);
             Router.events.off('routeChangeStart', handleBrowseAway);
@@ -308,7 +313,7 @@ export default function Buat({ mode, idsoal }: { mode: "buat" | "edit", idsoal?:
             `}</style>
             <div className="container-fluid">
                 {KurangData !== "" &&
-                    <div className="p-2 fs-6 text-white" style={{background: "#e35252"}}>
+                    <div className="p-2 fs-6 text-white" style={{ background: "#e35252" }}>
                         {KurangData}
                         <button className="float-end me-2 bg-transparent border-0 text-white" onClick={() => setKurangData("")}>
                             <i className="bi bi-x-lg"></i>
@@ -320,58 +325,58 @@ export default function Buat({ mode, idsoal }: { mode: "buat" | "edit", idsoal?:
                     <button className="tombol-menu" onClick={UlangSoal}><i className="bi bi-arrow-counterclockwise"></i> Ulang</button>
                     <button className="tombol-menu"><i className="bi bi-trash-fill"></i> Hapus</button>
                 </div>
-                <div className="row mb-3" style={{height: "30rem"}}>
+                <div className="row mb-3" style={{ height: "30rem" }}>
                     <div className="col-lg-6">
                         <div className="d-flex flex-row mb-3">
                             <button className={'me-3 border-0 ' + (StatusSoal === "soal" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStatusSoal("soal")}><i className="bi bi-fire"></i> Pertanyaan</button>
                             <button className={"me-3 border-0 " + (StatusSoal === "preview" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStatusSoal("preview")}><i className="bi bi-patch-exclamation-fill"></i> Output</button>
                             <button className={"tombol_aktif border-0 " + (StatusSoal === "bantuan" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStatusSoal("bantuan")}><i className="bi bi-question-circle-fill"></i> Bantuan</button>
                         </div>
-                        <div style={{height: "85%"}}>
+                        <div style={{ height: "85%" }}>
                             {StatusSoal === "soal" &&
-                                <div style={{height: "420px", minHeight: "200px"}}>
+                                <div style={{ height: "420px", minHeight: "200px" }}>
                                     <CodeEditor
                                         mode={"markdown"}
                                         value={Soal}
                                         onChange={() => setSoal(SoalKodeEditor!.editor.getValue())}
-                                        refData={(ins: ReactAce) => {SoalKodeEditor = ins}}
+                                        refData={(ins: ReactAce) => { SoalKodeEditor = ins }}
                                         autoComplete={false}
                                     />
                                 </div>
                             }
                             {StatusSoal === "preview" &&
-                                <div className="p-3 text-white" style={{height: "420px", minHeight: "200px", fontSize: "18px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
+                                <div className="p-3 text-white" style={{ height: "420px", minHeight: "200px", fontSize: "18px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
                                     <ReactMarkdown
                                         // eslint-disable-next-line react/no-children-prop
-                                        children={ Soal }
+                                        children={Soal}
                                         components={{
-                                        code({node, inline, className, children, ...props}) {
-                                            const match = /language-(\w+)/.exec(className || '')
-                                            return !inline && match ? (
-                                            <SyntaxHighlighter
-                                                // eslint-disable-next-line react/no-children-prop
-                                                children={String(children).replace(/\n$/, '')}
-                                                style={tomorrow as any}
-                                                language={match[1]}
-                                                PreTag="div"
-                                                {...props}
-                                            />
-                                            ) : (
-                                            <code className={className} {...props}>
-                                                {children}
-                                            </code>
-                                            )
-                                        }
+                                            code({ node, inline, className, children, ...props }) {
+                                                const match = /language-(\w+)/.exec(className || '')
+                                                return !inline && match ? (
+                                                    <SyntaxHighlighter
+                                                        // eslint-disable-next-line react/no-children-prop
+                                                        children={String(children).replace(/\n$/, '')}
+                                                        style={tomorrow as any}
+                                                        language={match[1]}
+                                                        PreTag="div"
+                                                        {...props}
+                                                    />
+                                                ) : (
+                                                    <code className={className} {...props}>
+                                                        {children}
+                                                    </code>
+                                                )
+                                            }
                                         }}
                                     />
                                     {/* {UbahSoal(Soal)} */}
                                 </div>
                             }
-                            {StatusSoal === "bantuan" && 
-                                <div className="text-white p-3 fs-5" style={{height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
+                            {StatusSoal === "bantuan" &&
+                                <div className="text-white p-3 fs-5" style={{ height: "100%", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px" }}>
                                     <h3>Pembuatan Soal</h3>
                                     <p className="fs-5">{`Dalam pembuatan soal, Bisa dibuat dengan bahasa Markdown dan untuk menggunakan Code snippet bisa menggunakan Tag (~~~), Contohnya: `}</p>
-                                    <pre className="fs-5 p-3" style={{background: "rgb(30, 30, 30)", whiteSpace: "pre-wrap", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>{`~~~javascript
+                                    <pre className="fs-5 p-3" style={{ background: "rgb(30, 30, 30)", whiteSpace: "pre-wrap", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px" }}>{`~~~javascript
 function Solusi() {
 return "Solusinya mana";
 }
@@ -383,11 +388,11 @@ return "Solusinya mana";
                     <div className="col-lg-6">
                         <form>
                             <div className="form-floating mb-3">
-                                <input type="text" id="NamaSoal" className="form-control text-white" placeholder="Soal" style={{height: "calc(2.5rem + 2px)", lineHeight: "3", backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)"}}/>
-                                <label className="text-white-50" htmlFor="floatingInput" style={{padding: "0.5rem 0.75rem"}}>Nama soal</label>
+                                <input type="text" id="NamaSoal" className="form-control text-white" placeholder="Soal" style={{ height: "calc(2.5rem + 2px)", lineHeight: "3", backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)" }} />
+                                <label className="text-white-50" htmlFor="floatingInput" style={{ padding: "0.5rem 0.75rem" }}>Nama soal</label>
                             </div>
                             <div className="mb-3">
-                                <select defaultValue="0" id="LevelSoal" className="form-control text-white" style={{backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)"}}>
+                                <select defaultValue="0" id="LevelSoal" className="form-control text-white" style={{ backgroundColor: "rgb(40, 40, 40)", borderColor: "rgb(58, 58, 58)" }}>
                                     <option value="0" hidden>Level</option>
                                     <option value="1">Level 1</option>
                                     <option value="2">Level 2</option>
@@ -432,7 +437,7 @@ return "Solusinya mana";
                         {` Konfirmasi Jawaban`}
                     </button>
                 </div>
-                <div className="row mb-5" style={{height: "30rem"}}>
+                <div className="row mb-5" style={{ height: "30rem" }}>
                     <div className="col-6">
                         <div className="mb-3">
                             <button className={'me-3 border-0 ' + (StatusKodeJawaban === "kodejawaban" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("kodejawaban")}><i className="bi bi-code-square"></i> Kode Jawaban</button>
@@ -440,47 +445,47 @@ return "Solusinya mana";
                             <button className={'me-3 border-0 ' + (StatusKodeJawaban === "output" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("output")}><i className="bi bi-patch-exclamation-fill"></i> Output</button>
                             <button className={"tombol_aktif border-0 " + (StatusKodeJawaban === "bantuan" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStastusKodeJawaban("bantuan")}><i className="bi bi-question-circle-fill"></i> Bantuan</button>
                         </div>
-                        <div style={{height: "85%"}}>
+                        <div style={{ height: "85%" }}>
                             {StatusKodeJawaban === "kodejawaban" &&
-                                <div style={{height: "420px", minHeight: "200px"}}>
+                                <div style={{ height: "420px", minHeight: "200px" }}>
                                     <CodeEditor
                                         mode={"python"}
                                         value={KodeJawaban}
                                         onChange={() => setKodeJawaban(JawabanKodeEditor!.editor.getValue())}
-                                        refData={(ins: ReactAce) => {JawabanKodeEditor = ins}}
+                                        refData={(ins: ReactAce) => { JawabanKodeEditor = ins }}
                                     />
                                 </div>
                             }
                             {StatusKodeJawaban === "liatkode" &&
-                                <div style={{height: "420px", minHeight: "200px"}}>
+                                <div style={{ height: "420px", minHeight: "200px" }}>
                                     <CodeEditor
                                         mode={"python"}
                                         value={LiatanKodeJawaban}
                                         onChange={() => setLiatanKodeJawaban(LiatanKodeJawabanEditor!.editor.getValue())}
-                                        refData={(ins: ReactAce) => {LiatanKodeJawabanEditor = ins}}
+                                        refData={(ins: ReactAce) => { LiatanKodeJawabanEditor = ins }}
                                     />
                                 </div>
                             }
                             {StatusKodeJawaban === "output" &&
-                                <div className="mb-3" style={{height: "420px", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
+                                <div className="mb-3" style={{ height: "420px", background: "rgb(38, 38, 38)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
                                     <div className="px-3">
                                         <div className="mt-2">
                                             {OutputKonfirmasiJawaban?.map((v, i) => {
-                                                if(v.status === "Sukses") {
+                                                if (v.status === "Sukses") {
                                                     return (v.koreksi ?
-                                                    <details className="mb-2 panah text-success">
-                                                        <summary className="mb-2">Test {i+1}: Success</summary>
-                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px"}}> 
-                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
-                                                        </div>
-                                                    </details>
-                                                    :
-                                                    <details className="mb-2 panah text-danger">
-                                                        <summary className="mb-2">Test {i+1}: Gagal</summary>
-                                                        <div className="px-3 py-2 rounded-2 text-white" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
-                                                        </div>
-                                                    </details>
+                                                        <details className="mb-2 panah text-success">
+                                                            <summary className="mb-2">Test {i + 1}: Success</summary>
+                                                            <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px" }}>
+                                                                Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                            </div>
+                                                        </details>
+                                                        :
+                                                        <details className="mb-2 panah text-danger">
+                                                            <summary className="mb-2">Test {i + 1}: Gagal</summary>
+                                                            <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
+                                                                Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                            </div>
+                                                        </details>
                                                     );
                                                 }
                                             })}
@@ -489,7 +494,7 @@ return "Solusinya mana";
                                 </div>
                             }
                             {StatusKodeJawaban === "bantuan" &&
-                                <div className="text-white p-3 fs-5" style={{height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
+                                <div className="text-white p-3 fs-5" style={{ height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px" }}>
                                     <h3>Cara kerja kode jawaban</h3>
                                     <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
                                 </div>
@@ -502,29 +507,29 @@ return "Solusinya mana";
                             <button className={"me-3 border-0 " + (StatusJawaban === "contohjawaban" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStatusJawaban("contohjawaban")}><i className="bi bi-exclamation-octagon-fill"></i> Contoh Jawaban</button>
                             <button className={"tombol_aktif border-0 " + (StatusJawaban === "bantuan" ? 'tombolBerikutnya' : 'tombol_aktif bg-transparent')} onClick={() => setStatusJawaban("bantuan")}><i className="bi bi-question-circle-fill"></i> Bantuan</button>
                         </div>
-                        <div style={{height: "85%"}}>
+                        <div style={{ height: "85%" }}>
                             {StatusJawaban === "listjawaban" &&
-                                <div style={{height: "420px"}}>
+                                <div style={{ height: "420px" }}>
                                     <CodeEditor
                                         mode={"python"}
                                         value={KodeListJawaban}
                                         onChange={() => setKodeListJawaban(JawabanListEditor!.editor.getValue())}
-                                        refData={(ins: ReactAce) => {JawabanListEditor = ins}}
+                                        refData={(ins: ReactAce) => { JawabanListEditor = ins }}
                                     />
                                 </div>
                             }
                             {StatusJawaban === "contohjawaban" &&
-                                <div style={{height: "420px"}}>
+                                <div style={{ height: "420px" }}>
                                     <CodeEditor
                                         mode={"python"}
                                         value={KodeContohJawaban}
                                         onChange={() => setKodeContohJawaban(ContohJawabanEditor!.editor.getValue())}
-                                        refData={(ins: ReactAce) => {ContohJawabanEditor = ins}}
+                                        refData={(ins: ReactAce) => { ContohJawabanEditor = ins }}
                                     />
                                 </div>
                             }
                             {StatusJawaban === "bantuan" &&
-                                <div className="text-white p-3 fs-5" style={{height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px"}}>
+                                <div className="text-white p-3 fs-5" style={{ height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px" }}>
                                     <h3>Cara kerja kode jawaban</h3>
                                     <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
                                 </div>

@@ -1,5 +1,6 @@
 import axios from "axios";
-import { NextApiRequest } from "next";
+import { getCookie, setCookie } from "cookies-next";
+import { NextApiRequest, NextApiResponse } from "next";
 import dynamic from "next/dynamic";
 import Router from "next/router";
 import { BaseSyntheticEvent, useState } from "react";
@@ -14,16 +15,41 @@ import { DataSoal, HasilJawaban } from "../../../types/tipe";
 
 const CodeEditor = dynamic(import('../../../components/codeEditor'), { ssr: false });
 
-export async function getServerSideProps(konteks: { params: { soal: string }, req: NextApiRequest }) {
-    const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
-        idsoal: konteks.params.soal
-    }, {
-        headers: { cookie: konteks.req.headers.cookie } as any
-    }).then(d => d.data)
+export async function getServerSideProps({ params, req, res }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse }) {
+    const infoakun = getCookie('infoakun', { req, res }) as string;
+    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
 
-    return {
-        props: {
-            data
+    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
+        headers: { cookie: req.headers.cookie } as any
+    }).then(d => d.data);
+
+    setCookie('infoakun', DapatinToken, {
+        req, res,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/"
+    });
+
+    try {
+        const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
+            idsoal: params.soal
+        }, {
+            headers: { cookie: req.headers.cookie } as any
+        });
+
+        return {
+            props: {
+                data: data.data
+            }
+        }
+    } catch (e) {
+        console.log(e);
+        return {
+            props: {
+                suka_ngk: true
+            }
         }
     }
 }
@@ -287,6 +313,8 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
         )
     }
 
+    console.log(data.soal);
+
     return (
         <Background>
             <Navbar />
@@ -360,7 +388,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
                                             </span>
                                             <span>
                                                 <i className="bi bi-person-fill me-2"></i>
-                                                <a className="text-decoration-none text-white" href="#">{data.pembuat}</a>
+                                                <a className="text-decoration-none text-white" href="#">{data.pembuat.username}</a>
                                             </span>
                                         </div>
                                     </div>
@@ -403,7 +431,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
                                     <hr />
                                     <div className="d-flex flex-row">
                                         <i className="bi bi-tags-fill me-3 fs-4"></i>
-                                        {data.tags.split(',').map((v, i) => {
+                                        {JSON.parse(data.tags).map((v: string, i: number) => {
                                             return (
                                                 <div key={i} className="me-3 p-2 fs-6" style={{ background: "grey" }}>
                                                     {v}

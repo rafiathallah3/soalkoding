@@ -2,26 +2,31 @@ import Navbar from "../../components/navbar"
 import NextImage from "next/image";
 import { useState } from "react";
 import axios from "axios";
-import { NextApiRequest } from "next";
-import { DataProfile } from "../../types/tipe";
+import { NextApiRequest, NextApiResponse } from "next";
+import { SettingProfile } from "../../types/tipe";
+import prisma from "../../database/prisma";
 
-export async function getServerSideProps(konteks: { params: { profile: string }, req: NextApiRequest}) {
-    const data = await axios.post("http://localhost:3003/api/profile/dapatinProfile", {}, {
-        headers: { cookie: konteks.req.headers.cookie } as any
-    }).then(d => d.data);
+export async function getServerSideProps(konteks: { params: { profile: string }, req: NextApiRequest }) {
+    try {
+        const data = await axios.post("http://localhost:3003/api/profile/dapatinProfile", {}, {
+            headers: { cookie: konteks.req.headers.cookie } as any
+        }).then(d => d.data);
 
-    return {
-        props: {
-            data
+        return {
+            props: {
+                data
+            }
         }
+    } catch (e) {
+        return { notFound: true }
     }
 }
 
-export default function Edit({ data }: { data: string | DataProfile}) {
+export default function Edit({ data }: { data: SettingProfile }) {
     const [Gambar, setGambar] = useState();
 
-    const UpdateProfile = async() => {
-        if((document.getElementById('foto')! as HTMLInputElement).files!.length <= 0) return;
+    const UpdateProfile = async () => {
+        if ((document.getElementById('foto')! as HTMLInputElement).files!.length <= 0) return;
         const formData = new FormData();
         // formData.append("")
         formData.append("file", (document.getElementById('foto')! as any).files[0]);
@@ -31,10 +36,10 @@ export default function Edit({ data }: { data: string | DataProfile}) {
                 method: "post",
                 url: "/api/profile/updateProfile",
                 data: formData,
-                headers: {"Content-Type": "multipart/form-data"}
+                headers: { "Content-Type": "multipart/form-data" }
             });
             console.log("data", res);
-        } catch(e) {
+        } catch (e) {
             console.log(e);
         }
 
@@ -64,7 +69,7 @@ export default function Edit({ data }: { data: string | DataProfile}) {
                         ctx.drawImage(gambar, 0, 0, 300, 150);
                         var dataurl = canvas.toDataURL(file as any);
                         var head = 'data:image/png;base64,';
-                        var imgFileSize = Math.round((dataurl.length - head.length)*3/4);
+                        var imgFileSize = Math.round((dataurl.length - head.length) * 3 / 4);
                         console.log(parseFloat((imgFileSize / (1024 * 1024)).toFixed(2)));
                         setGambar(dataurl as any);
                     }
@@ -88,19 +93,19 @@ export default function Edit({ data }: { data: string | DataProfile}) {
                         <div className="col">
                             <div className="mb-1">
                                 <div className="text-white mb-2">Nama</div>
-                                <input className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                <input defaultValue={data.name} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
                             </div>
                             <div className="mb-1">
                                 <div className="text-white mb-2">Tinggal</div>
-                                <input className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                <input defaultValue={data.tinggal} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
                             </div>
                             <div className="mb-1">
                                 <div className="text-white mb-2">Bio</div>
-                                <textarea className="form-control" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                <textarea defaultValue={data.bio} className="form-control" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
                             </div>
                             <div className="mb-1">
                                 <div className="text-white mb-2">URL</div>
-                                <input className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                <input defaultValue={data.website} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
                             </div>
                         </div>
                         <div className="col-2">
@@ -119,11 +124,11 @@ export default function Edit({ data }: { data: string | DataProfile}) {
                         <div className="mb-2 w-100 row row-cols-2">
                             <div className="col mb-1">
                                 <div className="text-white mb-2">Username</div>
-                                <input className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                <input defaultValue={data.username} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
                             </div>
                             <div className="col mb-1">
                                 <div className="text-white mb-2">Email</div>
-                                <input className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                <input defaultValue={data.email} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
                             </div>
                         </div>
                     </div>

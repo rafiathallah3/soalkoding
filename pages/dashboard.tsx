@@ -1,15 +1,46 @@
 import axios from 'axios';
 import Link from 'next/link';
-import { BaseSyntheticEvent } from 'react';
 import Background from '../components/background';
 import Navbar from '../components/navbar';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getCookie, setCookie } from 'cookies-next';
+import jwt from 'jsonwebtoken';
+import { decrypt } from '../database/UbahKeHash';
+import { prisma } from '../database/prisma';
 
-export default function Dashboard() {
-    const TombolLogout = async (e: BaseSyntheticEvent) => {
-        e.preventDefault();
-        await axios.post('api/logout');
+export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
+    const infoakun = getCookie('infoakun', { req, res }) as string;
+    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
+
+    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
+        headers: { cookie: req.headers.cookie } as any
+    }).then(d => d.data);
+
+    setCookie('infoakun', DapatinToken, {
+        req, res,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/"
+    });
+
+    const DapatinUser = await prisma.akun.findUnique({
+        where: {
+            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
+        }
+    })
+
+    if (DapatinUser === null) return { redirect: { destination: '/login', permanent: false } };
+
+    return {
+        props: {
+            username: DapatinUser.username
+        }
     }
+}
 
+export default function Dashboard({ username }: { username: any }) {
     return (
         <Background>
             <style jsx>{`
@@ -47,25 +78,25 @@ export default function Dashboard() {
             }
             
             `}</style>
-            <Navbar />
-            
+            <Navbar profile={username} />
+
             <div className="container">
-                <div className="row p-3 mb-4 rounded-3" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                <div className="row p-3 mb-4 rounded-3" style={{ background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)" }}>
                     <div className='container-fluid mb-4'>
-                        <button className='btn btn-outline-danger' style={{float: "right"}}>
+                        <button className='btn btn-outline-danger' style={{ float: "right" }}>
                             {"Berikutnya "}
                             <i className='bi bi-arrow-right'></i>
                         </button>
-                        <button className='me-4 btn btn-outline-success' style={{float: "right"}}>Latihan</button>
+                        <button className='me-4 btn btn-outline-success' style={{ float: "right" }}>Latihan</button>
                         <button className='btn btn-outline-secondary fs-6 me-4'>Tags</button>
                         <span className='text-warning bg-transparent fs-5'>Status: MEDIUM</span>
                     </div>
-                    <div style={{height: "200px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin"}}>
+                    <div style={{ height: "200px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
                         <Link href={"/soal"}>
-                        <a className="fs-4 fw-bold text-black text-decoration-none text-white">Jumlah appel</a>
+                            <a className="fs-4 fw-bold text-black text-decoration-none text-white">Jumlah appel</a>
                         </Link>
-                        <p className="fs-5" style={{whiteSpace: "pre-wrap", color: "rgb(196, 196, 196)"}}>
-                        {`You are given an odd-length array of integers, in which all of them are the same, except for one single number.
+                        <p className="fs-5" style={{ whiteSpace: "pre-wrap", color: "rgb(196, 196, 196)" }}>
+                            {`You are given an odd-length array of integers, in which all of them are the same, except for one single number.
 Complete the method which accepts such an array, and returns that single different number.
 The input array will always be valid! (odd-length >= 3)
 The input array will always be valid! (odd-length >= 3)
@@ -93,7 +124,7 @@ The input array will always be valid! (odd-length >= 3)
 
                 <div className="row mb-4">
                     <div className="col-md-6">
-                        <div className="p-2 text-white rounded-3 text-center h-100" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                        <div className="p-2 text-white rounded-3 text-center h-100" style={{ background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)" }}>
                             <h2>Total soal yang sudah dikerjakan</h2>
                             <span className='text-success me-5 fs-4'>Soal Easy: 0</span>
                             <span className='text-warning me-5 fs-4'>Soal Medium: 0</span>
@@ -103,8 +134,8 @@ The input array will always be valid! (odd-length >= 3)
                         </div>
                     </div>
                     <div className="col-md-6">
-                        <div className="p-3 rounded-3 d-flex flex-row h-100" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
-                            <div className='text-white me-4' style={{fontSize: "50px"}}>
+                        <div className="p-3 rounded-3 d-flex flex-row h-100" style={{ background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)" }}>
+                            <div className='text-white me-4' style={{ fontSize: "50px" }}>
                                 <i className='bi bi-box-seam-fill'></i>
                             </div>
                             <div className='text-white'>
@@ -124,15 +155,15 @@ The input array will always be valid! (odd-length >= 3)
                     </div>
                 </div>
 
-                <div className="row p-3 mb-4 rounded-3" style={{background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)"}}>
+                <div className="row p-3 mb-4 rounded-3" style={{ background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)" }}>
                     <div className='table-responsive'>
                         <table className="table text-white">
                             <thead>
                                 <tr>
-                                    <th scope="col" style={{width: "4.6%"}}>Status</th>
-                                    <th scope="col" style={{width: "30.6%"}}>Judul</th>
-                                    <th scope="col" style={{width: "40.6%"}}>Deskripsi</th>
-                                    <th scope="col" style={{width: "15%"}}>Tingkat Kesulitan</th>
+                                    <th scope="col" style={{ width: "4.6%" }}>Status</th>
+                                    <th scope="col" style={{ width: "30.6%" }}>Judul</th>
+                                    <th scope="col" style={{ width: "40.6%" }}>Deskripsi</th>
+                                    <th scope="col" style={{ width: "15%" }}>Tingkat Kesulitan</th>
                                     <th scope="col">Pembuat</th>
                                 </tr>
                             </thead>

@@ -5,15 +5,25 @@ export interface HasilJawaban {
     jawaban: any
 }
 
+export interface SettingProfile {
+    email: string,
+    username: string,
+    name: string,
+    bio: string
+    tinggal: string,
+    githuburl: string,
+    website: string,
+}
+
 export interface DataProfile {
-    id: number,
     username: string,
     nama: string,
-    soalselesai: { namasoal: string, url: string, level: number, kapan: number }[],
+    soalselesai: { id: string, soal: { id: string, namasoal: string, level: number }, kapan: Date }[],
     bikin: string,
     bio: string,
     tinggal: string,
-    githuburl: string
+    githuburl: string,
+    website: string
 }
 
 export interface DataSoal {
@@ -22,9 +32,9 @@ export interface DataSoal {
     tags: string,
     soal: string,
     idsoal: string,
-    pembuat: string,
-    public: number,
-    suka: string
+    pembuat: { username: string },
+    public: boolean,
+    suka: string,
 }
 
 export interface Solusi {

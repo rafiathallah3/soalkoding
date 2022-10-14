@@ -41,18 +41,18 @@ export default function Navbar({ profile = '' }) {
                             <Image src="/profile.jpeg" className="rounded me-2 text-white" height={40} width={48} alt="Potret seorang wanita cantik" />
                             <h4 className='text-white text-center align-middle'>100</h4>
                         </a>
-                        <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black"}}>
+                        <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{ minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black" }}>
                             <li>
-                                <a className="dropdown-item" href={"/profile/"+profile}><i className='bi bi-person-circle'></i> My profile</a>
+                                <a className="dropdown-item" href={"/profile/" + profile}><i className='bi bi-person-circle'></i> My profile</a>
                             </li>
                             <li>
-                                <a className="dropdown-item" href="#"><i className='bi bi-gear-fill'></i> Settings</a>
+                                <a className="dropdown-item" href={"/profile/edit"}><i className='bi bi-gear-fill'></i> Settings</a>
                             </li>
                             <li>
-                                <hr className='dropdown-divider' style={{borderColor: "rgb(102, 102, 102)"}}/>
+                                <hr className='dropdown-divider' style={{ borderColor: "rgb(102, 102, 102)" }} />
                             </li>
                             <li>
-                                <a className="dropdown-item" style={{cursor: "pointer"}} onClick={() => { (document.getElementById('keluarakun') as HTMLFormElement).submit() }}> <i className='bi bi-arrow-left'></i> Logout </a>
+                                <a className="dropdown-item" style={{ cursor: "pointer" }} onClick={() => { (document.getElementById('keluarakun') as HTMLFormElement).submit() }}> <i className='bi bi-arrow-left'></i> Logout </a>
                                 <form action="/api/logout" method='POST' id="keluarakun">
                                 </form>
                             </li>
