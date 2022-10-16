@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
+import axios from 'axios';
 import { PythonShell } from 'python-shell';
 import { getCookie } from 'cookies-next';
 import jwt from 'jsonwebtoken';
@@ -15,7 +16,7 @@ def ApakahSama(fungsi, parameter, jawaban):
         import base64
         print(json.dumps({"hasil": base64.b64encode(str(e).encode('utf-8')).decode('utf-8'), "jawaban": jawaban, "status": "Error", "error": e}))
 `
-export default function KirimJawaban(req: NextApiRequest, res: NextApiResponse) {
+export default async function KirimJawaban(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {
         // fs.writeFileSync("D:/Belajar program/belajar_nodejs/soal-koding/code/jalan.py", kode + '\n' + apakahSama + '\n' + listJawaban);
         const verifikasi = Verifikasi(req, res);
@@ -23,7 +24,7 @@ export default function KirimJawaban(req: NextApiRequest, res: NextApiResponse) 
         
         const { kode, listJawaban, eksekusiKode }: { kode: string, listJawaban: string, eksekusiKode: string } = req.body;
         // console.log(kode + '\n' + apakahSama + '\n' + listJawaban);
-        
+
         // https://github.com/compiler-explorer/compiler-explorer/blob/main/docs/API.md
         PythonShell.runString(kode + '\n' + apakahSama + '\n' + listJawaban, {mode: "text", pythonOptions: ["-u"]}, (err, hasil: string[] | undefined) => {
             if(err) console.error(err);

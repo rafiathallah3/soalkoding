@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { DapatinSQL } from "../../database/db";
 import bcrypt from 'bcrypt'
-import prisma from "../../database/prisma";
+import { prisma } from "../../database/prisma";
 
 export default async function Register(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {

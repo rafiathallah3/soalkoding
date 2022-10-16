@@ -1,34 +1,51 @@
 import axios from "axios";
-import { NextApiRequest } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import Navbar from "../../../../components/navbar";
 import Image from "next/image";
 import { DataSolusi, Komentar } from "../../../../types/tipe";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useState } from "react";
+import { getCookie, setCookie } from "cookies-next";
 
-export async function getServerSideProps(konteks: { params: { soal: string, solusi: string }, req: NextApiRequest }) {
-    const data = await axios.post(`http://${konteks.req.headers.host}/api/soal/solusi/dapatinSolusi`, {
-        idsoal: konteks.params.soal,
-        idsolusi: konteks.params.solusi
-    }, {
-        headers: { cookie: konteks.req.headers.cookie } as any
+export async function getServerSideProps({ params, req, res }: { params: { soal: string, solusi: string }, req: NextApiRequest, res: NextApiResponse }) {
+    const infoakun = getCookie('infoakun', { req, res }) as string;
+    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
+
+    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
+        headers: { cookie: req.headers.cookie } as any
     }).then(d => d.data);
-    data.idsolusi = konteks.params.solusi;
+
+    setCookie('infoakun', DapatinToken, {
+        req, res,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/"
+    });
+
+    const data = await axios.post(`http://${req.headers.host}/api/soal/solusi/dapatinSolusi`, {
+        idsoal: params.soal,
+        idsolusi: params.solusi
+    }, {
+        headers: { cookie: req.headers.cookie } as any
+    }).then(d => d.data);
+    data.idsolusi = params.solusi;
 
     return {
         props: {
             data
         }
     }
-} 
+}
 
-export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: string, komentar: (Komentar & {apakahSudahVote: "up" | "down" | "biasa"})[] } }) {
+export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: string, komentar: (Komentar & { apakahSudahVote: "up" | "down" | "biasa" })[] } }) {
     const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
         suka_ngk: data.suka_ngk,
         berapa: JSON.parse(data.soal.suka).length
     });
-    const [ListKomentar, setListKomentar] = useState<(Komentar & {apakahSudahVote: "up" | "down" | "biasa"})[]>(data.komentar);
+    const [ListKomentar, setListKomentar] = useState<(Komentar & { apakahSudahVote: "up" | "down" | "biasa" })[]>(data.komentar);
 
     const KlikKepintaran = async (elementTombol: MouseEvent, idsolusi: string) => {
         const _data = await axios.post("/api/soal/solusi/pintar", {
@@ -75,29 +92,29 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
             tipe: "vote",
         }).then(d => d.data);
 
-        switch(_data.suka) {
+        switch (_data.suka) {
             case "up":
                 (element.target as HTMLSpanElement).style.color = 'green';
-                document.getElementById('down-'+idkomen.toString())!.style.color = 'rgb(150, 150, 150)';
+                document.getElementById('down-' + idkomen.toString())!.style.color = 'rgb(150, 150, 150)';
                 break;
             case "down":
                 (element.target as HTMLSpanElement).style.color = 'red';
-                document.getElementById('up-'+idkomen.toString())!.style.color = 'rgb(150, 150, 150)';
+                document.getElementById('up-' + idkomen.toString())!.style.color = 'rgb(150, 150, 150)';
                 break;
             case "biasa":
                 (element.target as HTMLSpanElement).style.color = 'rgb(150, 150, 150)';
                 break;
         }
 
-        document.getElementById('komen-'+idkomen.toString())!.innerText = _data.berapa.toString();
+        document.getElementById('komen-' + idkomen.toString())!.innerText = _data.berapa.toString();
     }
 
     //Sumber: https://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
     function SemenjakWaktu(date: any) {
         var seconds = Math.floor((new Date() as any - date) / 1000);
-    
+
         let interval = seconds / 31536000;
-    
+
         if (interval >= 1) {
             return Math.floor(interval) + " tahun lalu";
         }
@@ -176,7 +193,7 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
                     <div className="mb-4 text-white">
                         <span className="me-3">
                             <i className="bi bi-person-fill me-2"></i>
-                            <a className="text-decoration-none text-white" href="#">{data.soal.pembuat}</a>
+                            <a className="text-decoration-none text-white" href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
                         </span>
                         <span className="me-3 favorit" onClick={FavoritSoal}>
                             {Favorit.suka_ngk ?
@@ -190,14 +207,8 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
                             <i className="bi bi-calendar-check me-1"></i>
                             {data.JumlahSolusi}
                         </span>
-                    </div>
-                    <div className="d-flex">
-                        <div className="text-white flex-grow-1">
-                            <i className="bi bi-person me-1"></i>
-                            {data.solusi[0].username}
-                        </div>
-                        <div className="text-white-50">
-                            {new Date(data.solusi[0].bikin).getDate() + '/' + new Date(data.solusi[0].bikin).getMonth() + '/' + new Date(data.solusi[0].bikin).getFullYear()}
+                        <div className="text-white-50 float-end">
+                            {new Date(data.solusi[0].kapan).getDate() + '/' + new Date(data.solusi[0].kapan).getMonth() + '/' + new Date(data.solusi[0].kapan).getFullYear()}
                         </div>
                     </div>
                     <div className="px-2 mb-3">
@@ -220,7 +231,7 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
                         </div>
                     </div>
                     <div className="d-flex flex-column">
-                        {ListKomentar.map((v, i) => {
+                        {data.solusi[0].komentar.map((v, i) => {
                             return (
                                 <div key={i} className="d-flex flex-row mb-3">
                                     <div>
@@ -228,14 +239,14 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
                                     </div>
                                     <div className="w-100">
                                         <div className="mb-1">
-                                            <span className="me-3 text-white">{v.username}</span>
-                                            <span className="text-white-50">{SemenjakWaktu(new Date(parseInt(v.bikin)))}</span>
+                                            <a href={`/profile/${v.user.username}`} className="me-3 text-white text-decoration-none">{v.user.username}</a>
+                                            <span className="text-white-50">{SemenjakWaktu(new Date(v.bikin))}</span>
                                         </div>
                                         <div className="text-white mb-2">{v.komen}</div>
                                         <div>
-                                            <span className="text-white me-2" id={'komen-'+v.id}>{JSON.parse(v.upvote).length - JSON.parse(v.downvote).length}</span> 
-                                            <i className="bi bi-caret-up-fill me-2 voting" id={'up-'+v.id} style={{color: (v.apakahSudahVote === "up" ? 'green' : 'rgb(150, 150, 150)')}} onClick={(e) => VoteKomen(e, "up", v.id)}></i>
-                                            <i className="bi bi-caret-down-fill voting" id={'down-'+v.id} style={{color: (v.apakahSudahVote === "down" ? 'red' : 'rgb(150, 150, 150)')}} onClick={(e) => VoteKomen(e, "down", v.id)}></i>
+                                            <span className="text-white me-2" id={'komen-' + v.id}>{JSON.parse(v.upvote).length - JSON.parse(v.downvote).length}</span>
+                                            <i className="bi bi-caret-up-fill me-2 voting" id={'up-' + v.id} style={{ color: (v.apakahSudahVote === "up" ? 'green' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "up", v.id)}></i>
+                                            <i className="bi bi-caret-down-fill voting" id={'down-' + v.id} style={{ color: (v.apakahSudahVote === "down" ? 'red' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "down", v.id)}></i>
                                         </div>
                                     </div>
                                 </div>

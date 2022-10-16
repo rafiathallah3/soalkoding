@@ -11,7 +11,10 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Background from "../../../components/background";
 import Navbar from "../../../components/navbar";
 import styles from '../../../styles/latihan.module.css'
+import jwt from 'jsonwebtoken';
 import { DataSoal, HasilJawaban } from "../../../types/tipe";
+import { prisma } from "../../../database/prisma";
+import { decrypt } from "../../../database/UbahKeHash";
 
 const CodeEditor = dynamic(import('../../../components/codeEditor'), { ssr: false });
 
@@ -31,6 +34,14 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
         maxAge: 60 * 60 * 24 * 30,
         path: "/"
     });
+
+    const DapatinUser = await prisma.akun.findUnique({
+        where: {
+            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
+        }
+    })
+
+    if (DapatinUser === null) return { redirect: { destination: '/login', permanent: false } };
 
     try {
         const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
@@ -207,7 +218,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
 
     const FavoritSoal = async () => {
         const _data = await axios.post("/api/soal/favorit", {
-            idsoal: data.idsoal
+            idsoal: data.id
         }).then(d => d.data);
 
         setFavorit({
@@ -219,12 +230,12 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
     const KirimSolusi = async (e: BaseSyntheticEvent) => {
         const _data = await axios.post("/api/soal/kirimsolusi", {
             kode: KodeBenar,
-            idsoal: data.idsoal,
+            idsoal: data.id,
             bahasa: BahasaProgram
         });
 
         if (_data.status === 200) {
-            Router.push(`/soal/${data.idsoal}/solusi`);
+            Router.push(`/soal/${data.id}/solusi`);
         }
     }
 
@@ -253,7 +264,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
         const hasil: { data: HasilJawaban[], lulus: number, gagal: number, waktu: string } = await axios.post("/api/soal/kirimkode", {
             kode: KodeSoal,
             idBahasaProgram: IdBahasaProgram,
-            idsoal: data.idsoal,
+            idsoal: data.id,
             w: statusKlik
         }).then(d => d.data);
 
@@ -312,8 +323,6 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
             </div>
         )
     }
-
-    console.log(data.soal);
 
     return (
         <Background>
@@ -467,7 +476,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
                                                     (Output.data.map((v, i) => {
                                                         if (v.koreksi) {
                                                             return (
-                                                                <details className="mb-2 panah text-success">
+                                                                <details key={i} className="mb-2 panah text-success">
                                                                     <summary className="mb-2">Test #{i + 1}: Success</summary>
                                                                     <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px" }}>
                                                                         Output: {v.hasil}, Jawaban: {v.jawaban}
@@ -476,7 +485,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
                                                             )
                                                         } else {
                                                             return (
-                                                                <details className="mb-2 panah text-danger">
+                                                                <details key={i} className="mb-2 panah text-danger">
                                                                     <summary className="mb-2">Test #{i + 1}: Gagal</summary>
                                                                     <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
                                                                         {v.status === "Error" ?

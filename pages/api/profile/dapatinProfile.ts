@@ -1,7 +1,7 @@
 import { getCookie } from "cookies-next";
 import { NextApiRequest, NextApiResponse } from "next";
 import { DapatinSQL, parseCookies } from "../../../database/db";
-import prisma from "../../../database/prisma";
+import { prisma } from "../../../database/prisma";
 import { decrypt } from "../../../database/UbahKeHash";
 import { verify } from '../../../services/jwt_sign';
 

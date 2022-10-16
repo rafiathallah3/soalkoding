@@ -2,9 +2,10 @@ import Navbar from "../../../../components/navbar";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import axios from "axios";
-import { NextApiRequest } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import { DataSolusi } from "../../../../types/tipe";
 import { useState } from "react";
+import { getCookie, setCookie } from "cookies-next";
 
 const TemplateKoding = `
 function Roblox() {
@@ -21,18 +22,36 @@ function Roblox() {
 }
 `.trim()
 
-export async function getServerSideProps(konteks: { params: { soal: string }, req: NextApiRequest }) {
-    const data = await axios.post(`http://${konteks.req.headers.host}/api/soal/solusi/dapatinSolusi`, {
-        idsoal: konteks.params.soal
-    }, {
-        headers: { cookie: konteks.req.headers.cookie } as any
+export async function getServerSideProps({ params, req, res }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse }) {
+    const infoakun = getCookie('infoakun', { req, res }) as string;
+    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
+
+    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
+        headers: { cookie: req.headers.cookie } as any
     }).then(d => d.data);
 
-    return {
-        props: {
-            data
+    setCookie('infoakun', DapatinToken, {
+        req, res,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/"
+    });
+
+    try {
+        const data = await axios.post(`http://${req.headers.host}/api/soal/solusi/dapatinSolusi`, {
+            idsoal: params.soal
+        }, {
+            headers: { cookie: req.headers.cookie } as any
+        }).then(d => d.data);
+
+        return {
+            props: {
+                data
+            }
         }
-    }
+    } catch { }
 }
 
 export default function Solusi({ data }: { data: DataSolusi }) {
@@ -58,7 +77,7 @@ export default function Solusi({ data }: { data: DataSolusi }) {
             idsolusi,
         }).then(d => d.data);
 
-        if(_data.suka_ngk) {
+        if (_data.suka_ngk) {
             (elementTombol.target as any).style.borderColor = 'white';
             (elementTombol.target as any).style.color = 'white';
         } else {
@@ -70,7 +89,7 @@ export default function Solusi({ data }: { data: DataSolusi }) {
 
     return (
         <div className="px-3">
-            <Navbar />
+            <Navbar profile={data.soal.pembuat.username} />
             <style jsx>{`
             .tombol-kerjakan {
                 background: rgb(45, 45, 45);
@@ -204,7 +223,7 @@ export default function Solusi({ data }: { data: DataSolusi }) {
                         <div className="mb-1">
                             <span className="me-3">
                                 <i className="bi bi-person-fill me-2"></i>
-                                <a className="text-decoration-none text-white" href="#">{data.soal.pembuat}</a>
+                                <a className="text-decoration-none text-white" href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
                             </span>
                             <span className="me-4 favorit" onClick={FavoritSoal}>
                                 {Favorit.suka_ngk ?
@@ -242,24 +261,24 @@ export default function Solusi({ data }: { data: DataSolusi }) {
                                 <div className="d-flex">
                                     <div className="text-white flex-grow-1">
                                         <i className="bi bi-person me-1"></i>
-                                        {v.username}
+                                        {v.user.username}
                                     </div>
                                     <div className="text-white-50">
-                                        {new Date(v.bikin).getDate() + '/' + new Date(v.bikin).getMonth() + '/' + new Date(v.bikin).getFullYear()}
+                                        {new Date(v.kapan).getDate() + '/' + new Date(v.kapan).getMonth() + '/' + new Date(v.kapan).getFullYear()}
                                     </div>
                                 </div>
                                 <div className="px-2 mb-3">
                                     <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={v.bahasa} style={tomorrow as any}>{v.kode}</SyntaxHighlighter>
                                 </div>
                                 <div>
-                                    <button className="tombol-keren me-3" style={{"borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)')}} onClick={(e) => KlikKepintaran(e as any, v.id)}>
+                                    <button className="tombol-keren me-3" style={{ "borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, v.id)}>
                                         <i className="bi bi-arrow-up-short"></i>
                                         Pintar
                                         <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
                                     </button>
-                                    <a href={`/soal/${v.idsoal}/solusi/${v.idsolusi}`} className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
+                                    <a href={`/soal/${v.idsoal}/solusi/${v.id}`} className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
                                         <i className="bi bi-chat-right-fill me-2 fs-5"></i>
-                                        {JSON.parse(v.komentar).length}
+                                        {v.komentar.length}
                                     </a>
                                 </div>
                             </div>

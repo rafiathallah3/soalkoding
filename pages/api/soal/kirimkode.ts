@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { PythonShell } from 'python-shell';
 import { DapatinSQL } from '../../../database/db';
 import axios from 'axios';
+import Verifikasi from '../../../services/VerifikasiAkun';
+import { prisma } from '../../../database/prisma';
 
 type DataSoal = {
     namasoal: string,
@@ -29,28 +31,87 @@ def ApakahSama(fungsi, parameter, jawaban):
 
 export default async function KirimKode(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {
+        const verifikasi = Verifikasi(req, res);
+        if(typeof verifikasi === 'number') return res.status(verifikasi).send(`Error: ${verifikasi}`);
+
         const { kode, idsoal, w } = req.body;
-        
-        const dataMentah = await DapatinSQL('SELECT idsoal, listjawaban, contohjawaban FROM soal WHERE idsoal = ?', [idsoal]) as any[];
-        
-        if(dataMentah.length <= 0) return res.status(400).json({error: "Soal tidak ketemu"});
-        
-        const HasilData: DataSoal = dataMentah[0]
-        
-        PythonShell.runString('import time \nwaktu_mulai = time.time()\n' + kode + '\n' + FungsiApakahSama + '\n' + (w === "test" ? HasilData.contohjawaban : HasilData.listjawaban) + '\n' + 'print(time.time() - waktu_mulai)', {mode: "text", pythonOptions: ["-u"]}, (err, hasil: string[] | undefined) => {
-            if(err) console.error(err);
-            if(hasil !== undefined) {
-                const FilterHasil = hasil.filter((v, i) => {
-                    return i !== hasil.length -1;
-                });
-                console.log(FilterHasil[0])
-                const MapData = FilterHasil.map((v) => JSON.parse(v));
-                
-                res.json({data: MapData, lulus: MapData.filter((v) => v.koreksi).length, gagal: MapData.filter((v) => !v.koreksi).length, waktu: hasil.at(-1)})
-            } else {
-                res.json({});
+        const DataSoal = await prisma.soal.findUnique({
+            where: {
+                id: idsoal
             }
-        })
+        });
+
+        if(DataSoal === null) return res.status(404).send("Soal tidak ketemu");
+
+        try {
+            const data = await axios.post('https://godbolt.org/api/compiler/python310/compile', {
+                "source": 'import time \nwaktu_mulai = time.time()\n' + kode + '\n' + FungsiApakahSama + '\n' + (w === "test" ? DataSoal.contohjawaban : DataSoal.listjawaban) + '\n' + 'print(time.time() - waktu_mulai)',
+                "compiler": "python310",
+                "options": {
+                    "userArguments": "",
+                    "executeParameters": {
+                        "args": "",
+                        "stdin": ""
+                    },
+                    "compilerOptions": {
+                        "executorRequest": true,
+                        "skipAsm": true
+                    },
+                    "filters": {
+                        "execute": true
+                    },
+                    "tools": [],
+                    "libraries": []
+                },
+                "lang": "python",
+                "files": [],
+                "allowStoreCodeDebug": true
+            }, {
+                headers: {
+                    "accept": "application/json, text/javascript, */*; q=0.01",
+                    "accept-language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+                    "content-type": "application/json",
+                    "sec-ch-ua": "\"Chromium\";v=\"106\", \"Google Chrome\";v=\"106\", \"Not;A=Brand\";v=\"99\"",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": "\"Windows\"",
+                    "sec-fetch-dest": "empty",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-site": "same-origin",
+                    "x-requested-with": "XMLHttpRequest"
+                }
+            }).then(d => d.data) as { stdout: { text: string }[] };
+            const FilterHasil: { hasil: string, jawaban: string, status: string, koreksi: boolean }[] = data.stdout.splice(0, data.stdout.length-1).map((v) => JSON.parse(v.text))
+
+            res.json({
+                data: FilterHasil,
+                lulus: FilterHasil.filter((v) => v.koreksi).length,
+                gagal: FilterHasil.filter((v) => !v.koreksi).length,
+                waktu: data.stdout[data.stdout.length-1].text
+            })
+        } catch(e) {
+            return res.status(502).send("Ada masalah dengan compiler");
+        }
+        
+        // const dataMentah = await DapatinSQL('SELECT idsoal, listjawaban, contohjawaban FROM soal WHERE idsoal = ?', [idsoal]) as any[];
+        
+        // if(dataMentah.length <= 0) return res.status(400).json({error: "Soal tidak ketemu"});
+        
+        // const HasilData: DataSoal = dataMentah[0]
+        
+        // PythonShell.runString('import time \nwaktu_mulai = time.time()\n' + kode + '\n' + FungsiApakahSama + '\n' + (w === "test" ? HasilData.contohjawaban : HasilData.listjawaban) + '\n' + 'print(time.time() - waktu_mulai)', {mode: "text", pythonOptions: ["-u"]}, (err, hasil: string[] | undefined) => {
+        //     if(err) console.error(err);
+        //     if(hasil !== undefined) {
+        //         const FilterHasil = hasil.filter((v, i) => {
+        //             return i !== hasil.length -1;
+        //         });
+        //         console.log(FilterHasil[0])
+        //         const MapData = FilterHasil.map((v) => JSON.parse(v));
+                
+        //         res.json({data: MapData, lulus: MapData.filter((v) => v.koreksi).length, gagal: MapData.filter((v) => !v.koreksi).length, waktu: hasil.at(-1)})
+        //     } else {
+        //         res.json({});
+        //     }
+        // })
     }
 }
 

@@ -5,7 +5,7 @@ import kue from 'cookie'
 import bcrypt from 'bcrypt';
 import { encrypt } from "../../database/UbahKeHash";
 import { DapatinSQL } from '../../database/db';
-import prisma from '../../database/prisma';
+import { prisma } from '../../database/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 	if(req.method === "POST") {

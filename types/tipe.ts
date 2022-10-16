@@ -31,32 +31,32 @@ export interface DataSoal {
     level: number,
     tags: string,
     soal: string,
-    idsoal: string,
+    id: string,
     pembuat: { username: string },
     public: boolean,
     suka: string,
 }
 
 export interface Solusi {
-    idsoal: string,
-    idsolusi: string,
-    username: string,
-    pintar: string,
-    komentar: string,
-    kode: string,
-    bikin: string,
-    bahasa: string,
     id: string
+    idsoal: string,
+    user: { username: string },
+    pintar: string,
+    komentar: Komentar[],
+    kode: string,
+    kapan: string,
+    bahasa: string,
 }
 
 export interface Komentar {
     id: number,
     idsoal: string,
     komen: string,
-    username: string,
-    bikin: string,
+    user: { username: string },
+    bikin: Date,
     upvote: string,
-    downvote: string
+    downvote: string,
+    apakahSudahVote?: string
 }
 
 export interface DataSolusi {
@@ -68,7 +68,7 @@ export interface DataSolusi {
         namasoal: string,
         level: number,
         tags: string,
-        pembuat: string,
+        pembuat: { username: string },
         suka: string,
     }
 }

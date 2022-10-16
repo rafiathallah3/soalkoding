@@ -12,12 +12,13 @@ model Komentar {
   solusi   Solusi   @relation(fields: [idsolusi], references: [id])
   idsolusi String
   komen    String   @db.Text
-  username String   @db.VarChar(20)
+  user     Akun     @relation(fields: [iduser], references: [id])
+  iduser   String
   bikin    DateTime @default(now())
   upvote   String   @default("[]") @db.Text
   downvote String   @default("[]") @db.Text
 
-  @@id([id, idsolusi])
+  @@id([id, idsolusi, iduser])
   @@unique([id])
   @@map("komentar")
 }
@@ -46,7 +47,7 @@ model Solusi {
   // idsolusi String     @db.VarChar(15)
   soal       Soal       @relation(fields: [idsoal], references: [id])
   idsoal     String
-  username   Akun       @relation(fields: [idusername], references: [id])
+  user       Akun       @relation(fields: [idusername], references: [id])
   idusername String
   pintar     String     @default("[]") @db.Text
   komentar   Komentar[]
@@ -60,21 +61,22 @@ model Solusi {
 }
 
 model Akun {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
   // userid      String  @db.VarChar(20)
-  username      String   @unique @db.VarChar(20)
-  nama          String?  @db.VarChar(35)
-  email         String   @unique @db.VarChar(30)
-  password      String   @db.VarChar(60)
+  username      String     @unique @db.VarChar(20)
+  nama          String?    @db.VarChar(35)
+  email         String     @unique @db.VarChar(30)
+  password      String     @db.VarChar(60)
   soalselesai   Solusi[]
   buatsoal      Soal[]
-  bio           String?  @db.VarChar(65)
-  tinggal       String?  @db.VarChar(30)
-  githuburl     String?  @db.TinyText
-  webiste       String?  @db.TinyText
-  perbaruiToken String?  @db.Text
-  bikin         DateTime @default(now())
-  terminate     Boolean  @default(false)
+  komentar      Komentar[]
+  bio           String?    @db.VarChar(65)
+  tinggal       String?    @db.VarChar(30)
+  githuburl     String?    @db.TinyText
+  webiste       String?    @db.TinyText
+  perbaruiToken String?    @db.Text
+  bikin         DateTime   @default(now())
+  terminate     Boolean    @default(false)
 
   @@map("akun")
 }
