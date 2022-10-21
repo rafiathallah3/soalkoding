@@ -52,7 +52,8 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
 
         return {
             props: {
-                data: data.data
+                data: data.data,
+                profile: DapatinUser.username
             }
         }
     } catch (e) {
@@ -146,7 +147,7 @@ end`,
 end`
 }
 
-export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } }) {
+export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: boolean }, profile: string }) {
     const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
     const [BahasaProgram, setBahasaProgram] = useState('python');
     const [Output, setOutput] = useState<{ data: HasilJawaban[], lulus: number, gagal: number, waktu: string, status: "Mengirim" | "Sukses" | "" }>({
@@ -308,7 +309,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
     if (Object.keys(data).length <= 0) {
         return (
             <div style={{ height: "100%" }}>
-                <Navbar />
+                <Navbar profile={profile} />
                 <style>{`
                 #__next {
                     height: 100%;
@@ -326,7 +327,7 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
 
     return (
         <Background>
-            <Navbar />
+            <Navbar profile={profile} />
             <style>{`
             .favorit:hover {
                 color: rgb(180, 180, 180);
@@ -406,8 +407,8 @@ export default function Soal({ data }: { data: DataSoal & { suka_ngk: boolean } 
                             <div className="row">
                                 <div className="text-white">
                                     <div style={{ height: "50px" }}>
-                                        <button id="tombolpertanyaan" className='me-3 tombolBerikutnya border-0' onClick={KlikPertanyaan}>Pertanyaan</button>
-                                        <button id="tomboloutput" className="tombol_aktif bg-transparent border-0" onClick={KlikOutput}>Output</button>
+                                        <button id="tombolpertanyaan" className='me-3 tombolBerikutnya border-0' onClick={KlikPertanyaan}>PERTANYAAN</button>
+                                        <button id="tomboloutput" className="tombol_aktif bg-transparent border-0" onClick={KlikOutput}>OUTPUT</button>
                                     </div>
                                 </div>
                             </div>

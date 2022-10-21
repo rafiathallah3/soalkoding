@@ -24,13 +24,25 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
         if(tipe === "komen") {
             if(idsolusi === undefined || komentar === undefined) return res.status(404).send("Tidak ketemu");
 
-            const DataSolusi = await prisma.komentar.create({
+            await prisma.komentar.create({
                 data: {
                     idsolusi,
                     iduser: verifikasi,
                     komen: komentar
                 }
+            });
+            
+            const DataKomentar = await prisma.komentar.findMany({
+                include: {
+                    user: {
+                        select: { username: true }
+                    }
+                }
             })
+
+            return res.json({
+                komentar: DataKomentar
+            });
         } else if(tipe === "vote") {
             if(idkomen === undefined) return res.status(404).send("Tidak ketemu");
 
@@ -90,6 +102,19 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                     berapa: JSON.parse(UpdateDataKomentar.upvote).length - JSON.parse(UpdateDataKomentar.downvote).length
                 });
             }
+        } else if(tipe === "hapus") {
+            if(idkomen === undefined) return res.status(404).send("Tidak ketemu");
+
+            const DataKomentar = await prisma.komentar.deleteMany({
+                where: {
+                    id: idkomen,
+                    iduser: verifikasi
+                }
+            });
+
+            return res.json({
+                komentar: DataKomentar
+            });
         }
         // const DataKue: { infoakun: string } = parseCookies(req);
         // if(Object.keys(DataKue).length <= 0) {

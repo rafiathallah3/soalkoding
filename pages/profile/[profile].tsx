@@ -4,6 +4,11 @@ import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { DataProfile } from "../../types/tipe";
 import { getCookie, setCookie } from "cookies-next";
+import { prisma } from "../../database/prisma";
+import { decrypt } from "../../database/UbahKeHash";
+import jwt from 'jsonwebtoken';
+import Link from "next/link";
+import { useState } from "react";
 
 export async function getServerSideProps({ params, req, res }: { params: { profile: string }, req: NextApiRequest, res: NextApiResponse }) {
     const infoakun = getCookie('infoakun', { req, res }) as string;
@@ -22,6 +27,12 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
         path: "/"
     });
 
+    const DapatinUser = await prisma.akun.findUnique({
+        where: {
+            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
+        }
+    });
+
     try {
         const data = await axios.post("http://localhost:3003/api/profile/dapatinProfile", {
             nama: params.profile
@@ -29,7 +40,8 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
 
         return {
             props: {
-                data
+                data,
+                profile: DapatinUser === null ? "" : DapatinUser.username
             }
         }
     } catch (e) {
@@ -39,7 +51,10 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
     }
 }
 
-export default function Profile({ data }: { data: DataProfile }) {
+export default function Profile({ data, profile }: { data: DataProfile, profile: string }) {
+    const [StatusTable, setStatusTable] = useState<"soalselesai" | "solusi">('soalselesai');
+    const InformasiDariUpdate = getCookie('infoedit');
+
     const namaBulan = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
@@ -72,9 +87,37 @@ export default function Profile({ data }: { data: DataProfile }) {
         return Math.floor(seconds) + " detik lalu";
     }
 
+    const KlikSoalSelesai = () => {
+        setStatusTable("soalselesai");
+        const SoalSelesaiElement = document.getElementById("tombolsoalselesai")!;
+        const DiskusiElement = document.getElementById("tombolsolusi")!;
+
+        if (SoalSelesaiElement.classList.contains("tombol-table")) {
+            DiskusiElement.classList.remove("tombol-table-aktif");
+            DiskusiElement.classList.add("tombol-table");
+
+            SoalSelesaiElement.classList.remove("tombol-table");
+            SoalSelesaiElement.classList.add("tombol-table-aktif");
+        }
+    }
+
+    const KlikSolusi = () => {
+        setStatusTable("solusi");
+        const SoalSelesaiElement = document.getElementById("tombolsoalselesai")!;
+        const DiskusiElement = document.getElementById("tombolsolusi")!;
+
+        if (DiskusiElement.classList.contains("tombol-table")) {
+            SoalSelesaiElement.classList.remove("tombol-table-aktif");
+            SoalSelesaiElement.classList.add("tombol-table");
+
+            DiskusiElement.classList.remove("tombol-table");
+            DiskusiElement.classList.add("tombol-table-aktif");
+        }
+    }
+
     return (
         <>
-            <Navbar />
+            <Navbar profile={profile} />
             <div className="container">
                 {typeof data === "string" ?
                     <div style={{ minHeight: "90%" }}>
@@ -91,60 +134,148 @@ export default function Profile({ data }: { data: DataProfile }) {
                         </div>
                     </div>
                     :
-                    <div className="row min-vh-100">
-                        <div className="col-3 rounded-1" style={{ background: "rgb(48, 48, 48)", height: "28rem" }}>
-                            <div className="d-flex flex-row text-white mb-2 mt-2">
-                                <Image src="/profile.jpeg" className="rounded-3 text-white" height={80} width={80} alt="Potret seorang wanita cantik" />
-                                <div className="ms-2">
-                                    <h3>{data.nama}</h3>
-                                    <p className="text-white-50">@{data.username}</p>
+                    <div className="row">
+                        <style jsx>{`
+                        .tombol-table-aktif {
+                            padding: 10px 15px 10px 15px;
+                            margin-right: 10px;
+                            font-size: 17px;
+                            color: white;
+                            background: rgb(70, 70, 70);
+                            border: 0px solid;
+                            border-radius: 4px;
+                        }
+
+                        .tombol-table {
+                            padding: 10px 15px 10px 15px;
+                            margin-right: 10px;
+                            font-size: 17px;
+                            color: rgb(180, 180, 180);
+                            background: transparent;
+                            border: 0px solid;
+                            transition: .2s;
+                        }
+
+                        .tombol-table:hover {
+                            color: white;
+                        }
+                        `}</style>
+                        {InformasiDariUpdate !== undefined &&
+                            <div className="text-white mb-3 p-2" style={{ background: "#296331" }}>{InformasiDariUpdate}</div>
+                        }
+                        <div className="col-3 rounded-1 p-3" style={{ background: "rgb(45, 45, 45)", border: "1px solid rgb(61, 61, 61)" }}>
+                            <div className="d-flex flex-column text-white mb-2 mt-2">
+                                <div className="d-flex">
+                                    <div className="d-flex flex-shrink-0 position-relative me-3" style={{ height: "5rem", width: "5rem" }}>
+                                        <div className="w-100 h-100 position-relative">
+                                            <Image src={data.gambarurl === null ? "/gambar/profile.png" : data.gambarurl} className="rounded-3 text-white" layout="fill" alt="Potret seorang wanita cantik" />
+                                        </div>
+                                    </div>
+                                    <div className="d-flex flex-column">
+                                        <h5>{data.nama}</h5>
+                                        <p className="text-white-50">{data.username}</p>
+                                    </div>
                                 </div>
                             </div>
                             <div className="mb-3">
-                                <p className="text-white-50 mb-1">Saya tinggal di</p>
-                                <p className="text-white">{data.tinggal}</p>
-                            </div>
-                            <div className="mb-3">
                                 <p className="text-white-50 mb-1">Member sejak</p>
-                                <p className="text-white">{`${namaBulan[new Date(parseInt(data.bikin)).getMonth()]} ${new Date(parseInt(data.bikin)).getFullYear()}`}</p>
+                                <p className="text-white">{`${namaBulan[new Date(data.bikin).getMonth()]} ${new Date(data.bikin).getFullYear()}`}</p>
                             </div>
+                            {data.tinggal &&
+                                <div className="mb-3">
+                                    <p className="text-white-50 mb-1">Saya tinggal di</p>
+                                    <p className="text-white">{data.tinggal}</p>
+                                </div>
+                            }
+                            {data.bio &&
+                                <div className="mb-3">
+                                    <p className="text-white-50 mb-1">Tentang Saya</p>
+                                    <p className="text-white">{data.bio}</p>
+                                </div>
+                            }
                             <div className="mb-3">
-                                <p className="text-white-50 mb-1">Tentang Saya</p>
-                                <p className="text-white">{data.bio}</p>
+                                {data.githuburl &&
+                                    <a href={data.githuburl} target={"_blank"} rel="noopener noreferrer" title="Github Link" className="text-white fs-4 me-3">
+                                        <i className="bi bi-github"></i>
+                                    </a>
+                                }
+                                {data.website &&
+                                    <a href={data.website} target={"_blank"} rel="noopener noreferrer" title="Website" className="text-white fs-4 me-3">
+                                        <i className="bi bi-globe2"></i>
+                                    </a>
+                                }
                             </div>
-                            <div className="mb-3">
-                                <a className="text-white fs-4 me-3" href={data.githuburl} target={"_blank"} rel="noopener noreferrer">
-                                    <i className="bi bi-github"></i>
-                                </a>
-                            </div>
-                            <button className="btn btn-dark form-control">
-                                Edit PRofile
-                            </button>
+                            <a href={"/profile/edit"} className="btn btn-dark form-control">
+                                Edit Profile
+                            </a>
+                            <br />
+                            <hr className="text-white" />
+                            <div className="text-white fs-5">Soal sudah dikerjakan: {data.soalselesai.length}</div>
+                            <div className='text-success me-5 fs-5'>Level 1 - 2: {data.soalselesai.filter(({ soal }) => soal.level <= 2).length}</div>
+                            <div className='text-warning me-5 fs-5'>Level 3 - 4: {data.soalselesai.filter(({ soal }) => soal.level > 2 && soal.level <= 4).length}</div>
+                            <div className='text-danger fs-5'>Level 5: {data.soalselesai.filter(({ soal }) => soal.level === 5).length}</div>
                         </div>
                         <div className="col-9">
-                            <div className="p-1 text-white rounded-3 mb-3" style={{ background: "rgb(45, 45, 45)", border: "1px solid rgb(61, 61, 61)" }}>
+                            {/* <div className="p-3 text-white rounded-3 mb-3" style={{ background: "rgb(45, 45, 45)", border: "1px solid rgb(61, 61, 61)" }}>
+                                <div className="row">
+                                    <div className="col text-center">
+                                        <div className="fs-5">Total soal sudah dikerjakan</div>
+                                        <div className="fs-2">0</div>
+                                    </div>
+                                    <div className="col">
+                                        <div className='text-success me-5 fs-5'>Level 1 - 2: {data.soalselesai.filter(({ soal }) => soal.level <= 2).length}</div>
+                                        <div className='text-warning me-5 fs-5'>Level 3 - 4: {data.soalselesai.filter(({ soal }) => soal.level > 2 && soal.level <= 4).length}</div>
+                                        <div className='text-danger fs-5'>Level 5: {data.soalselesai.filter(({ soal }) => soal.level === 5).length}</div>
+                                    </div>
+                                </div>
                                 <h5 className="text-center">Total soal yang sudah dikerjakan</h5>
                                 <div className="text-center">
                                     <span className='text-success me-5 fs-4'>Level 1 - 2: {data.soalselesai.filter(({ soal }) => soal.level <= 2).length}</span>
                                     <span className='text-warning me-5 fs-4'>Level 3 - 4: {data.soalselesai.filter(({ soal }) => soal.level > 2 && soal.level <= 4).length}</span>
                                     <span className='text-danger fs-4'>Level 5: {data.soalselesai.filter(({ soal }) => soal.level === 5).length}</span>
                                 </div>
-                            </div>
+                            </div> */}
                             <div className="p-3 text-white rounded-3" style={{ background: "rgb(45, 45, 45)", border: "1px solid rgb(61, 61, 61)" }}>
                                 <div className="mb-3">
-                                    <button className='me-4 btn btn-outline-success'>Soal</button>
-                                    <button className='me-4 btn btn-outline-success'>Diskusi</button>
+                                    <button id="tombolsoalselesai" className="tombol-table-aktif" onClick={KlikSoalSelesai}>Soal selesai</button>
+                                    <button id="tombolsolusi" className='tombol-table' onClick={KlikSolusi}>Solusi</button>
                                 </div>
-                                <div className="d-flex flex-column">
-                                    {data.soalselesai.map((v, i) => {
-                                        return (
-                                            <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
-                                                <a className="text-white text-decoration-none" href={`/soal/${v.id}/solusi/${v.soal.id}`}>{v.soal.namasoal}</a>
-                                                <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.kapan))}</span>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
+                                {StatusTable === "soalselesai" &&
+                                    <div className="d-flex flex-column">
+                                        {data.soalselesai.length <= 0 ?
+                                            <div className="text-center fs-5">{data.username} tidak pernah menyelesaikan satu soal</div>
+                                            :
+                                            <>
+                                                {data.soalselesai.map((v, i) => {
+                                                    return (
+                                                        <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
+                                                            <a className="text-white text-decoration-none" href={`/soal/${v.soal.id}/latihan`}>{v.soal.namasoal}</a>
+                                                            <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.kapan))}</span>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </>
+                                        }
+                                    </div>
+                                }
+                                {StatusTable === "solusi" &&
+                                    <div className="d-flex flex-column">
+                                        {data.soalselesai.length <= 0 ?
+                                            <div className="text-center fs-5">{data.username} tidak pernah menyelesaikan satu soal</div>
+                                            :
+                                            <>
+                                                {data.soalselesai.map((v, i) => {
+                                                    return (
+                                                        <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
+                                                            <a className="text-white text-decoration-none" href={`/soal/${v.soal.id}/solusi/${v.id}`}>{v.soal.namasoal} - {v.bahasa}</a>
+                                                            <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.kapan))}</span>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </>
+                                        }
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>

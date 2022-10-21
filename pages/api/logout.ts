@@ -1,17 +1,18 @@
 import { NextApiRequest, NextApiResponse } from "next";
 // import kue from 'cookie';
-import { deleteCookie, getCookie } from 'cookies-next';
-import { decrypt } from "../../database/UbahKeHash";
-import { verify } from "../../services/jwt_sign";
-import prisma from "../../database/prisma";
+// import { decrypt } from "../../database/UbahKeHash";
+// import { verify } from "../../services/jwt_sign";
+import { deleteCookie } from 'cookies-next';
+import { prisma } from "../../database/prisma";
+import Verifikasi from "../../services/VerifikasiAkun";
 
 export default async function Logout(req: NextApiRequest, res: NextApiResponse) {
-    const Infoomasi = await verify(getCookie('infoakun', { req, res }) as string, process.env.TOKENRAHASIA!) as { datanya: {iv: string, IniDataRahasia: string} };
-    const HasilDecrypt: {id: string} = JSON.parse(decrypt(Infoomasi.datanya));
+    const verifikasi = Verifikasi(req, res);
+    if(typeof verifikasi === 'number') return res.status(verifikasi).send(`Error ${verifikasi}`); 
 
-    await prisma.users.update({
+    await prisma.akun.update({
         where: {
-            id: HasilDecrypt.id
+            id: verifikasi
         },
         data: {
             perbaruiToken: ''

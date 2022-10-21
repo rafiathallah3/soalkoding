@@ -2,6 +2,7 @@ import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import Navbar from "../../../../components/navbar";
 import Image from "next/image";
+import Link from "next/link";
 import { DataSolusi, Komentar } from "../../../../types/tipe";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
@@ -40,12 +41,12 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
     }
 }
 
-export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: string, komentar: (Komentar & { apakahSudahVote: "up" | "down" | "biasa" })[] } }) {
+export default function SolusiId({ data }: { data: DataSolusi }) {
     const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
         suka_ngk: data.suka_ngk,
         berapa: JSON.parse(data.soal.suka).length
     });
-    const [ListKomentar, setListKomentar] = useState<(Komentar & { apakahSudahVote: "up" | "down" | "biasa" })[]>(data.komentar);
+    const [ListKomentar, setListKomentar] = useState<Komentar[]>(data.solusi[0].komentar);
 
     const KlikKepintaran = async (elementTombol: MouseEvent, idsolusi: string) => {
         const _data = await axios.post("/api/soal/solusi/pintar", {
@@ -109,6 +110,17 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
         document.getElementById('komen-' + idkomen.toString())!.innerText = _data.berapa.toString();
     }
 
+    const HapusKomen = async (idkomen: number) => {
+        const maukah = confirm('Apa kamu yakin ingin menghapus komen ini?')
+
+        if (maukah) {
+            const _data: { suka: "biasa" | "up" | "down", berapa: number } = await axios.post('/api/soal/solusi/komentar', {
+                idkomen,
+                tipe: "hapus",
+            }).then(d => d.data);
+        }
+    }
+
     //Sumber: https://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
     function SemenjakWaktu(date: any) {
         var seconds = Math.floor((new Date() as any - date) / 1000);
@@ -167,6 +179,10 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
                 cursor: pointer;
             }
 
+            .hapus-komen:hover {
+                cursor: pointer;
+            }
+
             ::-webkit-scrollbar {
                 background: rgb(36, 36, 36);
                 opacity: 1;
@@ -208,52 +224,65 @@ export default function SolusiId({ data }: { data: DataSolusi & { idsolusi: stri
                             {data.JumlahSolusi}
                         </span>
                         <div className="text-white-50 float-end">
-                            {new Date(data.solusi[0].kapan).getDate() + '/' + new Date(data.solusi[0].kapan).getMonth() + '/' + new Date(data.solusi[0].kapan).getFullYear()}
+                            {new Date(data.solusi[0].kapan).getDate() + '/' + (new Date(data.solusi[0].kapan).getMonth() + 1) + '/' + new Date(data.solusi[0].kapan).getFullYear()}
                         </div>
                     </div>
-                    <div className="px-2 mb-3">
-                        <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={data.solusi[0].bahasa} style={tomorrow as any}>{data.solusi[0].kode}</SyntaxHighlighter>
-                    </div>
-                    <button className="tombol-keren me-3" style={{ "borderColor": (data.solusi[0].apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (data.solusi[0].apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, data.solusi[0].id)}>
-                        <i className="bi bi-arrow-up-short"></i>
-                        Pintar
-                        <span className={"ms-2"} id={data.solusi[0].id}>{JSON.parse(data.solusi[0].pintar).length}</span>
-                    </button>
+                    {data.ApakahSudahSelesai ?
+                        <>
+                            <div className="px-2 mb-3">
+                                <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={data.solusi[0].bahasa} style={tomorrow as any}>{data.solusi[0].kode}</SyntaxHighlighter>
+                            </div>
+                            <button className="tombol-keren me-3" style={{ "borderColor": (data.solusi[0].apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (data.solusi[0].apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, data.solusi[0].id)}>
+                                <i className="bi bi-arrow-up-short"></i>
+                                Pintar
+                                <span className={"ms-2"} id={data.solusi[0].id}>{JSON.parse(data.solusi[0].pintar).length}</span>
+                            </button>
+                        </>
+                        :
+                        <div className="text-white text-center fs-5">
+                            Kamu belum menyelesaikan soal
+                        </div>
+                    }
                 </div>
-                <div className="p-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
-                    <div className="d-flex flex-row">
-                        <div>
-                            <Image src="/profile.jpeg" className="rounded me-2 text-white" height={60} width={68} alt="Potret seorang wanita cantik" />
+                {data.ApakahSudahSelesai &&
+                    <div className="p-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
+                        <div className="d-flex flex-row">
+                            <div>
+                                <Image src="/profile.jpeg" className="rounded me-2 text-white" height={60} width={68} alt="Potret seorang wanita cantik" />
+                            </div>
+                            <div className="w-100">
+                                <textarea className="w-100" id="textkomen" style={{ resize: "none", backgroundColor: "rgb(40, 40, 40)", outline: "none", color: "rgb(200, 200, 200)" }}></textarea>
+                                <button className="float-end text-white btn" style={{ background: "#337d32", borderColor: "rgb(40, 40, 40)" }} onClick={KirimKomentar}>Kirim</button>
+                            </div>
                         </div>
-                        <div className="w-100">
-                            <textarea className="w-100" id="textkomen" style={{ resize: "none", backgroundColor: "rgb(40, 40, 40)", outline: "none", color: "rgb(200, 200, 200)" }}></textarea>
-                            <button className="float-end text-white btn" style={{ background: "#337d32", borderColor: "rgb(40, 40, 40)" }} onClick={KirimKomentar}>Kirim</button>
-                        </div>
-                    </div>
-                    <div className="d-flex flex-column">
-                        {data.solusi[0].komentar.map((v, i) => {
-                            return (
-                                <div key={i} className="d-flex flex-row mb-3">
-                                    <div>
-                                        <Image src="/profile.jpeg" className="rounded me-2 text-white" height={60} width={68} alt="Potret seorang wanita cantik" />
-                                    </div>
-                                    <div className="w-100">
-                                        <div className="mb-1">
-                                            <a href={`/profile/${v.user.username}`} className="me-3 text-white text-decoration-none">{v.user.username}</a>
-                                            <span className="text-white-50">{SemenjakWaktu(new Date(v.bikin))}</span>
-                                        </div>
-                                        <div className="text-white mb-2">{v.komen}</div>
+                        <div className="d-flex flex-column">
+                            {ListKomentar.map((v, i) => {
+                                return (
+                                    <div key={i} className="d-flex flex-row mb-3">
                                         <div>
-                                            <span className="text-white me-2" id={'komen-' + v.id}>{JSON.parse(v.upvote).length - JSON.parse(v.downvote).length}</span>
-                                            <i className="bi bi-caret-up-fill me-2 voting" id={'up-' + v.id} style={{ color: (v.apakahSudahVote === "up" ? 'green' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "up", v.id)}></i>
-                                            <i className="bi bi-caret-down-fill voting" id={'down-' + v.id} style={{ color: (v.apakahSudahVote === "down" ? 'red' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "down", v.id)}></i>
+                                            <Image src="/profile.jpeg" className="rounded me-2 text-white" height={60} width={68} alt="Potret seorang wanita cantik" />
+                                        </div>
+                                        <div className="w-100">
+                                            <div className="mb-1">
+                                                <Link href={`/profile/${v.user.username}`}>
+                                                    <a className="me-3 text-white text-decoration-none">{v.user.username}</a>
+                                                </Link>
+                                                <span className="text-white-50 me-3">{SemenjakWaktu(new Date(v.bikin))}</span>
+                                                <i className="bi bi-trash hapus-komen" onClick={() => HapusKomen(v.id)} style={{ color: "red" }}></i>
+                                            </div>
+                                            <div className="text-white mb-2">{v.komen}</div>
+                                            <div>
+                                                <span className="text-white me-2" id={'komen-' + v.id}>{JSON.parse(v.upvote).length - JSON.parse(v.downvote).length}</span>
+                                                <i className="bi bi-caret-up-fill me-2 voting" id={'up-' + v.id} style={{ color: (v.apakahSudahVote === "up" ? 'green' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "up", v.id)}></i>
+                                                <i className="bi bi-caret-down-fill voting" id={'down-' + v.id} style={{ color: (v.apakahSudahVote === "down" ? 'red' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "down", v.id)}></i>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )
-                        })}
+                                )
+                            })}
+                        </div>
                     </div>
-                </div>
+                }
             </div>
         </>
     )

@@ -3,6 +3,17 @@ import Link from 'next/link';
 import { SyntheticEvent, useState } from 'react';
 import Router from "next/router";
 import Background from '../components/background';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getCookie } from 'cookies-next';
+
+export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
+    const infoakun = getCookie('infoakun', { req, res }) as string;
+    if (infoakun !== undefined) return { redirect: { destination: '/dashboard', permanent: false } };
+
+    return {
+        props: {}
+    }
+}
 
 export default function Login() {
     const [AdaError, setAdaError] = useState('');
@@ -57,7 +68,7 @@ export default function Login() {
                                     <hr className="my-4 text-white" />
 
                                     <div className="d-grid">
-                                        <Link href={"https://github.com/login/oauth/authorize?client_id=25bed176db5b6ad0e239&scope=read:user%20user:email"}>
+                                        <Link href={"https://github.com/login/oauth/authorize?client_id=25bed176db5b6ad0e239&scope=read:user,user:email"}>
                                             <button className="btn btn-dark" style={{ backgroundColor: "rgb(41, 41, 41)" }}>
                                                 <i className="bi bi-github"></i> Masuk dengan GitHub
                                             </button>

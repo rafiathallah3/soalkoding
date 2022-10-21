@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `akun` ADD COLUMN `webiste` TINYTEXT NULL;
+ALTER TABLE `akun` ADD COLUMN `website` TINYTEXT NULL;
 
 -- AlterTable
 ALTER TABLE `soal` MODIFY `tags` TINYTEXT NOT NULL DEFAULT '[]',

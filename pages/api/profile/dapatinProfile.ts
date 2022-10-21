@@ -4,6 +4,7 @@ import { DapatinSQL, parseCookies } from "../../../database/db";
 import { prisma } from "../../../database/prisma";
 import { decrypt } from "../../../database/UbahKeHash";
 import { verify } from '../../../services/jwt_sign';
+import Verifikasi from "../../../services/VerifikasiAkun";
 
 export default async function dapatinProfile(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {
@@ -22,6 +23,9 @@ export default async function dapatinProfile(req: NextApiRequest, res: NextApiRe
                     githuburl: true,
                     terminate: true,
                     bikin: true,
+                    gambarurl: true,
+                    website: true,
+                    sudahVerifikasi: true,
                     soalselesai: {
                         select: {
                             id: true,
@@ -32,7 +36,8 @@ export default async function dapatinProfile(req: NextApiRequest, res: NextApiRe
                                     level: true
                                 }
                             },
-                            kapan: true
+                            kapan: true,
+                            bahasa: true,
                         }
                     }
                 }
@@ -46,11 +51,12 @@ export default async function dapatinProfile(req: NextApiRequest, res: NextApiRe
 
         const KueInfoAkun = getCookie('infoakun', { req, res });
         if(KueInfoAkun) {
-            const Infoomasi = await verify(KueInfoAkun as string, process.env.TOKENRAHASIA!) as { datanya: {iv: string, IniDataRahasia: string} };
-            const HasilDecrypt: {id: string} = JSON.parse(decrypt(Infoomasi.datanya));
+            const verifikasi = Verifikasi(req, res);
+            if(typeof verifikasi === 'number') return res.status(verifikasi).send(`Error ${verifikasi}`);
+            
             const DataUser = await prisma.akun.findUnique({
                 where: {
-                    ...HasilDecrypt
+                    id: verifikasi
                 },
                 select: {
                     email: true,

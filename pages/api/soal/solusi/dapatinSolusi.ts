@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { verify } from '../../../../services/jwt_sign';
-import { DapatinSQL, parseCookies } from "../../../../database/db";
-import { decrypt } from "../../../../database/UbahKeHash";
-import { Komentar, Solusi } from "../../../../types/tipe";
+// import { verify } from '../../../../services/jwt_sign';
+// import { DapatinSQL, parseCookies } from "../../../../database/db";
+// import { decrypt } from "../../../../database/UbahKeHash";
+// import { Komentar, Solusi } from "../../../../types/tipe";
 import { prisma } from "../../../../database/prisma";
 import Verifikasi from "../../../../services/VerifikasiAkun";
 
@@ -11,7 +11,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
         const verifikasi = Verifikasi(req, res);
         if(typeof verifikasi === 'number') return res.status(verifikasi).send(`Error ${verifikasi}`);
 
-        const { idsoal, idsolusi } = req.body;
+        const { idsolusi, idsoal, lihat, berdasarkan } = req.body;
     
         const DataUser = await prisma.akun.findUnique({
             where: {
@@ -28,6 +28,11 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
             include: {
                 pembuat: true,
                 solusi: {
+                    where: {
+                        idusername: lihat === "sendiri" ? verifikasi : undefined,
+                        id: idsolusi
+                    },
+                    orderBy: berdasarkan === undefined ? undefined : berdasarkan === "kepintaran" ? { pintar: 'asc' } : { kapan: berdasarkan === "baru" ? 'asc' : 'desc' },
                     include: {
                         user: {
                             select: { username: true }
@@ -47,10 +52,12 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
         if(DataSoal === null) return res.status(404).send("Soal tidak ada");
 
         return res.json({
+            profile: DataUser.username,
             idsoal,
             soal: DataSoal,
             suka_ngk: JSON.parse(DataSoal.suka).includes(verifikasi),
-            JumlahSolusi: DataSoal.solusi.filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i).length,
+            ApakahSudahSelesai: DataSoal.solusi.map((v) => v.idusername).includes(verifikasi),
+            JumlahSolusi: DataSoal.solusi.filter((v, i, a) => a.findIndex((t) => t.idusername === v.idusername) === i).length,
             solusi: DataSoal.solusi.map((v) => {
                 return {
                     ...v,

@@ -1,20 +1,47 @@
 import Navbar from "../../components/navbar"
 import NextImage from "next/image";
-import { useState } from "react";
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { SettingProfile } from "../../types/tipe";
-import prisma from "../../database/prisma";
+import { prisma } from "../../database/prisma";
+import { getCookie, setCookie } from "cookies-next";
+import { decrypt } from "../../database/UbahKeHash";
+import jwt from 'jsonwebtoken';
+import Link from "next/link";
 
-export async function getServerSideProps(konteks: { params: { profile: string }, req: NextApiRequest }) {
+export async function getServerSideProps({ params, req, res }: { params: { profile: string }, req: NextApiRequest, res: NextApiResponse }) {
+    const infoakun = getCookie('infoakun', { req, res }) as string;
+    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
+
+    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
+        headers: { cookie: req.headers.cookie } as any
+    }).then(d => d.data);
+
+    setCookie('infoakun', DapatinToken, {
+        req, res,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/"
+    });
+
+    const DapatinUser = await prisma.akun.findUnique({
+        where: {
+            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
+        }
+    })
+
+    if (DapatinUser === null) return { redirect: { destination: '/login', permanent: false } };
+
     try {
         const data = await axios.post("http://localhost:3003/api/profile/dapatinProfile", {}, {
-            headers: { cookie: konteks.req.headers.cookie } as any
-        }).then(d => d.data);
+            headers: { cookie: req.headers.cookie } as any
+        });
 
         return {
             props: {
-                data
+                data: data.data,
             }
         }
     } catch (e) {
@@ -23,126 +50,153 @@ export async function getServerSideProps(konteks: { params: { profile: string },
 }
 
 export default function Edit({ data }: { data: SettingProfile }) {
-    const [Gambar, setGambar] = useState();
+    // const [Gambar, setGambar] = useState();
 
-    const UpdateProfile = async () => {
-        if ((document.getElementById('foto')! as HTMLInputElement).files!.length <= 0) return;
-        const formData = new FormData();
-        // formData.append("")
-        formData.append("file", (document.getElementById('foto')! as any).files[0]);
+    // const UpdateProfile = async () => {
+    //     console.log("Pencet update profile")
+    //     if ((document.getElementById('foto')! as HTMLInputElement).files!.length <= 0) return;
+    //     const formData = new FormData();
+    //     // formData.append("")
+    //     formData.append("file", (document.getElementById('foto')! as any).files[0]);
+    //     formData.append("nama", "Muhammad Rafi athallah");
 
-        try {
-            const res = await axios({
-                method: "post",
-                url: "/api/profile/updateProfile",
-                data: formData,
-                headers: { "Content-Type": "multipart/form-data" }
-            });
-            console.log("data", res);
-        } catch (e) {
-            console.log(e);
-        }
+    //     try {
+    //         // axios({
+    //         //     method: "post",
+    //         //     url: "/api/profile/updateProfile",
+    //         //     data: {},
+    //         //     headers: { "Content-Type": "multipart/form-data" }
+    //         // }).then((res) => {
+    //         //     console.log(res);
+    //         // });
+    //         // console.log("data", res);
+    //     } catch (e) {
+    //         console.log(e);
+    //     }
+    // }
 
-    }
+    // const GantiGambarProfile = () => {
+    //     document.getElementById('foto')!.click();
+    // }
 
-    const GantiGambarProfile = () => {
-        document.getElementById('foto')!.click();
-    }
+    // const InputGantiProfil = () => {
+    //     const [file]: [file: File] = (document.getElementById('foto')! as any).files;
+    //     if (file) {
+    //         if (parseFloat((file.size / (1024 * 1024)).toFixed(2)) < 1.5) {
+    //             // (document.getElementById('Gambar')! as HTMLImageElement).src = URL.createObjectURL(file);
+    //             // setGambar(URL.createObjectURL(file) as any);
 
-    const InputGantiProfil = () => {
-        const [file]: [file: File] = (document.getElementById('foto')! as any).files;
-        if (file) {
-            if (parseFloat((file.size / (1024 * 1024)).toFixed(2)) < 1.5) {
-                // (document.getElementById('Gambar')! as HTMLImageElement).src = URL.createObjectURL(file);
-                // setGambar(URL.createObjectURL(file) as any);
+    //             var reader = new FileReader();
+    //             reader.readAsDataURL(file);
 
-                var reader = new FileReader();
-                reader.readAsDataURL(file);
+    //             reader.onload = function (e) {
+    //                 let gambar = new Image;
+    //                 gambar.src = e.target!.result as any;
+    //                 var canvas = document.createElement("canvas");
+    //                 var ctx = canvas.getContext("2d")!;
 
-                reader.onload = function (e) {
-                    let gambar = new Image;
-                    gambar.src = e.target!.result as any;
-                    var canvas = document.createElement("canvas");
-                    var ctx = canvas.getContext("2d")!;
-
-                    gambar.onload = function () {
-                        ctx.drawImage(gambar, 0, 0, 300, 150);
-                        var dataurl = canvas.toDataURL(file as any);
-                        var head = 'data:image/png;base64,';
-                        var imgFileSize = Math.round((dataurl.length - head.length) * 3 / 4);
-                        console.log(parseFloat((imgFileSize / (1024 * 1024)).toFixed(2)));
-                        setGambar(dataurl as any);
-                    }
-                }
-            }
-        }
-    }
+    //                 gambar.onload = function () {
+    //                     ctx.drawImage(gambar, 0, 0, 300, 150);
+    //                     var dataurl = canvas.toDataURL(file as any);
+    //                     var head = 'data:image/png;base64,';
+    //                     var imgFileSize = Math.round((dataurl.length - head.length) * 3 / 4);
+    //                     console.log(parseFloat((imgFileSize / (1024 * 1024)).toFixed(2)));
+    //                     setGambar(dataurl as any);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     return (
         <>
-            <Navbar />
+            <Navbar profile={data.username} />
             <style>{`
             .gambarProfile:hover {
                 cursor: pointer;
             }
             `}</style>
             <div className="container-xl">
-                <div className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
-                    <span className="text-white fs-5">Profile</span>
-                    <div className="row p-2 mb-2">
-                        <div className="col">
-                            <div className="mb-1">
-                                <div className="text-white mb-2">Nama</div>
-                                <input defaultValue={data.name} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
-                            </div>
-                            <div className="mb-1">
-                                <div className="text-white mb-2">Tinggal</div>
-                                <input defaultValue={data.tinggal} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
-                            </div>
-                            <div className="mb-1">
-                                <div className="text-white mb-2">Bio</div>
-                                <textarea defaultValue={data.bio} className="form-control" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
-                            </div>
-                            <div className="mb-1">
-                                <div className="text-white mb-2">URL</div>
-                                <input defaultValue={data.website} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
-                            </div>
-                        </div>
-                        <div className="col-2">
+                <form action="/api/profile/updateProfile" method="POST">
+                    <fieldset>
+                        <div className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
+                            <span className="text-white fs-5">Profile</span>
+                            <div className="row p-2 mb-2">
+                                <div className="col">
+                                    <div className="mb-1">
+                                        <div className="text-white mb-2">Nama</div>
+                                        <input defaultValue={data.nama} name="nama" className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                    </div>
+                                    <div className="mb-1">
+                                        <div className="text-white mb-2">Tinggal</div>
+                                        <input defaultValue={data.tinggal} name="tinggal" className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                    </div>
+                                    <div className="mb-1">
+                                        <div className="text-white mb-2">Bio</div>
+                                        <textarea defaultValue={data.bio} name="bio" className="form-control" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                    </div>
+                                    <div className="mb-1">
+                                        <div className="text-white mb-2">URL</div>
+                                        <input defaultValue={data.website} name="website" className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                    </div>
+                                </div>
+                                {/* <div className="col-2">
                             <div>
                                 <span className="mb-2 text-white">Gambar profile</span>
                                 <input type="file" id="foto" accept="image/*" onChange={InputGantiProfil} hidden />
                                 <NextImage className="rounded-1 gambarProfile" src={Gambar || "/profile.jpeg"} id="Gambar" width={200} height={200} alt="Profile kamu yang sangat keren, sepertinya" onClick={GantiGambarProfile} />
-                                {/* <p style={{color: "#802520"}}>Ukuran gambar terlalu besar!</p> */}
+                                <p style={{color: "#802520"}}>Ukuran gambar terlalu besar!</p>
+                            </div>
+                        </div> */}
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div className="p-3 mb-3 rounded-2" style={{ backgroundColor: "rgb(48, 48, 48)" }}>
-                    <span className="text-white fs-5">Akun</span>
-                    <div className="p-2">
-                        <div className="mb-2 w-100 row row-cols-2">
-                            <div className="col mb-1">
-                                <div className="text-white mb-2">Username</div>
-                                <input defaultValue={data.username} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                    </fieldset>
+                    <fieldset>
+                        <div className="p-3 mb-3 rounded-2" style={{ backgroundColor: "rgb(48, 48, 48)" }}>
+                            <span className="text-white fs-5">Akun</span>
+                            <div className="p-2 mb-3">
+                                <div className="mb-3 w-100 row g-3">
+                                    <div className="col-md-6 mb-1">
+                                        <div className="text-white mb-2">Username</div>
+                                        <input defaultValue={data.username} name="username" className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                    </div>
+                                    <div className="col-md-6 mb-1">
+                                        <div className="text-white mb-2">
+                                            <span className="me-2">Email</span>
+                                            {data.sudahVerifikasi ?
+                                                <i title="Email sudah terverifikasi" className="bi bi-check-lg" style={{ color: "#32a852" }}></i>
+                                                :
+                                                <button style={{ background: "#3264a8", color: "white", border: "0px solid", padding: "0px 10px 0px 10px" }}>Verifikasi</button>
+                                            }
+                                        </div>
+                                        <input defaultValue={data.email} name="email" className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                                    </div>
+                                </div>
+                                <a href={'/profile/password/gantipassword'} className="p-2 text-decoration-none rounded-1 text-white" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>Ganti Password</a>
                             </div>
-                            <div className="col mb-1">
-                                <div className="text-white mb-2">Email</div>
-                                <input defaultValue={data.email} className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
+                            <span className="text-white fs-5">Social</span>
+                            <div className="p-2">
+                                <div className="d-flex flex-column">
+                                    {data.githuburl === null ?
+                                        <Link href={`/profile/github/hubungin`}>
+                                            <button type="button" className="mb-1 p-1 rounded-1 text-white text-center" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>
+                                                <i className="ms-2 bi bi-github"></i>
+                                                <span className="ms-2">Hubungkan ke github</span>
+                                            </button>
+                                        </Link>
+                                        :
+                                        <button type="button" className="mb-1 p-1 rounded-1 text-white text-center" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>
+                                            <i className="ms-2 bi bi-github"></i>
+                                            <span className="ms-2">Github sudah terhubung dengan username {data.githuburl.split('/').pop()}</span>
+                                        </button>
+                                    }
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <span className="text-white fs-5">Social</span>
-                    <div className="p-2">
-                        <div className="d-flex flex-column">
-                            <button className="mb-1 p-1 rounded-1 text-white text-center" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>
-                                <i className="ms-2 bi bi-github"></i>
-                                <span className="ms-2">Hubungkan ke github</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-3 mb-3 rounded-2" style={{ backgroundColor: "rgb(48, 48, 48)" }}>
+                    </fieldset>
+                    <input type="submit" value={"UPDATE"} className="rounded-1" style={{ backgroundColor: "rgb(100, 100, 100)", border: "0px solid transparent", color: "rgb(230, 230, 230)", width: "5rem", height: "2rem" }} />
+                </form>
+                {/* <div className="p-3 mb-3 rounded-2" style={{ backgroundColor: "rgb(48, 48, 48)" }}>
                     <span className="text-white fs-5">Password</span>
                     <div className="p-2">
                         <div className="w-100 row row-cols-2">
@@ -164,11 +218,8 @@ export default function Edit({ data }: { data: SettingProfile }) {
                             </div>
                         </div>
                     </div>
-                </div>
-                <button className="rounded-1" onClick={UpdateProfile} style={{ backgroundColor: "rgb(100, 100, 100)", border: "0px solid transparent", color: "rgb(230, 230, 230)", width: "5rem", height: "2rem" }}>
-                    UPDATE
-                </button>
-            </div>
+                </div> */}
+            </div >
         </>
     )
 }

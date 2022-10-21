@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import { encrypt } from "../../database/UbahKeHash";
 import { DapatinSQL } from '../../database/db';
 import { prisma } from '../../database/prisma';
+import { setCookie } from 'cookies-next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 	if(req.method === "POST") {
@@ -40,25 +41,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				data: {
 					perbaruiToken: PerbaruiToken
 				}
-			})
-
-			const hasilKue = kue.serialize("infoakun", token, {
-				httpOnly: true,
-				secure: process.env.NODE_ENV !== "development",
-				sameSite: "strict",
-				maxAge: 60 * 60 * 24 * 30,
-				path: "/"
 			});
 
-			const hasilPerbaruiKue = kue.serialize("perbaruitoken", PerbaruiToken, {
-				httpOnly: true,
-				secure: process.env.NODE_ENV !== 'development',
-				sameSite: "strict",
-				maxAge: 60 * 60 * 24 * 30,
-				path: '/'
-			});
+			setCookie('infoakun', token, {req, res, httpOnly: true, secure: process.env.NODE_ENV !== "development", sameSite: 'strict', maxAge: 60 * 60 * 24 * 30, path: '/'})
+			setCookie('perbaruitoken', PerbaruiToken, {req, res, httpOnly: true, secure: process.env.NODE_ENV !== "development", sameSite: 'strict', maxAge: 60 * 60 * 24 * 30, path: '/'})
 
-			res.setHeader("Set-Cookie", [hasilKue, hasilPerbaruiKue]);
+			// const hasilKue = kue.serialize("infoakun", token, {
+			// 	httpOnly: true,
+			// 	secure: process.env.NODE_ENV !== "development",
+			// 	sameSite: "strict",
+			// 	maxAge: 60 * 60 * 24 * 30,
+			// 	path: "/"
+			// });
+
+			// const hasilPerbaruiKue = kue.serialize("perbaruitoken", PerbaruiToken, {
+			// 	httpOnly: true,
+			// 	secure: process.env.NODE_ENV !== 'development',
+			// 	sameSite: "strict",
+			// 	maxAge: 60 * 60 * 24 * 30,
+			// 	path: '/'
+			// });
+
+			// res.setHeader("Set-Cookie", [hasilKue, hasilPerbaruiKue]);
 			return res.json({ kondisi: "benar" });
 		}
 

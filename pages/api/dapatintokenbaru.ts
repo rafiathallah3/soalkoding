@@ -11,6 +11,9 @@ export default async function DapatinTokenBaru(req: NextApiRequest, res: NextApi
         const DapatinUser = await prisma.akun.findFirst({
             where: {
                 perbaruiToken: PerbaruiToken as string
+            },
+            select: {
+                username: true
             }
         });
         if(!DapatinUser) return res.status(403).send("Forbidden");

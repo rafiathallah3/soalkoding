@@ -61,22 +61,25 @@ model Solusi {
 }
 
 model Akun {
-  id            String     @id @default(cuid())
+  id              String     @id @default(cuid())
   // userid      String  @db.VarChar(20)
-  username      String     @unique @db.VarChar(20)
-  nama          String?    @db.VarChar(35)
-  email         String     @unique @db.VarChar(30)
-  password      String     @db.VarChar(60)
-  soalselesai   Solusi[]
-  buatsoal      Soal[]
-  komentar      Komentar[]
-  bio           String?    @db.VarChar(65)
-  tinggal       String?    @db.VarChar(30)
-  githuburl     String?    @db.TinyText
-  webiste       String?    @db.TinyText
-  perbaruiToken String?    @db.Text
-  bikin         DateTime   @default(now())
-  terminate     Boolean    @default(false)
+  username        String     @unique @db.VarChar(20)
+  nama            String?    @db.VarChar(35)
+  email           String     @unique @db.VarChar(30)
+  password        String     @db.VarChar(60)
+  githubstate     String?    @db.VarChar(30)
+  soalselesai     Solusi[]
+  buatsoal        Soal[]
+  komentar        Komentar[]
+  gambarurl       String     @default("/gambar/profile.png")
+  sudahVerifikasi Boolean    @default(false)
+  bio             String?    @db.VarChar(65)
+  tinggal         String?    @db.VarChar(30)
+  githuburl       String?    @db.TinyText
+  website         String?    @db.TinyText
+  perbaruiToken   String?    @db.Text
+  bikin           DateTime   @default(now())
+  terminate       Boolean    @default(false)
 
   @@map("akun")
 }

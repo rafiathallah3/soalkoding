@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Background from '../components/background';
 import Navbar from '../components/navbar';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getCookie, setCookie } from 'cookies-next';
+import { deleteCookie, getCookie, setCookie } from 'cookies-next';
 import jwt from 'jsonwebtoken';
 import { decrypt } from '../database/UbahKeHash';
 import { prisma } from '../database/prisma';
@@ -12,18 +12,29 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
     const infoakun = getCookie('infoakun', { req, res }) as string;
     if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
 
-    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-        headers: { cookie: req.headers.cookie } as any
-    }).then(d => d.data);
+    try {
+        var DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
+            headers: { cookie: req.headers.cookie } as any
+        }).then(d => d.data);
 
-    setCookie('infoakun', DapatinToken, {
-        req, res,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/"
-    });
+        setCookie('infoakun', DapatinToken, {
+            req, res,
+            httpOnly: true,
+            secure: process.env.NODE_ENV !== "development",
+            sameSite: "strict",
+            maxAge: 60 * 60 * 24 * 30,
+            path: "/"
+        });
+    } catch {
+        deleteCookie('infoakun', { req, res });
+        deleteCookie('perbaruitoken', { req, res });
+        return {
+            redirect: {
+                destination: "/login",
+                permanent: false
+            }
+        }
+    }
 
     const DapatinUser = await prisma.akun.findUnique({
         where: {

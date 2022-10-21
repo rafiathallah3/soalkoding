@@ -32,32 +32,49 @@ export default function Navbar({ profile = '' }) {
                         </Link>
                     </li>
                 </ul>
-                <ul className="navbar-nav ms-auto px-4 barangnavbar">
-                    <li className='nav-item me-4 align-self-center'>
-                        <i className='bi bi-bell-fill text-white fs-3'></i>
-                    </li>
-                    <li className="nav-item dropdown-center">
-                        <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-                            <Image src="/profile.jpeg" className="rounded me-2 text-white" height={40} width={48} alt="Potret seorang wanita cantik" />
-                            <h4 className='text-white text-center align-middle'>100</h4>
-                        </a>
-                        <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{ minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black" }}>
-                            <li>
-                                <a className="dropdown-item" href={"/profile/" + profile}><i className='bi bi-person-circle'></i> My profile</a>
+                <ul className={"navbar-nav ms-auto px-4 barangnavbar " + (profile === '' ? 'p-2' : '')}>
+                    {profile !== '' ?
+                        <>
+                            <li className='nav-item me-4 align-self-center'>
+                                <i className='bi bi-bell-fill text-white fs-3'></i>
                             </li>
-                            <li>
-                                <a className="dropdown-item" href={"/profile/edit"}><i className='bi bi-gear-fill'></i> Settings</a>
+                            <li className="nav-item dropdown-center">
+                                <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                    <Image src="/gambar/profile.png" className="rounded me-2 text-white" height={40} width={48} alt="Potret seorang wanita cantik" />
+                                    <h4 className='text-white text-center align-middle'>100</h4>
+                                </a>
+                                <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{ minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black" }}>
+                                    <li>
+                                        <a className="dropdown-item" href={"/profile/" + profile}><i className='bi bi-person-circle'></i> My profile</a>
+                                    </li>
+                                    <li>
+                                        <a className="dropdown-item" href={"/profile/edit"}><i className='bi bi-gear-fill'></i> Settings</a>
+                                    </li>
+                                    <li>
+                                        <hr className='dropdown-divider' style={{ borderColor: "rgb(102, 102, 102)" }} />
+                                    </li>
+                                    <li>
+                                        <a className="dropdown-item" style={{ cursor: "pointer" }} onClick={() => { (document.getElementById('keluarakun') as HTMLFormElement).submit() }}> <i className='bi bi-arrow-left'></i> Logout </a>
+                                        <form action="/api/logout" method='POST' id="keluarakun">
+                                        </form>
+                                    </li>
+                                </ul>
                             </li>
-                            <li>
-                                <hr className='dropdown-divider' style={{ borderColor: "rgb(102, 102, 102)" }} />
+                        </>
+                        :
+                        <>
+                            <li className='nav-item me-1 align-self-center p-2'>
+                                <Link href={'/login'}>
+                                    <a className="text-decoration-none" style={{ padding: "6px", background: "rgb(48, 48, 48)", color: "white", border: '0px solid' }}>Masuk</a>
+                                </Link>
                             </li>
-                            <li>
-                                <a className="dropdown-item" style={{ cursor: "pointer" }} onClick={() => { (document.getElementById('keluarakun') as HTMLFormElement).submit() }}> <i className='bi bi-arrow-left'></i> Logout </a>
-                                <form action="/api/logout" method='POST' id="keluarakun">
-                                </form>
+                            <li className='nav-item me-1 align-self-center p-2'>
+                                <Link href={'/register'}>
+                                    <a className="text-decoration-none" style={{ padding: "6px", background: "rgb(48, 48, 48)", color: "white", border: '0px solid' }}>Register</a>
+                                </Link>
                             </li>
-                        </ul>
-                    </li>
+                        </>
+                    }
                 </ul>
             </div>
         </nav>
