@@ -1,54 +1,33 @@
-import axios from "axios";
-import { deleteCookie, getCookie, setCookie } from "cookies-next";
 import { NextApiRequest, NextApiResponse } from "next"
 import { prisma } from "../../../database/prisma";
-import { decrypt } from "../../../database/UbahKeHash";
-import jwt from 'jsonwebtoken';
+import { UpdateInfoAkun } from "../../../services/Servis";
+import { Akun } from "@prisma/client";
+import kuripto from 'crypto';
+import { setCookie } from "cookies-next";
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const infoakun = getCookie('infoakun', { req, res }) as string;
-    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { akungithub: { username: string } } & { redirect: string };
+    const hasil = kuripto.randomBytes(10).toString('hex');
+    const params = `client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=http://localhost:3003/api/auth/callback/github&response_type=code&scope=read:user,user:email&state=${hasil}`;
 
-    try {
-        var DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-            headers: { cookie: req.headers.cookie } as any
-        }).then(d => d.data);
+    if (DapatinUser.redirect !== undefined) {
+        setCookie('IniStateGithub_NantiJugaDihapus', hasil, { req, res, maxAge: 30 });
 
-        setCookie('infoakun', DapatinToken, {
-            req, res,
-            httpOnly: true,
-            secure: process.env.NODE_ENV !== "development",
-            sameSite: "strict",
-            maxAge: 60 * 60 * 24 * 30,
-            path: "/"
-        });
-    } catch {
-        deleteCookie('infoakun', { req, res });
-        deleteCookie('perbaruitoken', { req, res });
         return {
             redirect: {
-                destination: "/login",
-                permanent: false
+                permanent: false,
+                destination: `https://github.com/login/oauth/authorize?${params}`
             }
         }
     }
+    if (DapatinUser.akungithub !== null) return { redirect: { destination: '/login' } }
 
-    const DapatinUser = await prisma.akun.findUnique({
-        where: {
-            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
-        }
-    })
+    // let huruf = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    // let hasil = '';
+    // for (let i = 0; i < 20; i++) {
+    //     hasil += huruf.charAt(Math.floor(Math.random() * huruf.length));
+    // }
 
-    if (DapatinUser === null) return { redirect: { destination: '/login', permanent: false } };
-    if (DapatinUser.githuburl !== null) return { redirect: { destination: '/login' } }
-
-    let huruf = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let hasil = '';
-    for (let i = 0; i < 20; i++) {
-        hasil += huruf.charAt(Math.floor(Math.random() * huruf.length));
-    }
-
-    console.log(hasil);
     await prisma.akun.update({
         where: {
             id: DapatinUser.id
@@ -61,7 +40,7 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
     return {
         redirect: {
             permanent: false,
-            destination: `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=http%3A%2F%2Flocalhost:3003%2Fapi%2Fcallback&response_type=code&scope=read%3Auser%2Cuser%3Aemail&state=${hasil}`
+            destination: `https://github.com/login/oauth/authorize?${params}`
         }
     }
 }

@@ -7,6 +7,16 @@ export default async function Register(req: NextApiRequest, res: NextApiResponse
     if(req.method === "POST") {
         const { username, email, password } = req.body;
 
+        if(username.replace(/\s\s+/g, ' ').trim().length <= 4) 
+            return res.status(404).send("Username harus lebih dari 4 karakter!");
+
+        if(email.replace(/\s\s+/g, ' ').trim().length <= 10)
+            return res.status(404).send("Email harus lebih dari 10 karakter!");
+
+        if(password.replace(/\s\s+/g, ' ').trim().length <= 8) 
+            return res.status(404).send("Password harus lebih dari 8 karakter!");
+        
+
         const ApakahAdaEmailDanUsername = await prisma.akun.findMany({
             where: {
                 OR: [
@@ -28,9 +38,9 @@ export default async function Register(req: NextApiRequest, res: NextApiResponse
         console.log(ApakahAdaEmailDanUsername);
         if(ApakahAdaEmailDanUsername.length <= 0) {
             const garam = await bcrypt.genSalt();
-            const HashPassword = await bcrypt.hash(password, garam);
+            const HashPassword = await bcrypt.hash(password.replace(/\s\s+/g, ' ').trim(), garam);
 
-            const data = await prisma.akun.create({
+            await prisma.akun.create({
                 data: {
                     username,
                     email,

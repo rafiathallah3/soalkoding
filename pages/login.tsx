@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Link from 'next/link';
-import { SyntheticEvent, useState } from 'react';
+import { SyntheticEvent, useEffect, useState } from 'react';
 import Router from "next/router";
 import Background from '../components/background';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -22,17 +22,21 @@ export default function Login() {
         e.preventDefault();
         setAdaError('');
         const { email, password } = e.target as any;
-        const data: { kondisi: string } = await axios.post("/api/login", {
+        const data = await axios.post("/api/login", {
             email: email.value,
             password: password.value
         }).then(d => d.data);
 
-        if (data.kondisi === "benar") {
+        if (data === "benar") {
             Router.push("/dashboard");
         } else {
             setAdaError('Password atau Email SALAH!');
         }
     }
+
+    useEffect(() => {
+        setAdaError(!getCookie('notif') ? undefined : JSON.parse(getCookie('notif') as string).pesan)
+    }, []);
 
     //next auth js
     return (
@@ -68,7 +72,7 @@ export default function Login() {
                                     <hr className="my-4 text-white" />
 
                                     <div className="d-grid">
-                                        <Link href={"https://github.com/login/oauth/authorize?client_id=25bed176db5b6ad0e239&scope=read:user,user:email"}>
+                                        <Link href={"/profile/github/hubungin"}>
                                             <button className="btn btn-dark" style={{ backgroundColor: "rgb(41, 41, 41)" }}>
                                                 <i className="bi bi-github"></i> Masuk dengan GitHub
                                             </button>

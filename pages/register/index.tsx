@@ -2,7 +2,7 @@ import Link from "next/link";
 import axios from 'axios';
 import { SyntheticEvent, useState } from "react";
 import Router from "next/router";
-import Background from "../components/background";
+import Background from "../../components/background";
 
 export default function Register() {
     const [AdaError, setAdaError] = useState('');

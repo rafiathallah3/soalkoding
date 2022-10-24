@@ -11,7 +11,7 @@ export interface SettingProfile {
     nama: string,
     bio: string
     tinggal: string,
-    githuburl: string,
+    akungithub?: { username: string },
     sudahVerifikasi: boolean,
     gambarurl: string,
     website: string,
@@ -24,7 +24,7 @@ export interface APIProfileGithub {
     avatar_url: string,
     location: string,
     bio: string,
-    html_url: string
+    html_url: string,
 }
 
 export interface APIEmailsGithub {
@@ -85,4 +85,10 @@ export interface DataSolusi {
         pembuat: { username: string },
         suka: string,
     }
+}
+
+export enum WarnaStatus {
+    kuning = "#9ba308",
+    biru = "blue",
+    merah = "red"
 }

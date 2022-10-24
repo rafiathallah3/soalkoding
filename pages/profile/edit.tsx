@@ -3,45 +3,24 @@ import NextImage from "next/image";
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { SettingProfile } from "../../types/tipe";
-import { prisma } from "../../database/prisma";
-import { getCookie, setCookie } from "cookies-next";
-import { decrypt } from "../../database/UbahKeHash";
-import jwt from 'jsonwebtoken';
 import Link from "next/link";
+import { UpdateInfoAkun } from '../../services/Servis';
+import { Akun } from "@prisma/client";
+import { getCookie } from "cookies-next";
+import { useEffect, useState } from "react";
 
-export async function getServerSideProps({ params, req, res }: { params: { profile: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const infoakun = getCookie('infoakun', { req, res }) as string;
-    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
-
-    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-        headers: { cookie: req.headers.cookie } as any
-    }).then(d => d.data);
-
-    setCookie('infoakun', DapatinToken, {
-        req, res,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/"
-    });
-
-    const DapatinUser = await prisma.akun.findUnique({
-        where: {
-            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
-        }
-    })
-
-    if (DapatinUser === null) return { redirect: { destination: '/login', permanent: false } };
+export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
         const data = await axios.post("http://localhost:3003/api/profile/dapatinProfile", {}, {
             headers: { cookie: req.headers.cookie } as any
-        });
+        }).then(d => d.data);
 
         return {
             props: {
-                data: data.data,
+                data,
             }
         }
     } catch (e) {
@@ -50,6 +29,11 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
 }
 
 export default function Edit({ data }: { data: SettingProfile }) {
+    const [Notif, setNotif] = useState<{ status: string, pesan: string } | undefined>(undefined);
+
+    useEffect(() => {
+        setNotif(!getCookie('notif') ? undefined : JSON.parse(getCookie('notif') as string))
+    }, [])
     // const [Gambar, setGambar] = useState();
 
     // const UpdateProfile = async () => {
@@ -117,6 +101,9 @@ export default function Edit({ data }: { data: SettingProfile }) {
             }
             `}</style>
             <div className="container-xl">
+                {Notif &&
+                    <div className="mb-2 text-white p-2" style={{ background: `${Notif.status}` }}>{Notif.pesan}</div>
+                }
                 <form action="/api/profile/updateProfile" method="POST">
                     <fieldset>
                         <div className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
@@ -177,7 +164,7 @@ export default function Edit({ data }: { data: SettingProfile }) {
                             <span className="text-white fs-5">Social</span>
                             <div className="p-2">
                                 <div className="d-flex flex-column">
-                                    {data.githuburl === null ?
+                                    {!data.akungithub ?
                                         <Link href={`/profile/github/hubungin`}>
                                             <button type="button" className="mb-1 p-1 rounded-1 text-white text-center" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>
                                                 <i className="ms-2 bi bi-github"></i>
@@ -185,10 +172,15 @@ export default function Edit({ data }: { data: SettingProfile }) {
                                             </button>
                                         </Link>
                                         :
-                                        <button type="button" className="mb-1 p-1 rounded-1 text-white text-center" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>
-                                            <i className="ms-2 bi bi-github"></i>
-                                            <span className="ms-2">Github sudah terhubung dengan username {data.githuburl.split('/').pop()}</span>
-                                        </button>
+                                        <div className="btn-group">
+                                            <div className="me-3 p-1 w-100 rounded-1 text-white text-center" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>
+                                                <i className="ms-2 bi bi-github"></i>
+                                                <span className="ms-2">Github sudah terhubung dengan username {data.akungithub.username}</span>
+                                            </div>
+                                            <Link href={'/profile/github/putusin'}>
+                                                <button className="p-1 w-25 rounded-1 text-white text-center" style={{ backgroundColor: "rgb(40, 40, 40)", border: "1px solid rgb(100, 100, 100)" }}>Putuskan github</button>
+                                            </Link>
+                                        </div>
                                     }
                                 </div>
                             </div>

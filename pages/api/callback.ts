@@ -7,6 +7,7 @@ import { APIEmailsGithub, APIProfileGithub } from '../../types/tipe';
 // import jwt from 'jsonwebtoken';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    console.log(req.cookies);
     const { code, state } = req.query;
     
     const DataAkun = await prisma.akun.findFirst({
@@ -79,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     //       private_repos: 10000
     //     }
     //   }
-
+    
     if(DataAkun !== null) {
         // if(Object.keys(req.cookies).length === 0) {
         //     const EncryptData = encrypt(JSON.stringify({id: DataAkun.id}));

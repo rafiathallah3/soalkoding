@@ -3,35 +3,14 @@ import Image from "next/image"
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { DataProfile } from "../../types/tipe";
-import { getCookie, setCookie } from "cookies-next";
-import { prisma } from "../../database/prisma";
-import { decrypt } from "../../database/UbahKeHash";
-import jwt from 'jsonwebtoken';
-import Link from "next/link";
+import { getCookie } from "cookies-next";
 import { useState } from "react";
+import { UpdateInfoAkun } from "../../services/Servis";
+import { Akun } from "@prisma/client";
 
 export async function getServerSideProps({ params, req, res }: { params: { profile: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const infoakun = getCookie('infoakun', { req, res }) as string;
-    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
-
-    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-        headers: { cookie: req.headers.cookie } as any
-    }).then(d => d.data);
-
-    setCookie('infoakun', DapatinToken, {
-        req, res,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/"
-    });
-
-    const DapatinUser = await prisma.akun.findUnique({
-        where: {
-            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
-        }
-    });
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
         const data = await axios.post("http://localhost:3003/api/profile/dapatinProfile", {

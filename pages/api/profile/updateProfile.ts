@@ -1,7 +1,9 @@
 import { setCookie } from "cookies-next";
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../database/prisma";
+import { KirimNotifikasi } from "../../../services/Servis";
 import Verifikasi from "../../../services/VerifikasiAkun";
+import { WarnaStatus } from "../../../types/tipe";
 
 export default async function updateProfile(req: NextApiRequest, res: NextApiResponse) {
 	if(req.method === "POST") {
@@ -10,16 +12,23 @@ export default async function updateProfile(req: NextApiRequest, res: NextApiRes
 
 		const { nama, tinggal, bio, url, username, email } = req.body;
 		//filter
+
+		if(username.replace(/\s\s+/g, ' ').trim().length <= 3) {
+			KirimNotifikasi(WarnaStatus.kuning, "Ada yang salah saat mengupdate profile", { req, res });
+			return res.redirect("/profile/edit");
+		}
+
 		await prisma.akun.update({
 			where: {
 				id: verifikasi
 			},
 			data: {
-				...req.body
+				...req.body,
+				username: username.replace(/\s\s+/g, ' ').trim()
 			}
 		});
 
-		setCookie('infoedit', 'Profile sudah berhasil di update', {req, res, httpOnly: false, maxAge: 10});
+		KirimNotifikasi(WarnaStatus.biru, "Profile sudah berhasil di update", { req, res });
 		return res.redirect('/profile/'+username);
 	}
 	return res.status(405).send("Error: 405");

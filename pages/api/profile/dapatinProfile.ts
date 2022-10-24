@@ -20,7 +20,6 @@ export default async function dapatinProfile(req: NextApiRequest, res: NextApiRe
                     nama: true,
                     bio: true,
                     tinggal: true,
-                    githuburl: true,
                     terminate: true,
                     bikin: true,
                     gambarurl: true,
@@ -38,6 +37,11 @@ export default async function dapatinProfile(req: NextApiRequest, res: NextApiRe
                             },
                             kapan: true,
                             bahasa: true,
+                        }
+                    },
+                    akungithub: {
+                        select: {
+                            username: true
                         }
                     }
                 }
@@ -64,10 +68,14 @@ export default async function dapatinProfile(req: NextApiRequest, res: NextApiRe
                     nama: true,
                     bio: true,
                     tinggal: true,
-                    githuburl: true,
+                    akungithub: {
+                        select: {
+                            username: true
+                        }
+                    },
                 }
             });
-
+            
             return res.json({
                 ...DataUser,
             })
