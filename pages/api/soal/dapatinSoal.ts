@@ -22,6 +22,14 @@ export default async function dapatinSoal(req: NextApiRequest, res: NextApiRespo
                     select: {
                         username: true
                     }
+                },
+                kumpulanjawaban: {
+                    select: {
+                        listjawaban: true,
+                        contohjawaban: true,
+                        liatankode: true,
+                        bahasa: true
+                    }
                 }
             }
         });

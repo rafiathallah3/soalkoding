@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getCookie, setCookie } from "cookies-next";
 import { NextApiRequest, NextApiResponse } from "next";
 import dynamic from "next/dynamic";
 import Router from "next/router";
@@ -11,48 +10,38 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Background from "../../../components/background";
 import Navbar from "../../../components/navbar";
 import styles from '../../../styles/latihan.module.css'
-import jwt from 'jsonwebtoken';
-import { DataSoal, HasilJawaban } from "../../../types/tipe";
+import { DataSoal, HasilJawaban, HasilKompiler } from "../../../types/tipe";
 import { prisma } from "../../../database/prisma";
-import { decrypt } from "../../../database/UbahKeHash";
+import { UpdateInfoAkun } from "../../../services/Servis";
+import { Akun } from "@prisma/client";
 
 const CodeEditor = dynamic(import('../../../components/codeEditor'), { ssr: false });
 
 export async function getServerSideProps({ params, req, res }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const infoakun = getCookie('infoakun', { req, res }) as string;
-    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    if (DapatinUser.redirect !== undefined) return DapatinUser;
 
-    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-        headers: { cookie: req.headers.cookie } as any
-    }).then(d => d.data);
-
-    setCookie('infoakun', DapatinToken, {
-        req, res,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/"
+    const DataSoal = await prisma.soal.findUnique({
+        where: {
+            id: params.soal
+        },
+        select: {
+            public: true
+        }
     });
 
-    const DapatinUser = await prisma.akun.findUnique({
-        where: {
-            id: JSON.parse(decrypt((jwt.verify(DapatinToken, process.env.TOKENRAHASIA!) as any).datanya)).id
-        }
-    })
-
-    if (DapatinUser === null) return { redirect: { destination: '/login', permanent: false } };
+    if (DataSoal === null || !DataSoal.public) return { notFound: true }
 
     try {
         const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
             idsoal: params.soal
         }, {
             headers: { cookie: req.headers.cookie } as any
-        });
+        }).then(d => d.data);
 
         return {
             props: {
-                data: data.data,
+                data,
                 profile: DapatinUser.username
             }
         }
@@ -66,91 +55,9 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
     }
 }
 
-const ListBahasaProgram = {
-    "71": "python",
-    "63": "javascript",
-    "74": "typescript",
-    "54": "c_cpp",
-    "64": "lua",
-    "73": "rust",
-    "72": "ruby"
-}
-
-const ListKode = {
-    "71": `def Solusi(angka, list_bulatan):
-    hasil = [0]*len(list_bulatan)
-    for i,v in enumerate(list_bulatan): 
-        total = 0
-        t = False
-        listc = [] 
-        for j in angka:
-            if((v / j).is_integer()):
-                total = v//j
-                t = True
-                listc.append(total)
-
-        if t: 
-            hasil[i] = min(listc)
-            continue
-
-        d = False
-        while v >= hasil[i]:
-            if(hasil[i] + max(angka) > v):
-                c = (hasil[i]+max(angka)) - v
-                if c in angka:
-                    total += 1
-                    hasil[i] = total
-                else: 
-                    hasil[i] = 0
-                    d = True
-
-                break
-            
-            hasil[i] += max(angka)
-            total += 1
-        
-        if not d:
-            hasil[i] = total
-
-    return hasil
-
-    # if __name__ == "__main__":
-    # def ApakahSama(fungsi, parameter, jawaban):
-    #     try:
-    #         hasil = fungsi(*parameter)
-    #         return {"hasil": str(hasil) if hasil == None else hasil, "jawaban": jawaban, "status": "Sukses"}
-    #     except Exception as e:
-    #         import base64
-    #         return {"hasil": base64.b64encode(str(e).encode('utf-8')).decode('utf-8'), "jawaban": jawaban, "status": "Error"}
-    
-    # print(ApakahSama(Solusi, (5, 6), 30))
-    # print(ApakahSama(Solusi, (3, 10), 30))
-    # print(ApakahSama(Solusi, (5, 2), 30))`,
-    "63": `function Solusi() {
-    console.log("Solusi");
-}`,
-    "74": `function Solusi() {
-    console.log("Solusi");
-}`,
-    "54": `#include <string>
-    void Solusi() {
-    std::cout << "Solusi";
-}`,
-    "64": `function Solusi()
-    print("Solusi");
-end`,
-    "73": `fn Solusi() {
-    println!("Solusi");
-}`,
-    "72": `def Solusi()
-    puts "Solusi"     
-end`
-}
-
 export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: boolean }, profile: string }) {
-    const [IdBahasaProgram, setIdBahasaProgram] = useState('71');
     const [BahasaProgram, setBahasaProgram] = useState('python');
-    const [Output, setOutput] = useState<{ data: HasilJawaban[], lulus: number, gagal: number, waktu: string, status: "Mengirim" | "Sukses" | "" }>({
+    const [Output, setOutput] = useState<HasilKompiler>({
         data: [{
             hasil: "",
             jawaban: "",
@@ -160,23 +67,10 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
         lulus: 0,
         gagal: 1,
         waktu: "",
-        status: ""
+        statuskompiler: ""
     });
-    // const [Output, setOutput] = useState<{error: string, waktu: string, output: HasilJawaban[], status: "Mengirim" | "Error" | "Sukses" | "", lulus: number, gagal: number}>({
-    //     error: "",
-    //     waktu: "",
-    //     status: "",
-    //     lulus: 0,
-    //     gagal: 0,
-    //     output: [{
-    //         status: "",
-    //         koreksi: "",
-    //         hasil: "",
-    //         jawaban: ""
-    //     }],
-    // });
     const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
-    const [Kode, setKode] = useState(ListKode['71']);
+    const [Kode, setKode] = useState(data.kumpulanjawaban[0].liatankode);
     const [KodeBenar, setKodeBenar] = useState<string>();
     const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
         suka_ngk: data.suka_ngk,
@@ -241,14 +135,13 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
     }
 
     const GantiBahasaProgram = (e: BaseSyntheticEvent) => {
-        setIdBahasaProgram(e.target.value);
-        setBahasaProgram(ListBahasaProgram[e.target.value as keyof typeof ListBahasaProgram])
-        setKode(ListKode[e.target.value as keyof typeof ListKode]);
+        setBahasaProgram(e.target.value)
+        setKode(data.kumpulanjawaban.find((v) => v.bahasa === e.target.value)?.liatankode ?? "");
     }
 
     const StatusKirimOutput = () => {
         setStatusTekananSoalOutput('output');
-        setOutput({ ...Output, status: "Mengirim" });
+        setOutput({ ...Output, statuskompiler: "Mengirim" });
     }
 
     const KirimJawaban = async (e: BaseSyntheticEvent, statusKlik: "test" | "jawaban") => {
@@ -257,53 +150,19 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
         StatusKirimOutput();
         const KodeSoal = kodeEditor!.editor.getValue();
 
-        // const hasil: {status: string, output: HasilJawaban[] | undefined, error: string | undefined, waktu: string, lulus: number, gagal: number} = await axios.post("/api/soal/kirimkode", {
-        //     kode: kodeEditor!.editor.getValue(),
-        //     idBahasaProgram: IdBahasaProgram,
-        //     idsoal: data.idsoal
-        // }).then(d => d.data);
-        const hasil: { data: HasilJawaban[], lulus: number, gagal: number, waktu: string } = await axios.post("/api/soal/kirimkode", {
+        setOutput({ ...Output, statuskompiler: "Mengirim" });
+        const hasil: HasilKompiler = await axios.post("/api/soal/konfirmasikode", {
             kode: KodeSoal,
-            idBahasaProgram: IdBahasaProgram,
+            bahasa: BahasaProgram,
             idsoal: data.id,
             w: statusKlik
-        }).then(d => d.data);
+        }).then(v => v.data);
 
-        if (statusKlik === "jawaban") {
-            if (hasil.lulus >= hasil.data.map((v) => v.koreksi).length) {
-                console.log(KodeSoal)
-                setKodeBenar(KodeSoal);
-            }
+        if (statusKlik === "jawaban" && hasil.data.length <= hasil.lulus) {
+            setKodeBenar(KodeSoal);
         }
 
-        setOutput({
-            data: hasil.data,
-            waktu: hasil.waktu,
-            lulus: hasil.lulus,
-            gagal: hasil.gagal,
-            status: "Sukses"
-        });
-
-        // switch (hasil.status) {
-        //     case "Error":
-        //         setOutput({
-        //             ...Output,
-        //             status: hasil.status,
-        //             error: hasil.error!,
-        //             waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
-        //         });
-        //         break;
-        //     case "Sukses":
-        //         setOutput({
-        //             ...Output,
-        //             status: hasil.status,
-        //             output: hasil.output!,
-        //             waktu: (parseFloat(hasil.waktu) * 1000).toString() + 'ms',
-        //             lulus: hasil.lulus,
-        //             gagal: hasil.gagal
-        //         });
-        //         break;
-        // }
+        setOutput({ ...hasil, statuskompiler: "Sukses" });
     }
 
     if (Object.keys(data).length <= 0) {
@@ -419,7 +278,7 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
                                         children={data.soal}
                                         components={{
                                             code({ node, inline, className, children, ...props }) {
-                                                const match = /language-(\w+)/.exec(className || '')
+                                                const match = /language-(\w+)/.exec(className || '');
                                                 return !inline && match ? (
                                                     <SyntaxHighlighter
                                                         // eslint-disable-next-line react/no-children-prop
@@ -452,62 +311,65 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
                                 </div>
                                 :
                                 <div id="output" className="mb-2" style={{ height: "calc(100vh - 250px)", minHeight: "200px", background: "rgb(38, 38, 38)", border: "1px solid " + (Output.lulus >= Output.data.length ? "rgb(56, 138, 51)" : 'rgb(59, 59, 59)'), borderRadius: "5px", whiteSpace: "pre-wrap", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
-                                    {(Output.status !== "Mengirim" && Output.status !== "") &&
+                                    {(Output.statuskompiler !== "Mengirim" && Output.statuskompiler !== "") && //Ini maksudnya apa yang masa lalu rafi, Semoga ya masa depan rafi bisa menjelaskan 20:41 29/10/2022
                                         <div>
                                             <div className="text-white px-3 mt-2">
-                                                <span className="me-3">Waktu: {Number(Output.waktu).toFixed(2) + ' detik'}</span>
+                                                <span className="me-3">Waktu: {Output.waktu + ' ms'}</span>
                                                 <span className="me-3 text-success">Lulus: {Output.lulus}</span>
                                                 <span className="me-3 text-danger">Gagal: {Output.gagal}</span>
                                             </div>
-                                            <hr className="text-white" style={{ marginBottom: "0px" }} />
+                                            <hr className="text-white mb-2" style={{ marginBottom: "0px" }} />
                                         </div>
                                     }
                                     <div className="px-3">
-                                        {Output.status !== "Mengirim" &&
-                                            <div className="mt-2">
-                                                {/* {Output.status === "Error" &&
-                                        <div className="px-3 text-white">
-                                            <div className="mb-3">Output Error:</div>
-                                            <div className="px-3 py-2 rounded-2" style={{background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px"}}> 
-                                                {Output.}
-                                            </div>
-                                        </div>
-                                        } */}
-                                                {Output.status === "Sukses" &&
-                                                    (Output.data.map((v, i) => {
-                                                        if (v.koreksi) {
-                                                            return (
-                                                                <details key={i} className="mb-2 panah text-success">
-                                                                    <summary className="mb-2">Test #{i + 1}: Success</summary>
-                                                                    <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px" }}>
-                                                                        Output: {v.hasil}, Jawaban: {v.jawaban}
-                                                                    </div>
-                                                                </details>
-                                                            )
-                                                        } else {
-                                                            return (
-                                                                <details key={i} className="mb-2 panah text-danger">
-                                                                    <summary className="mb-2">Test #{i + 1}: Gagal</summary>
-                                                                    <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
-                                                                        {v.status === "Error" ?
-                                                                            <p>{new Buffer(v.hasil, 'base64').toString('utf-8')}</p>
-                                                                            :
-                                                                            <p>Output: {v.hasil}, Jawaban: {v.jawaban}</p>
-                                                                        }
-                                                                    </div>
-                                                                </details>
-                                                            )
-                                                        }
-                                                    }))
-                                                }
-                                                {Output.lulus >= Output.data.length &&
-                                                    <div style={{ color: "#30AD43" }}>
-                                                        Selamat, Kamu lulus semua test!
+                                        {Output.statuskompiler === "Sukses" &&
+                                            <>
+                                                {Output.error !== undefined ?
+                                                    <div className="px-3 py-2 mt-3 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
+                                                        <span style={{ whiteSpace: "pre-line" }}>
+                                                            {Output.error}
+                                                        </span>
                                                     </div>
+                                                    :
+                                                    <>
+                                                        {Output?.data.map((v, i) => {
+                                                            if (v.status === "Sukses") {
+                                                                return (v.koreksi ?
+                                                                    <details key={i} className="mb-2 panah text-success">
+                                                                        <summary className="mb-2">Test {i + 1}: Success</summary>
+                                                                        <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px" }}>
+                                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                                        </div>
+                                                                    </details>
+                                                                    :
+                                                                    <details key={i} className="mb-2 panah text-danger">
+                                                                        <summary className="mb-2">Test {i + 1}: Gagal</summary>
+                                                                        <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
+                                                                            Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                                        </div>
+                                                                    </details>
+                                                                );
+                                                            }
+
+                                                            return (
+                                                                <details key={i} className="mb-2 panah text-danger" open>
+                                                                    <summary className="mb-2">Test {i + 1}: Gagal</summary>
+                                                                    <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
+                                                                        {v.hasil}
+                                                                    </div>
+                                                                </details>
+                                                            )
+                                                        })}
+                                                    </>
                                                 }
+                                            </>
+                                        }
+                                        {(Output.lulus >= Output.data.length && Output.statuskompiler === "Sukses") &&
+                                            <div style={{ color: "#30AD43" }}>
+                                                Selamat, Kamu lulus semua test!
                                             </div>
                                         }
-                                        {Output.status === "Mengirim" &&
+                                        {Output.statuskompiler === "Mengirim" &&
                                             <div className="text-white mt-2">Menigrim kode ke server...</div>
                                         }
                                     </div>
@@ -535,13 +397,9 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
                                 <div className="text-white">
                                     <div style={{ height: "50px" }}>
                                         <select onChange={GantiBahasaProgram} className={styles.bahasaSelect}>
-                                            <option value="71">Python</option>
-                                            <option value="63">Javascript</option>
-                                            <option value="74">Typescript</option>
-                                            <option value="54">C++</option>
-                                            <option value="64">Lua</option>
-                                            <option value="73">Rust</option>
-                                            <option value="72">Ruby</option>
+                                            {Object.values(data.kumpulanjawaban).map((v, i) => {
+                                                return <option key={i} value={v.bahasa}>{v.bahasa.charAt(0).toUpperCase() + v.bahasa.slice(1)}</option>
+                                            })}
                                         </select>
                                         <button className="tombolBerikutnya" style={{ float: "right" }}>Settings</button>
                                         <button className="tombolBerikutnya me-3" style={{ float: "right" }}>Reset</button>
@@ -551,7 +409,7 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
                             <div className="row mb-2" style={{ height: "calc(100vh - 250px)", minHeight: "200px" }}>
                                 <div>
                                     <CodeEditor
-                                        mode={ListBahasaProgram[IdBahasaProgram as keyof typeof ListBahasaProgram]}
+                                        mode={BahasaProgram}
                                         value={Kode}
                                         placeholder={"Tunjukkin kepintaran mu!"}
                                         onChange={() => setKode(kodeEditor!.editor.getValue())}
@@ -563,9 +421,6 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
                             <div className="row">
                                 <div className="">
                                     <div style={{ height: "50px" }}>
-                                        <button className="text-white tombolBerikutnya" style={{ width: "5%" }}>
-                                            Import
-                                        </button>
                                         {(Kode !== KodeBenar) ?
                                             <button className="text-white tombolBerikutnya" style={{ float: "right", width: "5%" }} onClick={(e) => KirimJawaban(e, "jawaban")}>
                                                 Coba

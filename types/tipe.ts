@@ -45,6 +45,13 @@ export interface DataSoal {
     pembuat: { username: string },
     public: boolean,
     suka: string,
+    kumpulanjawaban: {
+        bahasa: string,
+        listjawaban: string,
+        contohjawaban: string,
+        liatankode: string,
+        jawabankode: string
+    }[]
 }
 
 export interface Solusi {
@@ -86,6 +93,45 @@ export interface DataSolusi {
         suka: string,
     }
 }
+
+export interface TipeInfoKode {
+    contohjawaban: string,
+    listjawaban: string,
+    liatankode: string,
+    jawabankode: string,
+    bahasa: string
+}
+
+export interface TipeKonfirmasiJawaban {
+    hasil: any
+    jawaban: any
+    koreksi: boolean
+    status: "Sukses" | "Error"
+    error?: string
+}
+
+export interface HasilKompiler {
+    data: TipeKonfirmasiJawaban[]
+    waktu: string | number,
+    lulus: number,
+    gagal: number,
+    error?: any,
+    statuskompiler: "Sukses" | "Mengirim" | "" //Ini untuk menunjukkan kalau user mengirim kompiler dan tunjukkin hasil kompiler kalau sudah selesai 20:31 29/10/2022
+}
+
+export interface OutputCompilerGodbolt {
+    stdout: { text: string }[],
+    stderr: { text: string }[],
+    execTime: string
+}
+
+export interface OutputCompilerWandbox {
+    program_output: string,
+    program_error: string,
+    status: "0" | "1"
+}
+
+export type KumpulanBahasaProgram = "python" | "javascript" | "c++" | "lua";
 
 export enum WarnaStatus {
     kuning = "#9ba308",

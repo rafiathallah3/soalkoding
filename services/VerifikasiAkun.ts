@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 export default function Verifikasi(req: NextApiRequest, res: NextApiResponse): number | string {
     const DapatinKueAkun = getCookie('infoakun', { req, res });
 
-    if(DapatinKueAkun === undefined) return 405
+    if(DapatinKueAkun === undefined) return 401
     let VerifikasiAkun;
     try {
         VerifikasiAkun = jwt.verify(DapatinKueAkun as string, process.env.TOKENRAHASIA!);

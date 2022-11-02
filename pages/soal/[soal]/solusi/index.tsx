@@ -5,9 +5,9 @@ import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { DataSolusi, Solusi as TipeSolusi } from "../../../../types/tipe";
 import { useState } from "react";
-import { getCookie, setCookie } from "cookies-next";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { UpdateInfoAkun } from "../../../../services/Servis";
 
 const TemplateKoding = `
 function Roblox() {
@@ -25,24 +25,11 @@ function Roblox() {
 `.trim()
 
 export async function getServerSideProps({ params, req, res, query }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse, query: { lihat: string, berdasarkan: string } }) {
-    const infoakun = getCookie('infoakun', { req, res }) as string;
-    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
-
-    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-        headers: { cookie: req.headers.cookie } as any
-    }).then(d => d.data);
-
-    setCookie('infoakun', DapatinToken, {
-        req, res,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/"
-    });
+    const DapatinUser = await UpdateInfoAkun(req, res, false) as { redirect: string };
+    if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
-        const data = await axios.post(`http://${req.headers.host}/api/soal/solusi/dapatinSolusi`, {
+        const data = await axios.post(`${process.env.NAMAWEBSITE}/api/soal/solusi/dapatinSolusi`, {
             idsoal: params.soal,
             ...query
         }, {
@@ -55,7 +42,11 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
                 ...query
             }
         }
-    } catch { }
+    } catch {
+        return {
+            notFound: true
+        }
+    }
 }
 
 export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined }) {
@@ -112,9 +103,10 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
     }
 
     return (
-        <div className="px-3">
+        <>
             <Navbar profile={data.profile} />
-            <style jsx>{`
+            <div className="px-3">
+                <style jsx>{`
             .tombol-kerjakan {
                 background: rgb(45, 45, 45);
                 border: 1px solid #306634;
@@ -236,136 +228,137 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
 
             `}</style>
 
-            <div className="p-3 text-white rounded-1 mb-2" style={{ background: "rgb(48, 48, 48)" }}>
-                <div className="row">
-                    <div className="col">
-                        <div className="mb-2">
-                            <Link href={`/soal/${data.idsoal}/latihan`}>
-                                <a className="me-3 text-white text-decoration-none">{data.soal.namasoal}</a>
-                            </Link>
-                            <span className="p-2 fs-6 me-2" style={{ background: "rgb(55, 55, 55)" }}>Level {data.soal.level}</span>
-                            {data.ApakahSudahSelesai &&
-                                <i className="bi bi-check-lg"></i>
-                            }
-                        </div>
-                        <div className="mb-1">
-                            <span className="me-3">
-                                <i className="bi bi-person-fill me-2"></i>
-                                <a className="text-decoration-none text-white" href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
-                            </span>
-                            <span className="me-4 favorit" onClick={FavoritSoal}>
-                                {Favorit.suka_ngk ?
-                                    <i className="bi bi-star-fill me-1"></i>
-                                    :
-                                    <i className="bi bi-star me-1"></i>
+                <div className="p-3 text-white rounded-1 mb-2" style={{ background: "rgb(48, 48, 48)" }}>
+                    <div className="row">
+                        <div className="col">
+                            <div className="mb-2">
+                                <Link href={`/soal/${data.idsoal}/latihan`}>
+                                    <a className="me-3 text-white text-decoration-none">{data.soal.namasoal}</a>
+                                </Link>
+                                <span className="p-2 fs-6 me-2" style={{ background: "rgb(55, 55, 55)" }}>Level {data.soal.level}</span>
+                                {data.ApakahSudahSelesai &&
+                                    <i className="bi bi-check-lg"></i>
                                 }
-                                {Favorit.berapa}
-                            </span>
-                            <span title="Jumlah solusi">
-                                <i className="bi bi-calendar-check me-1"></i>
-                                {data.JumlahSolusi}
-                            </span>
+                            </div>
+                            <div className="mb-1">
+                                <span className="me-3">
+                                    <i className="bi bi-person-fill me-2"></i>
+                                    <a className="text-decoration-none text-white" href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
+                                </span>
+                                <span className="me-3 favorit" onClick={FavoritSoal}>
+                                    {Favorit.suka_ngk ?
+                                        <i className="bi bi-star-fill me-1"></i>
+                                        :
+                                        <i className="bi bi-star me-1"></i>
+                                    }
+                                    {Favorit.berapa}
+                                </span>
+                                <span title="Jumlah solusi">
+                                    <i className="bi bi-calendar-check me-1"></i>
+                                    {data.JumlahSolusi}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div className="col">
-                        <div className="d-flex flex-row justify-content-end h-100">
-                            <Link href={`/soal/${data.idsoal}/latihan`}>
-                                <a className="text-decoration-none align-self-center tombol-kerjakan me-2">Kerjakan</a>
-                            </Link>
-                            <button className="align-self-center tombol-soalberikutnya">Soal berikutnya <i className="bi bi-caret-right-fill"></i></button>
+                        <div className="col">
+                            <div className="d-flex flex-row justify-content-end h-100">
+                                <Link href={`/soal/${data.idsoal}/latihan`}>
+                                    <a className="text-decoration-none align-self-center tombol-kerjakan me-2">Kerjakan</a>
+                                </Link>
+                                <button className="align-self-center tombol-soalberikutnya">Soal berikutnya <i className="bi bi-caret-right-fill"></i></button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            {/* <div className="p-3 rounded-1 text-white mb-2" style={{ background: 'rgb(60, 60, 60)' }}>
+                {/* <div className="p-3 rounded-1 text-white mb-2" style={{ background: 'rgb(60, 60, 60)' }}>
                 <span className="me-3">Seberapa puasnya kamu dengan soal ini?</span>
                 <button className="me-2 tombol-puas">Tidak puas</button>
                 <button className="me-2 tombol-puas">Biasa</button>
                 <button className="me-2 tombol-puas">Sangat puas</button>
             </div> */}
-            {data.ApakahSudahSelesai ?
-                <div className="row">
-                    <div className="col-10">
-                        {Solusi.map((v, i) => {
-                            return (
-                                <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
-                                    <div className="d-flex">
-                                        <div className="text-white flex-grow-1">
-                                            <i className="bi bi-person me-1"></i>
-                                            <Link href={`/profile/${v.user.username}`}>
-                                                <a className="me-3 text-white text-decoration-none">{v.user.username}</a>
+                {data.ApakahSudahSelesai ?
+                    <div className="row">
+                        <div className="col-10">
+                            {Solusi.map((v, i) => {
+                                return (
+                                    <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
+                                        <div className="d-flex">
+                                            <div className="text-white flex-grow-1">
+                                                <i className="bi bi-person me-1"></i>
+                                                <Link href={`/profile/${v.user.username}`}>
+                                                    <a className="me-3 text-white text-decoration-none">{v.user.username}</a>
+                                                </Link>
+                                            </div>
+                                            <div className="text-white-50">
+                                                {new Date(v.kapan).getDate() + '/' + (new Date(v.kapan).getMonth() + 1) + '/' + new Date(v.kapan).getFullYear()}
+                                            </div>
+                                        </div>
+                                        <div className="px-2 mb-3">
+                                            <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={v.bahasa} style={tomorrow as any}>{v.kode}</SyntaxHighlighter>
+                                        </div>
+                                        <div>
+                                            <button className="tombol-keren me-3" style={{ "borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, v.id)}>
+                                                <i className="bi bi-arrow-up-short"></i>
+                                                Pintar
+                                                <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
+                                            </button>
+                                            <Link href={`/soal/${v.idsoal}/solusi/${v.id}`}>
+                                                <a className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
+                                                    <i className="bi bi-chat-right-fill me-2 fs-5"></i>
+                                                    {v.komentar.length}
+                                                </a>
                                             </Link>
                                         </div>
-                                        <div className="text-white-50">
-                                            {new Date(v.kapan).getDate() + '/' + new Date(v.kapan).getMonth() + '/' + new Date(v.kapan).getFullYear()}
-                                        </div>
                                     </div>
-                                    <div className="px-2 mb-3">
-                                        <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={v.bahasa} style={tomorrow as any}>{v.kode}</SyntaxHighlighter>
-                                    </div>
-                                    <div>
-                                        <button className="tombol-keren me-3" style={{ "borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, v.id)}>
-                                            <i className="bi bi-arrow-up-short"></i>
-                                            Pintar
-                                            <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
-                                        </button>
-                                        <Link href={`/soal/${v.idsoal}/solusi/${v.id}`}>
-                                            <a className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
-                                                <i className="bi bi-chat-right-fill me-2 fs-5"></i>
-                                                {v.komentar.length}
-                                            </a>
-                                        </Link>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                    <div className="col">
-                        <div className="p-2 rounded-1 filter-jawaban">
-                            <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Lihat</div>
-                            <form id="test" onChange={GantiQuery}>
-                                <fieldset className="mb-2" name="lihat">
-                                    <label className="radio-container">
-                                        <input type="radio" name="lihat" value="semua" defaultChecked={lihat === "semua"} />
-                                        <span style={{ marginLeft: "20px" }}>Semua</span>
-                                        <span className="checkmark"></span>
-                                    </label>
-                                    <label className="radio-container">
-                                        <input type="radio" name="lihat" value="sendiri" defaultChecked={lihat === "sendiri"} />
-                                        <span style={{ marginLeft: "20px" }}>Sendiri</span>
-                                        <span className="checkmark"></span>
-                                    </label>
-                                </fieldset>
-                                <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Berdasarkan</div>
-                                <fieldset name="berdasarkan">
-                                    <label className="radio-container">
-                                        <input type="radio" name="berdasarkan" id="berdasarkan" value="kepintaran" defaultChecked={berdasarkan === "kepintaran"} />
-                                        <span style={{ marginLeft: "20px" }}>Kepintaran</span>
-                                        <span className="checkmark"></span>
-                                    </label>
-                                    <label className="radio-container">
-                                        <input type="radio" name="berdasarkan" id="berdasarkan" value="baru" defaultChecked={berdasarkan === "baru"} />
-                                        <span style={{ marginLeft: "20px" }}>Baru</span>
-                                        <span className="checkmark"></span>
-                                    </label>
-                                    <label className="radio-container">
-                                        <input type="radio" name="berdasarkan" id="berdasarkan" value="lama" defaultChecked={berdasarkan === "lama"} />
-                                        <span style={{ marginLeft: "20px" }}>Lama</span>
-                                        <span className="checkmark"></span>
-                                    </label>
-                                </fieldset>
-                            </form>
+                                )
+                            })}
+                        </div>
+                        <div className="col">
+                            <div className="p-2 rounded-1 filter-jawaban">
+                                <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Lihat</div>
+                                <form id="test" onChange={GantiQuery}>
+                                    <fieldset className="mb-2" name="lihat">
+                                        <label className="radio-container">
+                                            <input type="radio" name="lihat" value="semua" defaultChecked={lihat === "semua"} />
+                                            <span style={{ marginLeft: "20px" }}>Semua</span>
+                                            <span className="checkmark"></span>
+                                        </label>
+                                        <label className="radio-container">
+                                            <input type="radio" name="lihat" value="sendiri" defaultChecked={lihat === "sendiri"} />
+                                            <span style={{ marginLeft: "20px" }}>Sendiri</span>
+                                            <span className="checkmark"></span>
+                                        </label>
+                                    </fieldset>
+                                    <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Berdasarkan</div>
+                                    <fieldset name="berdasarkan">
+                                        <label className="radio-container">
+                                            <input type="radio" name="berdasarkan" id="berdasarkan" value="kepintaran" defaultChecked={berdasarkan === "kepintaran"} />
+                                            <span style={{ marginLeft: "20px" }}>Kepintaran</span>
+                                            <span className="checkmark"></span>
+                                        </label>
+                                        <label className="radio-container">
+                                            <input type="radio" name="berdasarkan" id="berdasarkan" value="baru" defaultChecked={berdasarkan === "baru"} />
+                                            <span style={{ marginLeft: "20px" }}>Baru</span>
+                                            <span className="checkmark"></span>
+                                        </label>
+                                        <label className="radio-container">
+                                            <input type="radio" name="berdasarkan" id="berdasarkan" value="lama" defaultChecked={berdasarkan === "lama"} />
+                                            <span style={{ marginLeft: "20px" }}>Lama</span>
+                                            <span className="checkmark"></span>
+                                        </label>
+                                    </fieldset>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
-                :
-                <div className="text-white text-center fs-5">
-                    Kamu belum mengerjakan soal ini!
-                    <div>
-                        Kerjakan soalnya dulu baru kamu bisa melihat semua jawaban orang lain
+                    :
+                    <div className="text-white text-center fs-5">
+                        Kamu belum mengerjakan soal ini!
+                        <div>
+                            Kerjakan soalnya dulu baru kamu bisa melihat semua jawaban orang lain
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        </>
     )
 }
