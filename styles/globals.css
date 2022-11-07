@@ -7,6 +7,7 @@ body {
   min-height: 100%;
   background: linear-gradient(rgb(36, 36, 36), rgb(34, 34, 36));
   background-size: cover;
+  height: 100%;
 }
 
 a {

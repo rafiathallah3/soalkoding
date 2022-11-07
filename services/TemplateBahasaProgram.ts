@@ -4,10 +4,10 @@ import json
 def ApakahSama(fungsi, parameter, jawaban):
     try:
         hasil = fungsi(*parameter)
-        print(json.dumps({"hasil": f"{hasil}", "jawaban": f"{jawaban}", "status": "Sukses", "koreksi": jawaban == hasil}))
+        print(f"""SplitIniUntukTestCase{json.dumps({"hasil": f"{hasil}", "jawaban": f"{jawaban}", "status": "Sukses", "koreksi": jawaban == hasil})}""")
     except Exception as e:
         import base64
-        print(json.dumps({"hasil": str(e), "jawaban": jawaban, "status": "Error"}))
+        print(f"""SplitIniUntukTestCase{json.dumps({"hasil": str(e), "jawaban": jawaban, "status": "Error"})}""")
 `.trim();
 
 const JavascriptGabungaKode = `

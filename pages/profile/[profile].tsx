@@ -20,7 +20,10 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
         return {
             props: {
                 data,
-                profile: DapatinUser === null ? "" : DapatinUser.username
+                profile: {
+                    username: DapatinUser.username,
+                    gambar: DapatinUser.gambarurl
+                }
             }
         }
     } catch (e) {
@@ -30,8 +33,8 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
     }
 }
 
-export default function Profile({ data, profile }: { data: DataProfile, profile: string }) {
-    const [StatusTable, setStatusTable] = useState<"soalselesai" | "solusi">('soalselesai');
+export default function Profile({ data, profile }: { data: DataProfile, profile: { username: string, gambar: string } }) {
+    const [StatusTable, setStatusTable] = useState<"soalselesai" | "solusi" | "favorit">('soalselesai');
     const InformasiDariUpdate = getCookie('infoedit');
 
     const namaBulan = ["January", "February", "March", "April", "May", "June",
@@ -64,34 +67,6 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
             return Math.floor(interval) + " menit lalu";
         }
         return Math.floor(seconds) + " detik lalu";
-    }
-
-    const KlikSoalSelesai = () => {
-        setStatusTable("soalselesai");
-        const SoalSelesaiElement = document.getElementById("tombolsoalselesai")!;
-        const DiskusiElement = document.getElementById("tombolsolusi")!;
-
-        if (SoalSelesaiElement.classList.contains("tombol-table")) {
-            DiskusiElement.classList.remove("tombol-table-aktif");
-            DiskusiElement.classList.add("tombol-table");
-
-            SoalSelesaiElement.classList.remove("tombol-table");
-            SoalSelesaiElement.classList.add("tombol-table-aktif");
-        }
-    }
-
-    const KlikSolusi = () => {
-        setStatusTable("solusi");
-        const SoalSelesaiElement = document.getElementById("tombolsoalselesai")!;
-        const DiskusiElement = document.getElementById("tombolsolusi")!;
-
-        if (DiskusiElement.classList.contains("tombol-table")) {
-            SoalSelesaiElement.classList.remove("tombol-table-aktif");
-            SoalSelesaiElement.classList.add("tombol-table");
-
-            DiskusiElement.classList.remove("tombol-table");
-            DiskusiElement.classList.add("tombol-table-aktif");
-        }
     }
 
     return (
@@ -195,29 +170,11 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                             <div className='text-danger fs-5'>Level 5: {data.soalselesai.filter(({ soal }) => soal.level === 5).length}</div>
                         </div>
                         <div className="col-9">
-                            {/* <div className="p-3 text-white rounded-3 mb-3" style={{ background: "rgb(45, 45, 45)", border: "1px solid rgb(61, 61, 61)" }}>
-                                <div className="row">
-                                    <div className="col text-center">
-                                        <div className="fs-5">Total soal sudah dikerjakan</div>
-                                        <div className="fs-2">0</div>
-                                    </div>
-                                    <div className="col">
-                                        <div className='text-success me-5 fs-5'>Level 1 - 2: {data.soalselesai.filter(({ soal }) => soal.level <= 2).length}</div>
-                                        <div className='text-warning me-5 fs-5'>Level 3 - 4: {data.soalselesai.filter(({ soal }) => soal.level > 2 && soal.level <= 4).length}</div>
-                                        <div className='text-danger fs-5'>Level 5: {data.soalselesai.filter(({ soal }) => soal.level === 5).length}</div>
-                                    </div>
-                                </div>
-                                <h5 className="text-center">Total soal yang sudah dikerjakan</h5>
-                                <div className="text-center">
-                                    <span className='text-success me-5 fs-4'>Level 1 - 2: {data.soalselesai.filter(({ soal }) => soal.level <= 2).length}</span>
-                                    <span className='text-warning me-5 fs-4'>Level 3 - 4: {data.soalselesai.filter(({ soal }) => soal.level > 2 && soal.level <= 4).length}</span>
-                                    <span className='text-danger fs-4'>Level 5: {data.soalselesai.filter(({ soal }) => soal.level === 5).length}</span>
-                                </div>
-                            </div> */}
                             <div className="p-3 text-white rounded-3" style={{ background: "rgb(45, 45, 45)", border: "1px solid rgb(61, 61, 61)" }}>
                                 <div className="mb-3">
-                                    <button id="tombolsoalselesai" className="tombol-table-aktif" onClick={KlikSoalSelesai}>Soal selesai</button>
-                                    <button id="tombolsolusi" className='tombol-table' onClick={KlikSolusi}>Solusi</button>
+                                    <button id="tombolsoalselesai" className={StatusTable === "soalselesai" ? "tombol-table-aktif" : "tombol-table"} onClick={() => setStatusTable("soalselesai")}>Soal selesai</button>
+                                    <button id="tombolsolusi" className={StatusTable === "solusi" ? "tombol-table-aktif" : "tombol-table"} onClick={() => setStatusTable("solusi")}>Solusi</button>
+                                    <button id="tombolfavorit" className={StatusTable === "favorit" ? "tombol-table-aktif" : "tombol-table"} onClick={() => setStatusTable("favorit")}>Favorit</button>
                                 </div>
                                 {StatusTable === "soalselesai" &&
                                     <div className="d-flex flex-column">
@@ -225,14 +182,14 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                                             <div className="text-center fs-5">{data.username} tidak pernah menyelesaikan satu soal</div>
                                             :
                                             <>
-                                                {data.soalselesai.map((v, i) => {
+                                                {data.soalselesai.filter((v, i, a) => a.findIndex((t) => t.id === v.id)).map((v, i) => {
                                                     return (
                                                         <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                             <a className="text-white text-decoration-none" href={`/soal/${v.soal.id}/latihan`}>{v.soal.namasoal}</a>
                                                             <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.kapan))}</span>
                                                         </div>
                                                     )
-                                                })}
+                                                }).reverse()}
                                             </>
                                         }
                                     </div>
@@ -250,7 +207,24 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                                                             <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.kapan))}</span>
                                                         </div>
                                                     )
-                                                })}
+                                                }).reverse()}
+                                            </>
+                                        }
+                                    </div>
+                                }
+                                {StatusTable === "favorit" &&
+                                    <div className="d-flex flex-column">
+                                        {data.favorit.length <= 0 ?
+                                            <div className="text-center fs-5">{data.username} tidak pernah favorit satu soal</div>
+                                            :
+                                            <>
+                                                {data.favorit.map((v, i) => {
+                                                    return (
+                                                        <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
+                                                            <a className="text-white text-decoration-none" href={`/soal/${v.soal.id}/latihan`}>{v.soal.namasoal}</a>
+                                                        </div>
+                                                    )
+                                                }).reverse()}
                                             </>
                                         }
                                     </div>

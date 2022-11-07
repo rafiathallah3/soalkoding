@@ -1,8 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-// import { verify } from '../../../../services/jwt_sign';
-// import { DapatinSQL, parseCookies } from "../../../../database/db";
-// import { decrypt } from "../../../../database/UbahKeHash";
-// import { Komentar, Solusi } from "../../../../types/tipe";
 import { prisma } from "../../../../database/prisma";
 import Verifikasi from "../../../../services/VerifikasiAkun";
 
@@ -11,8 +7,6 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
         const verifikasi = Verifikasi(req, res);
         if(typeof verifikasi === 'number') return res.status(verifikasi).send(`Error ${verifikasi}`);
 
-        const { idsolusi, idsoal, lihat, berdasarkan } = req.body;
-    
         const DataUser = await prisma.akun.findUnique({
             where: {
                 id: verifikasi
@@ -20,6 +14,8 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
         });
 
         if(DataUser === null) return res.status(401);
+        
+        const { idsolusi, idsoal, lihat, berdasarkan } = req.body;
 
         const DataSoal = await prisma.soal.findUnique({
             where: {
@@ -27,6 +23,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
             },
             include: {
                 pembuat: true,
+                favorit: true,
                 solusi: {
                     where: {
                         idusername: lihat === "sendiri" ? verifikasi : undefined,
@@ -40,7 +37,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                         komentar: {
                             include: {
                                 user: {
-                                    select: { username: true }
+                                    select: { username: true, gambarurl: true }
                                 }
                             }
                         }
@@ -55,7 +52,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
             profile: DataUser.username,
             idsoal,
             soal: DataSoal,
-            suka_ngk: JSON.parse(DataSoal.suka).includes(verifikasi),
+            suka_ngk: DataSoal.favorit.find((v) => v.iduser === verifikasi) !== undefined,
             ApakahSudahSelesai: DataSoal.solusi.map((v) => v.idusername).includes(verifikasi),
             JumlahSolusi: DataSoal.solusi.filter((v, i, a) => a.findIndex((t) => t.idusername === v.idusername) === i).length,
             solusi: DataSoal.solusi.map((v) => {

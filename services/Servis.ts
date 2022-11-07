@@ -131,13 +131,21 @@ export async function JalaninKompiler(req: NextApiRequest) {
                 }
             }).then(d => d.data) as OutputCompilerGodbolt;
     
-            // console.log(data);
             if(data.stderr.length > 0) {
                 // console.log(data.stderr);
                 return { error: data.stderr.map((v) => v.text + '\n').toString() };
             }
             
-            const ParseOutput: TipeKonfirmasiJawaban[] = data.stdout.map((v) => JSON.parse(v.text));
+            let lastindex = 0;
+            const ParseOutput: TipeKonfirmasiJawaban[] = data.stdout.filter((v) => v.text.includes("SplitIniUntukTestCase")).map((v, i) => {
+                const ind = data.stdout.findIndex((d) => d === v);
+                const hasilprint = data.stdout.slice(lastindex, ind);
+                lastindex = ind + 1;
+                const DataPrint = hasilprint.map((d) => d.text);
+
+                return {...JSON.parse(v.text.replace("SplitIniUntukTestCase", "")), print: DataPrint.length <= 0 ? undefined : DataPrint}
+            })
+            
             return { 
                 data: ParseOutput,
                 waktu: data.execTime,
@@ -165,4 +173,4 @@ export async function JalaninKompiler(req: NextApiRequest) {
     }
 }
 
-export const KirimNotifikasi = (status: WarnaStatus, pesan: string, { req, res }: { req: NextApiRequest, res: NextApiResponse }): void => setCookie('notif', { status, pesan }, { req, res, maxAge: 5 })
+export const KirimNotifikasi = (status: WarnaStatus, pesan: string, { req, res }: { req: NextApiRequest, res: NextApiResponse }): void => setCookie('notif', { status, pesan }, { req, res, maxAge: 2 })

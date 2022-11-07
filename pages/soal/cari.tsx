@@ -5,36 +5,11 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import FavoritKomponen from "../../components/Favorit";
 import Navbar from "../../components/navbar"
 import Select from 'react-select';
-import { useRouter } from "next/router";
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { UpdateInfoAkun } from "../../services/Servis";
 import { Akun } from "@prisma/client";
-
-const test = `
-Diberikan kalkulator, tetapi kalkulator tersebut hanya memiliki 3 angka yaitu a, b, dan c.
-Kalkulator tersebut hanya bisa menggunakan operasi tambah. Kemudian diberikan sejumlah Q
-bilangan bulat n. Tantangannya mudah saja. Dari bilangan bulat n tersebut, carilah jumlah
-minimum angka yang perlu ditekan agar kalkulator bisa menampilkan bilangan bulat n.
-
-Catatan: Kalau angka kalkulator tidak bisa menghasilkan angka yang ditentukan maka return 0 dan angka kalkulator tidak akan berisi 0.
-
-Input: 
-1. List angka kalkulator
-2. List angka yang ditentukan dari angka kalkulator
-
-Contohnya:
-~~~python
-Solusi([2, 3, 5], [10, 9, 17]) # -> [2, 3, 4]
-# Baris pertama dapat 10 dapat dibentuk minimum dengan 2 nomor (5 + 5)
-# Baris kedua dapat 9 dapat dibentuk minimum dengan 3 nomor (3 + 3 + 3)
-# Baris Ketiga 17 dapat dibentuk minimum dengan 4 nomor (5 + 5 + 5 + 2)
-
-Solusi([5, 8, 9], [6, 13]) # -> [0, 2]
-# Baris pertama dapat 0 karena tidak ada angka yang bisa menghasilkan 6
-# Baris kedua 13 dapat dibentuk minimum dengan 2 nomor (5 + 9)
-~~~
-`
+import { DataSoal } from "../../types/tipe";
 
 export async function getServerSideProps({ query, req, res }: { query: any, req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
@@ -49,7 +24,9 @@ export async function getServerSideProps({ query, req, res }: { query: any, req:
 
         return {
             props: {
-                query
+                data: data.kumpulandata,
+                profile: { username: DapatinUser.username, gambar: DapatinUser.gambarurl },
+                query,
             }
         }
     } catch (e) {
@@ -59,7 +36,7 @@ export async function getServerSideProps({ query, req, res }: { query: any, req:
     }
 }
 
-export default function Cari({ data, query }: { data: any, query: { kesusahan: string, urutan: string, kerjakan: string, tags: string, bahasa: string } }) {
+export default function Cari({ data, query, profile }: { data: (DataSoal & { apakahsudah: boolean, suka_ngk: boolean, jumlahsolusi: number })[], query: { kesusahan: string, urutan: string, kerjakan: string, tags: string, bahasa: string }, profile: { username: string, gambar: string } }) {
     const [QueryURL, setQueryURL] = useState<{
         kerjakan?: string,
         tags?: string,
@@ -69,29 +46,24 @@ export default function Cari({ data, query }: { data: any, query: { kesusahan: s
         namanya?: string,
         orangnya?: string
     }>({ ...query });
-
     const [TutupMenu, setTutupMenu] = useState(false);
 
-    const router = useRouter();
-
-    const TambahinQuery = () => {
-        router.push('/soal/cari', {
-            query: Object.keys(QueryURL).filter(v => QueryURL[v as keyof typeof QueryURL] !== undefined || v !== "").reduce((res: any, k) => (res[k] = QueryURL[k as keyof typeof QueryURL], res), {})
-        })
+    const TambahinQuery = async () => {
+        window.location = `/soal/cari?${new URLSearchParams(QueryURL).toString()}` as any;
     }
 
     useEffect(() => {
         if (TutupMenu) {
             TambahinQuery();
-            console.log("ROBLOX");
             setTutupMenu(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [TutupMenu])
 
+    //08115730346
     return (
         <>
-            <Navbar />
+            <Navbar profile={profile} />
             <style jsx>{`
             .tombol-kerjakan {
                 background: rgb(45, 45, 45);
@@ -192,7 +164,7 @@ export default function Cari({ data, query }: { data: any, query: { kesusahan: s
             }
 
             ::-webkit-scrollbar {
-                background: rgb(36, 36, 36);
+                background: rgb(48, 48, 48);
                 opacity: 1;
                 width: 10px;
             }
@@ -217,70 +189,82 @@ export default function Cari({ data, query }: { data: any, query: { kesusahan: s
                 <div className="px-3">
                     <div className="row">
                         <div className="col-10">
-                            <div className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
-                                <div className="d-flex">
-                                    <div className="text-white flex-grow-1">
-                                        <div className="p-1" style={{ fontSize: "17px" }}>
-                                            <span className="me-2">3 Angka kalkulator</span>
-                                            <i className="bi bi-check-lg"></i>
-                                            <span className="float-end text-white-50">2022</span>
+                            {data.map((v, i) => {
+                                return (
+                                    <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
+                                        <div className="d-flex">
+                                            <div className="text-white flex-grow-1">
+                                                <div className="px-1 mb-2" style={{ fontSize: "17px" }}>
+                                                    <a href={`/soal/${v.id}/latihan`} className="text-white text-decoration-none me-3">{v.namasoal}</a>
+                                                    <span className={"p-2 fs-6 me-2 " + (v.level <= 2 ? "text-white" : v.level <= 4 ? "text-warning" : "text-danger")} style={{ background: "rgb(55, 55, 55)" }}>Level {v.level}</span>
+                                                    {v.apakahsudah &&
+                                                        <i className="bi bi-check-lg"></i>
+                                                    }
+                                                    <span className="float-end text-white-50">{new Date(v.bikin).getDate() + '/' + (new Date(v.bikin).getMonth() + 1) + '/' + new Date(v.bikin).getFullYear()}</span>
+                                                </div>
+                                                <div className="mb-1">
+                                                    <span className="me-3">
+                                                        <i className="bi bi-person-fill me-1"></i>
+                                                        <a className="text-white text-decoration-none" href={`/profile/${v.pembuat.username}`}>{v.pembuat.username}</a>
+                                                    </span>
+                                                    <FavoritKomponen data={{ suka_ngk: v.suka_ngk, berapa: v.favorit.length, idsoal: v.id }} />
+                                                    <span className="me-3" title="Jumlah solusi">
+                                                        <i className="bi bi-calendar-check me-1"></i>
+                                                        {v.jumlahsolusi}
+                                                    </span>
+                                                    <span className="me-3" title="Kepuasan orang dalam mengerjakan soal">
+                                                        <i className="bi bi-eyeglasses me-1"></i>
+                                                        30
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="mb-3">
-                                            <span className="me-3">
-                                                <i className="bi bi-person-fill me-1"></i>
-                                                <a className="text-white text-decoration-none" href="#">rafiathallah3</a>
-                                            </span>
-                                            <FavoritKomponen data={{ suka_ngk: true, berapa: 1, idsoal: "Sss" }} />
-                                            <span className="me-3" title="Jumlah solusi">
-                                                <i className="bi bi-calendar-check me-1"></i>
-                                                30
-                                            </span>
-                                            <span className="me-3" title="Kepuasan orang dalam mengerjakan soal">
-                                                <i className="bi bi-eyeglasses me-1"></i>
-                                                30
-                                            </span>
+                                        <div className="mb-4 px-3 py-2 text-white" style={{ maxHeight: "180px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
+                                            <ReactMarkdown
+                                                // eslint-disable-next-line react/no-children-prop
+                                                children={v.soal}
+                                                components={{
+                                                    code({ node, inline, className, children, ...props }) {
+                                                        const match = /language-(\w+)/.exec(className || '');
+                                                        return !inline && match ? (
+                                                            <SyntaxHighlighter
+                                                                // eslint-disable-next-line react/no-children-prop
+                                                                children={String(children).replace(/\n$/, '')}
+                                                                style={tomorrow as any}
+                                                                language={match[1]}
+                                                                PreTag="div"
+                                                                {...props}
+                                                            />
+                                                        ) : (
+                                                            <code className={className} {...props}>
+                                                                {children}
+                                                            </code>
+                                                        )
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                        <hr className="text-white mb-2" style={{ marginBottom: "0px" }} />
+                                        <div className="row">
+                                            <div className="col-6">
+                                                {v.kumpulanjawaban.map((d, di) => {
+                                                    return (
+                                                        <a key={di} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }} href="#">{d.bahasa.charAt(0).toUpperCase() + d.bahasa.slice(1)}</a>
+                                                    )
+                                                })}
+                                            </div>
+                                            <div className="col-6 text-end">
+                                                {JSON.parse(v.tags).map((t: string, ti: number) => {
+                                                    return (
+                                                        <a key={ti} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }}>{t}</a>
+                                                    )
+                                                })}
+                                                <i className="bi bi-tags-fill me-3 fs-5" style={{ color: "rgb(200, 200, 200)" }}></i>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="mb-4 px-3 py-2 text-white" style={{ maxHeight: "200px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
-                                    <ReactMarkdown
-                                        // eslint-disable-next-line react/no-children-prop
-                                        children={test}
-                                        components={{
-                                            code({ node, inline, className, children, ...props }) {
-                                                const match = /language-(\w+)/.exec(className || '');
-                                                return !inline && match ? (
-                                                    <SyntaxHighlighter
-                                                        // eslint-disable-next-line react/no-children-prop
-                                                        children={String(children).replace(/\n$/, '')}
-                                                        style={tomorrow as any}
-                                                        language={match[1]}
-                                                        PreTag="div"
-                                                        {...props}
-                                                    />
-                                                ) : (
-                                                    <code className={className} {...props}>
-                                                        {children}
-                                                    </code>
-                                                )
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <hr className="text-white mb-2" style={{ marginBottom: "0px" }} />
-                                <div className="row">
-                                    <div className="col-6">
-                                        <a className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }} href="#">Javascript</a>
-                                        <a className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }} href="#">Python</a>
-                                    </div>
-                                    <div className="col-6 text-end">
-                                        <a className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }}>Array</a>
-                                        <a className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }}>Logika</a>
-                                        <a className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }}>Bahasa Indonesia</a>
-                                        <i className="bi bi-tags-fill me-3 fs-5" style={{ color: "rgb(200, 200, 200)" }}></i>
-                                    </div>
-                                </div>
-                            </div>
+                                );
+                            })}
                         </div>
                         <div className="col">
                             <div className="p-2 rounded-1 filter-jawaban">

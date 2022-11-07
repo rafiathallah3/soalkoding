@@ -7,26 +7,15 @@ import { DataSolusi, Komentar } from "../../../../types/tipe";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useState } from "react";
-import { getCookie, setCookie } from "cookies-next";
+import { UpdateInfoAkun } from "../../../../services/Servis";
+import { Akun } from "@prisma/client";
+import FavoritKomponen from "../../../../components/Favorit";
 
 export async function getServerSideProps({ params, req, res }: { params: { soal: string, solusi: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const infoakun = getCookie('infoakun', { req, res }) as string;
-    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    if (DapatinUser.redirect !== undefined) return DapatinUser;
 
-    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-        headers: { cookie: req.headers.cookie } as any
-    }).then(d => d.data);
-
-    setCookie('infoakun', DapatinToken, {
-        req, res,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/"
-    });
-
-    const data = await axios.post(`http://${req.headers.host}/api/soal/solusi/dapatinSolusi`, {
+    const data = await axios.post(`${process.env.NAMAWEBSITE}/api/soal/solusi/dapatinSolusi`, {
         idsoal: params.soal,
         idsolusi: params.solusi
     }, {
@@ -36,16 +25,16 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
 
     return {
         props: {
-            data
+            data,
+            profile: {
+                username: DapatinUser.username,
+                gambar: DapatinUser.gambarurl
+            }
         }
     }
 }
 
-export default function SolusiId({ data }: { data: DataSolusi }) {
-    const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
-        suka_ngk: data.suka_ngk,
-        berapa: JSON.parse(data.soal.suka).length
-    });
+export default function SolusiId({ data, profile }: { data: DataSolusi, profile: { username: string, gambar: string } }) {
     const [ListKomentar, setListKomentar] = useState<Komentar[]>(data.solusi[0].komentar);
 
     const KlikKepintaran = async (elementTombol: MouseEvent, idsolusi: string) => {
@@ -62,17 +51,6 @@ export default function SolusiId({ data }: { data: DataSolusi }) {
             (elementTombol.target as any).style.color = 'rgb(170, 170, 170)';
         }
         document.getElementById(_data.idsolusi)!.innerText = _data.berapa;
-    }
-
-    const FavoritSoal = async () => {
-        const _data = await axios.post("/api/soal/favorit", {
-            idsoal: data.idsoal
-        }).then(d => d.data);
-
-        setFavorit({
-            suka_ngk: _data.suka_ngk,
-            berapa: _data.berapa
-        })
     }
 
     const KirimKomentar = async () => {
@@ -111,7 +89,7 @@ export default function SolusiId({ data }: { data: DataSolusi }) {
     }
 
     const HapusKomen = async (idkomen: number) => {
-        const maukah = confirm('Apa kamu yakin ingin menghapus komen ini?')
+        const maukah = confirm('Apa kamu yakin ingin menghapus komen ini?');
 
         if (maukah) {
             const _data: { suka: "biasa" | "up" | "down", berapa: number } = await axios.post('/api/soal/solusi/komentar', {
@@ -151,7 +129,7 @@ export default function SolusiId({ data }: { data: DataSolusi }) {
 
     return (
         <>
-            <Navbar />
+            <Navbar profile={profile} />
             <style jsx>{`
             .tombol-keren {
                 background: rgb(50, 50, 50);
@@ -203,22 +181,18 @@ export default function SolusiId({ data }: { data: DataSolusi }) {
                 <div className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
                     <div className="mb-3 text-white">
                         <span className="me-3">{data.soal.namasoal}</span>
-                        <span className="p-2 fs-6 me-2" style={{ background: "rgb(55, 55, 55)" }}>Level {data.soal.level}</span>
+                        <span className={"p-2 fs-6 me-2 " + (data.soal.level <= 2 ? "text-white" : data.soal.level <= 4 ? "text-warning" : "text-danger")} style={{ background: "rgb(55, 55, 55)" }}>Level {data.soal.level}</span>
                         <a className="text-decoration-none text-white" style={{ float: "right" }} href={`/soal/${data.idsoal}/solusi`}>Kembali lagi ke soal sebelumnya</a>
+                        {data.ApakahSudahSelesai &&
+                            <i className="bi bi-check-lg"></i>
+                        }
                     </div>
                     <div className="mb-4 text-white">
                         <span className="me-3">
                             <i className="bi bi-person-fill me-2"></i>
                             <a className="text-decoration-none text-white" href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
                         </span>
-                        <span className="me-3 favorit" onClick={FavoritSoal}>
-                            {Favorit.suka_ngk ?
-                                <i className="bi bi-star-fill me-1"></i>
-                                :
-                                <i className="bi bi-star me-1"></i>
-                            }
-                            {Favorit.berapa}
-                        </span>
+                        <FavoritKomponen data={{ suka_ngk: data.suka_ngk, berapa: data.soal.favorit.length, idsoal: data.idsoal }} />
                         <span title="Jumlah solusi">
                             <i className="bi bi-calendar-check me-1"></i>
                             {data.JumlahSolusi}
@@ -247,8 +221,8 @@ export default function SolusiId({ data }: { data: DataSolusi }) {
                 {data.ApakahSudahSelesai &&
                     <div className="p-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
                         <div className="d-flex flex-row">
-                            <div>
-                                <Image src="/profile.jpeg" className="rounded me-2 text-white" height={60} width={68} alt="Potret seorang wanita cantik" />
+                            <div className="me-2">
+                                <Image src={profile.gambar} className="rounded text-white" height={60} width={60} alt="Potret seorang wanita cantik" />
                             </div>
                             <div className="w-100">
                                 <textarea className="w-100" id="textkomen" style={{ resize: "none", backgroundColor: "rgb(40, 40, 40)", outline: "none", color: "rgb(200, 200, 200)" }}></textarea>
@@ -259,15 +233,15 @@ export default function SolusiId({ data }: { data: DataSolusi }) {
                             {ListKomentar.map((v, i) => {
                                 return (
                                     <div key={i} className="d-flex flex-row mb-3">
-                                        <div>
-                                            <Image src="/profile.jpeg" className="rounded me-2 text-white" height={60} width={68} alt="Potret seorang wanita cantik" />
+                                        <div className="me-2">
+                                            <Image src={v.user.gambarurl} className="rounded text-white" height={60} width={60} alt="Potret seorang wanita cantik" />
                                         </div>
-                                        <div className="w-100">
+                                        <div className="ms-2 w-100">
                                             <div className="mb-1">
                                                 <Link href={`/profile/${v.user.username}`}>
-                                                    <a className="me-3 text-white text-decoration-none">{v.user.username}</a>
+                                                    <a className="me-2 text-white text-decoration-none">{v.user.username}</a>
                                                 </Link>
-                                                <span className="text-white-50 me-3">{SemenjakWaktu(new Date(v.bikin))}</span>
+                                                <span className="text-white-50 me-2">{SemenjakWaktu(new Date(v.bikin))}</span>
                                                 <i className="bi bi-trash hapus-komen" onClick={() => HapusKomen(v.id)} style={{ color: "red" }}></i>
                                             </div>
                                             <div className="text-white mb-2">{v.komen}</div>

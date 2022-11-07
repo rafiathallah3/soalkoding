@@ -1,33 +1,26 @@
+import { Akun } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
-import { getCookie, setCookie } from "cookies-next";
 import BuatKomponen from "../../components/BuatSoal";
-import axios from "axios";
+import { UpdateInfoAkun } from "../../services/Servis";
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const infoakun = getCookie('infoakun', { req, res }) as string;
-    if (infoakun === undefined) return { redirect: { destination: '/login', permanent: false } };
-
-    const DapatinToken = await axios.post("http://localhost:3003/api/dapatintokenbaru", {}, {
-        headers: { cookie: req.headers.cookie } as any
-    }).then(d => d.data);
-
-    setCookie('infoakun', DapatinToken, {
-        req, res,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/"
-    });
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     return {
-        props: {}
+        props: {
+            profile: {
+                username: DapatinUser.username,
+                gambar: DapatinUser.gambarurl
+            }
+        }
     }
 }
 
-export default function Buat() {
+export default function Buat({ profile }: { profile: { username: string, gambar: string } }) {
     return (
         <BuatKomponen
+            profile={profile}
             mode="buat"
         />
     )

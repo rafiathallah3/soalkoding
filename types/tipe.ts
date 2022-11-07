@@ -1,10 +1,3 @@
-export interface HasilJawaban {
-    koreksi: boolean,
-    status: "Sukses" | "Error",
-    hasil: any,
-    jawaban: any
-}
-
 export interface SettingProfile {
     email: string,
     username: string,
@@ -12,6 +5,8 @@ export interface SettingProfile {
     bio: string
     tinggal: string,
     akungithub?: { username: string },
+    favorit: { id: number, soal: DataSoal }[]
+    githuburl: string,
     sudahVerifikasi: boolean,
     gambarurl: string,
     website: string,
@@ -45,13 +40,16 @@ export interface DataSoal {
     pembuat: { username: string },
     public: boolean,
     suka: string,
+    favorit: { id: number }[]
+    bikin: Date,
     kumpulanjawaban: {
         bahasa: string,
         listjawaban: string,
         contohjawaban: string,
         liatankode: string,
         jawabankode: string
-    }[]
+    }[],
+    solusi: Solusi[]
 }
 
 export interface Solusi {
@@ -70,7 +68,7 @@ export interface Komentar {
     id: number,
     idsoal: string,
     komen: string,
-    user: { username: string },
+    user: { username: string, gambarurl: string },
     bikin: Date,
     upvote: string,
     downvote: string,
@@ -91,6 +89,7 @@ export interface DataSolusi {
         tags: string,
         pembuat: { username: string },
         suka: string,
+        favorit: { id: string }[]
     }
 }
 
@@ -108,6 +107,7 @@ export interface TipeKonfirmasiJawaban {
     koreksi: boolean
     status: "Sukses" | "Error"
     error?: string
+    print?: string[]
 }
 
 export interface HasilKompiler {
@@ -116,7 +116,7 @@ export interface HasilKompiler {
     lulus: number,
     gagal: number,
     error?: any,
-    statuskompiler: "Sukses" | "Mengirim" | "" //Ini untuk menunjukkan kalau user mengirim kompiler dan tunjukkin hasil kompiler kalau sudah selesai 20:31 29/10/2022
+    statuskompiler: "Sukses" | "Mengirim" | "", //Ini untuk menunjukkan kalau user mengirim kompiler dan tunjukkin hasil kompiler kalau sudah selesai 20:31 29/10/2022
 }
 
 export interface OutputCompilerGodbolt {

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Navbar({ profile = '' }) {
+export default function Navbar({ profile }: { profile: { username?: string, gambar?: string } }) {
     return (
         <nav className="navbar navbar-expand-lg navbar-light">
             <style jsx>{`
@@ -21,6 +21,8 @@ export default function Navbar({ profile = '' }) {
             .dropdown-center:hover .dropdown-menu {
                 display: block;
                 margin-top: 0;
+                left: auto;
+                right: 0;
             }
             
             `}</style>
@@ -32,20 +34,19 @@ export default function Navbar({ profile = '' }) {
                         </Link>
                     </li>
                 </ul>
-                <ul className={"navbar-nav ms-auto px-4 barangnavbar " + (profile === '' ? 'p-2' : '')}>
-                    {profile !== '' ?
+                <ul className={"navbar-nav ms-auto px-4 barangnavbar " + (Object.keys(profile).length === 0 ? 'p-2' : '')}>
+                    {Object.keys(profile).length !== 0 ?
                         <>
                             <li className='nav-item me-4 align-self-center'>
                                 <i className='bi bi-bell-fill text-white fs-3'></i>
                             </li>
                             <li className="nav-item dropdown-center">
-                                <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-                                    <Image src="/gambar/profile.png" className="rounded me-2 text-white" height={40} width={48} alt="Potret seorang wanita cantik" />
-                                    <h4 className='text-white text-center align-middle'>100</h4>
+                                <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" onClick={() => window.location = `/profile/${profile.username}` as any} role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                    <Image src={profile.gambar === undefined || profile.gambar === "" ? "/gambar/profile.png" : profile.gambar} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />
                                 </a>
                                 <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{ minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black" }}>
                                     <li>
-                                        <a className="dropdown-item" href={"/profile/" + profile}><i className='bi bi-person-circle'></i> My profile</a>
+                                        <a className="dropdown-item" href={"/profile/" + profile.username}><i className='bi bi-person-circle'></i> My profile</a>
                                     </li>
                                     <li>
                                         <a className="dropdown-item" href={"/profile/edit"}><i className='bi bi-gear-fill'></i> Settings</a>

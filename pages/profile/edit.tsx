@@ -1,5 +1,4 @@
 import Navbar from "../../components/navbar"
-import NextImage from "next/image";
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { SettingProfile } from "../../types/tipe";
@@ -21,6 +20,10 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
         return {
             props: {
                 data,
+                profile: {
+                    username: DapatinUser.username,
+                    gambar: DapatinUser.gambarurl
+                }
             }
         }
     } catch (e) {
@@ -28,7 +31,7 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
     }
 }
 
-export default function Edit({ data }: { data: SettingProfile }) {
+export default function Edit({ data, profile }: { data: SettingProfile, profile: { username: string, gambar: string } }) {
     const [Notif, setNotif] = useState<{ status: string, pesan: string } | undefined>(undefined);
 
     useEffect(() => {
@@ -94,7 +97,7 @@ export default function Edit({ data }: { data: SettingProfile }) {
 
     return (
         <>
-            <Navbar profile={data.username} />
+            <Navbar profile={profile} />
             <style>{`
             .gambarProfile:hover {
                 cursor: pointer;
@@ -150,11 +153,11 @@ export default function Edit({ data }: { data: SettingProfile }) {
                                     <div className="col-md-6 mb-1">
                                         <div className="text-white mb-2">
                                             <span className="me-2">Email</span>
-                                            {data.sudahVerifikasi ?
+                                            {/* {data.sudahVerifikasi ?
                                                 <i title="Email sudah terverifikasi" className="bi bi-check-lg" style={{ color: "#32a852" }}></i>
                                                 :
                                                 <button style={{ background: "#3264a8", color: "white", border: "0px solid", padding: "0px 10px 0px 10px" }}>Verifikasi</button>
-                                            }
+                                            } */}
                                         </div>
                                         <input defaultValue={data.email} name="email" className="form-control" type="text" style={{ background: "rgb(40, 40, 40)", color: "rgb(200, 200, 200)", border: "1px solid rgb(100, 100, 100)" }} />
                                     </div>

@@ -11,9 +11,8 @@ export default async function BuatSoal(req: NextApiRequest, res: NextApiResponse
         if(Object.values(req.body).every((v) => (v as string).trim() === "")) return res.status(403).send("Error 403");
         // const { NamaSoal, Level, Tags, Soal, ContohJawaban, ListJawaban, Bahasa, LiatanKode, KodeJawaban } = req.body;
         const { namasoal, level, tags, soal, infokode }: { [name: string]: string } = req.body;
-        const ParseInfoKode = JSON.parse(infokode) as { [bahasa: string]: TipeInfoKode };
-
-        const data = await prisma.soal.create({
+        
+        const DataSoal = await prisma.soal.create({
             data: {
                 namasoal,
                 level: parseInt(level),
@@ -21,17 +20,20 @@ export default async function BuatSoal(req: NextApiRequest, res: NextApiResponse
                 soal,
                 idpembuat: verifikasi,
                 public: false,
-                kumpulanjawaban: {
-                    createMany: {
-                        data: [
-                            ...Object.values(ParseInfoKode).filter((v) => v.listjawaban.trim() !== "" || v.contohjawaban.trim() !== "")
-                        ]
-                    }
-                }
             }
         });
+        
+        const ParseInfoKode = JSON.parse(infokode) as { [bahasa: string]: TipeInfoKode };
+        console.log([
+            ...Object.values(ParseInfoKode).filter((v) => v.listjawaban.trim() !== "" || v.contohjawaban.trim() !== "").map((v) => ({...v, idsoal: DataSoal.id}))
+        ])
+        await prisma.kumpulanJawaban.createMany({
+            data: [
+                ...Object.values(ParseInfoKode).filter((v) => v.listjawaban.trim() !== "" || v.contohjawaban.trim() !== "").map((v) => ({...v, idsoal: DataSoal.id})),
+            ]
+        })
 
-        return res.json({ id: data.id });
+        return res.json({ id: DataSoal.id });
     }
     
     return res.status(405).send("Error 405");

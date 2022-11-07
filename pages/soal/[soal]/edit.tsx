@@ -31,15 +31,20 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
                 soal: DataSoal.soal,
                 public: DataSoal.public,
                 kumpulanjawaban: DataSoal.kumpulanjawaban
+            },
+            profile: {
+                username: DapatinUser.username,
+                gambar: DapatinUser.gambarurl
             }
         }
     }
 }
 
-export default function Edit({ data }: { data: DataSoal }) {
+export default function Edit({ data, profile }: { data: DataSoal, profile: { username: string, gambar: string } }) {
     return (
         <BuatKomponen
             mode="edit"
+            profile={profile}
             data={data}
         />
     )

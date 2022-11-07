@@ -187,6 +187,7 @@ export default async function Github(req: NextApiRequest, res: NextApiResponse) 
                     create: {
                         email: GithubDataEmail[0].email,
                         username: GithubDataUser.login,
+                        gambar: GithubDataUser.avatar_url
                     }
                 }
             }

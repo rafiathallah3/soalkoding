@@ -36,26 +36,45 @@ export default async function UpdateSoal(req: NextApiRequest, res: NextApiRespon
 
         for(const i of Object.values(ParseInfoKode)) {
             if(i.contohjawaban.trim() === "" || i.listjawaban.trim() === "") continue;
-            await prisma.soal.update({
+            const KumpulanJawaban = await prisma.kumpulanJawaban.findFirst({
                 where: {
-                    id: idsoal
-                },
-                data: {
-                    kumpulanjawaban: {
-                        update:{ 
-                            where: {
-                                bahasa: i.bahasa
-                            },
-                            data: {
-                                contohjawaban: i.contohjawaban,
-                                listjawaban: i.listjawaban,
-                                liatankode: i.liatankode,
-                                jawabankode: i.jawabankode
-                            }
-                        }
-                    }
+                    idsoal,
+                    bahasa: i.bahasa
                 }
             });
+            if(KumpulanJawaban === null) return res.status(403).send("Error 403");
+
+            await prisma.kumpulanJawaban.update({
+                where: {
+                    id: KumpulanJawaban.id
+                },
+                data: {
+                    contohjawaban: i.contohjawaban,
+                    listjawaban: i.listjawaban,
+                    liatankode: i.liatankode,
+                    jawabankode: i.jawabankode
+                }
+            })
+            // await prisma.soal.update({
+            //     where: {
+            //         id: idsoal
+            //     },
+            //     data: {
+            //         kumpulanjawaban: {
+            //             update:{ 
+            //                 where: {
+            //                     bahasa: i.bahasa
+            //                 },
+            //                 data: {
+            //                     contohjawaban: i.contohjawaban,
+            //                     listjawaban: i.listjawaban,
+            //                     liatankode: i.liatankode,
+            //                     jawabankode: i.jawabankode
+            //                 }
+            //             }
+            //         }
+            //     }
+            // });
         }
     }
 

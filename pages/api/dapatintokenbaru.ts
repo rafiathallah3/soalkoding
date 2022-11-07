@@ -19,7 +19,7 @@ export default async function DapatinTokenBaru(req: NextApiRequest, res: NextApi
         if(!DapatinUser) return res.status(403).send("Forbidden");
         jwt.verify(PerbaruiToken as string, process.env.PERBARUITOKEN!, (err, user: any) => {
             if(err) return res.status(403).send("Forbidden");
-            const token = jwt.sign({ datanya: { iv: user.datanya.iv, IniDataRahasia: user.datanya.IniDataRahasia } }, process.env.TOKENRAHASIA!, { expiresIn: '1h' });
+            const token = jwt.sign({ datanya: { iv: user.datanya.iv, IniDataRahasia: user.datanya.IniDataRahasia } }, process.env.TOKENRAHASIA!, { expiresIn: '2h' });
             
             // console.log("Baru", token);
             res.status(200).send(token);

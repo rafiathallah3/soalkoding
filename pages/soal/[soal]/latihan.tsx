@@ -10,7 +10,8 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Background from "../../../components/background";
 import Navbar from "../../../components/navbar";
 import styles from '../../../styles/latihan.module.css'
-import { DataSoal, HasilJawaban, HasilKompiler } from "../../../types/tipe";
+import { DataSoal, HasilKompiler } from "../../../types/tipe";
+import FavoritKomponen from "../../../components/Favorit";
 import { prisma } from "../../../database/prisma";
 import { UpdateInfoAkun } from "../../../services/Servis";
 import { Akun } from "@prisma/client";
@@ -33,7 +34,7 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
     if (DataSoal === null || !DataSoal.public) return { notFound: true }
 
     try {
-        const data = await axios.post("http://localhost:3003/api/soal/dapatinSoal", {
+        const data = await axios.post(`${process.env.NAMAWEBSITE}/api/soal/dapatinSoal`, {
             idsoal: params.soal
         }, {
             headers: { cookie: req.headers.cookie } as any
@@ -42,7 +43,10 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
         return {
             props: {
                 data,
-                profile: DapatinUser.username
+                profile: {
+                    username: DapatinUser.username,
+                    gambar: DapatinUser.gambarurl
+                }
             }
         }
     } catch (e) {
@@ -55,7 +59,7 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
     }
 }
 
-export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: boolean }, profile: string }) {
+export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: boolean }, profile: { username: string, gambar: string } }) {
     const [BahasaProgram, setBahasaProgram] = useState('python');
     const [Output, setOutput] = useState<HasilKompiler>({
         data: [{
@@ -72,11 +76,6 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
     const [StatusTekananSoalOutput, setStatusTekananSoalOutput] = useState('soal');
     const [Kode, setKode] = useState(data.kumpulanjawaban[0].liatankode);
     const [KodeBenar, setKodeBenar] = useState<string>();
-    const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
-        suka_ngk: data.suka_ngk,
-        berapa: JSON.parse(data.suka).length
-    });
-
     let kodeEditor: ReactAce | undefined = undefined;
 
     const KlikOutput = () => {
@@ -109,17 +108,6 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
             pertanyaanElement.classList.remove("bg-transparent");
             pertanyaanElement.classList.add("tombolBerikutnya");
         }
-    }
-
-    const FavoritSoal = async () => {
-        const _data = await axios.post("/api/soal/favorit", {
-            idsoal: data.id
-        }).then(d => d.data);
-
-        setFavorit({
-            suka_ngk: _data.suka_ngk,
-            berapa: _data.berapa
-        })
     }
 
     const KirimSolusi = async (e: BaseSyntheticEvent) => {
@@ -247,17 +235,10 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
                                         <h5>{data.namasoal}</h5>
                                         <div>
                                             <span className={"me-4 " + (data.level <= 2 ? "" : data.level > 2 ? data.level > 4 ? "text-danger" : "text-warning" : "text-warning")}>Level {data.level}</span>
-                                            <span className="me-4 favorit" onClick={FavoritSoal}>
-                                                {Favorit.suka_ngk ?
-                                                    <i className="bi bi-star-fill me-1"></i>
-                                                    :
-                                                    <i className="bi bi-star me-1"></i>
-                                                }
-                                                {Favorit.berapa}
-                                            </span>
+                                            <FavoritKomponen data={{ suka_ngk: data.suka_ngk, berapa: data.favorit.length, idsoal: data.id }} />
                                             <span>
                                                 <i className="bi bi-person-fill me-2"></i>
-                                                <a className="text-decoration-none text-white" href="#">{data.pembuat.username}</a>
+                                                <a className="text-decoration-none text-white" href={`/profile/${data.pembuat.username}`}>{data.pembuat.username}</a>
                                             </span>
                                         </div>
                                     </div>

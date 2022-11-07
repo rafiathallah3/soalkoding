@@ -14,7 +14,7 @@ import { getCookie } from "cookies-next";
 
 const CodeEditor = dynamic(import('../components/codeEditor'), { ssr: false });
 
-export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: DataSoal }) {
+export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", data?: DataSoal, profile: { username: string, gambar: string } }) {
     const [StatusSoal, setStatusSoal] = useState<"preview" | "soal" | "bantuan">('soal');
     const [StatusKodeJawaban, setStastusKodeJawaban] = useState<"kodejawaban" | "liatkode" | "output" | "bantuan">('kodejawaban');
     const [StatusJawaban, setStatusJawaban] = useState<"listjawaban" | "contohjawaban" | "bantuan">('listjawaban');
@@ -92,7 +92,6 @@ export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: Dat
         try {
             setOutputKonfirmasiJawaban({ ...OutputKonfirmasiJawaban, statuskompiler: "Mengirim" });
             setStastusKodeJawaban("output");
-            console.log("Klik");
             const d: HasilKompiler = await axios.post("/api/soal/konfirmasikode", {
                 buat: JSON.stringify(InfoKode),
                 kode: InfoKode[BahasaProgram].jawabankode,
@@ -124,6 +123,7 @@ export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: Dat
             soal: Soal,
             infokode: JSON.stringify(InfoKode),
         }).then(d => d.data);
+        setSudahDiSave(true);
 
         router.push(`/soal/${d.id}/edit`);
     }
@@ -149,6 +149,7 @@ export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: Dat
             idsoal: data?.id,
             publicsoal: Public
         }).then(d => d.data);
+        setSudahDiSave(true);
 
         router.reload();
     }
@@ -158,7 +159,7 @@ export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: Dat
             idsoal: data?.id
         }).then(d => d.data);
 
-        if (DataHapus === "Sukses") router.push("/dashboard");
+        if (DataHapus === "Sukses") router.push("/soal/buat");
     }
 
     const UlangSoal = () => {
@@ -194,7 +195,6 @@ export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: Dat
     }, []);
 
     useEffect(() => {
-        setSudahDiSave(false);
         const warningText = 'Soal yang kamu bikin belum disimpan - Yakin mau keluar?';
         const handleWindowClose = (e: BeforeUnloadEvent) => {
             if (SudahDiSave) return;
@@ -212,6 +212,8 @@ export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: Dat
         window.addEventListener('beforeunload', handleWindowClose);
         router.events.on('routeChangeStart', handleBrowseAway);
 
+        setSudahDiSave(false);
+
         return () => {
             window.removeEventListener('beforeunload', handleWindowClose);
             router.events.off('routeChangeStart', handleBrowseAway);
@@ -221,7 +223,7 @@ export default function Buat({ mode, data }: { mode: "buat" | "edit", data?: Dat
 
     return (
         <>
-            <Navbar />
+            <Navbar profile={profile} />
             <style>{`
             .tombol-tags-aktif {
                 background-color: rgb(58, 58, 58) !important;
@@ -502,14 +504,26 @@ return "Solusinya mana";
                                                                         <details key={i} className="mb-2 panah text-success">
                                                                             <summary className="mb-2">Test {i + 1}: Success</summary>
                                                                             <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(35, 102, 53)", border: "1px solid rgb(51, 130, 72)", letterSpacing: ".7px" }}>
-                                                                                Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                                                <div className="mb-1 fs-6">
+                                                                                    Hasil: {v.hasil}, Jawaban: {v.jawaban}
+                                                                                </div>
+                                                                                {v.print !== undefined &&
+                                                                                    <div className="p-2" style={{ background: "rgb(50, 50, 50)", border: "1px solid rgb(150, 150, 150)", borderRadius: "5px" }}>
+                                                                                        Output:
+                                                                                        {v.print.map((d, id) => {
+                                                                                            return (
+                                                                                                <div key={id}>{d}</div>
+                                                                                            )
+                                                                                        })}
+                                                                                    </div>
+                                                                                }
                                                                             </div>
                                                                         </details>
                                                                         :
                                                                         <details key={i} className="mb-2 panah text-danger">
                                                                             <summary className="mb-2">Test {i + 1}: Gagal</summary>
                                                                             <div className="px-3 py-2 rounded-2 text-white" style={{ background: "rgb(97, 57, 57)", border: "1px solid rgb(145, 78, 78)", letterSpacing: ".7px" }}>
-                                                                                Output: {v.hasil}, Jawaban: {v.jawaban}
+                                                                                Hasil: {v.hasil}, Jawaban: {v.jawaban}
                                                                             </div>
                                                                         </details>
                                                                     );

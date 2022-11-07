@@ -7,12 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Favorit {
+  id     Int      @id @default(autoincrement())
+  idsoal String
+  soal   Soal     @relation(fields: [idsoal], references: [id], onDelete: Cascade)
+  iduser String
+  user   Akun     @relation(fields: [iduser], references: [id], onDelete: Cascade)
+  kapan  DateTime @default(now())
+
+  @@map("favorit")
+}
+
 model Komentar {
   id       String   @default(cuid())
   solusi   Solusi   @relation(fields: [idsolusi], references: [id], onDelete: Cascade)
   idsolusi String
   komen    String   @db.Text
-  user     Akun     @relation(fields: [iduser], references: [id])
+  user     Akun     @relation(fields: [iduser], references: [id], onDelete: Cascade)
   iduser   String
   bikin    DateTime @default(now())
   upvote   String   @default("[]") @db.Text
@@ -27,11 +38,11 @@ model KumpulanJawaban {
   id            Int    @id @default(autoincrement())
   idsoal        String
   soal          Soal   @relation(fields: [idsoal], references: [id], onDelete: Cascade)
-  bahasa        String @unique
-  listjawaban   String
-  contohjawaban String
+  bahasa        String
+  listjawaban   String @db.MediumText
+  contohjawaban String @db.MediumText
   liatankode    String
-  jawabankode   String
+  jawabankode   String @db.MediumText
 }
 
 model Soal {
@@ -43,7 +54,7 @@ model Soal {
   tags            String            @default("[]") @db.TinyText
   soal            String            @db.MediumText
   public          Boolean           @default(false)
-  suka            String            @default("[]") @db.Text
+  favorit         Favorit[]
   solusi          Solusi[]
   kumpulanjawaban KumpulanJawaban[]
   bikin           DateTime          @default(now())
@@ -55,7 +66,7 @@ model Solusi {
   id         String     @default(cuid())
   soal       Soal       @relation(fields: [idsoal], references: [id], onDelete: Cascade)
   idsoal     String
-  user       Akun       @relation(fields: [idusername], references: [id])
+  user       Akun       @relation(fields: [idusername], references: [id], onDelete: Cascade)
   idusername String
   pintar     String     @default("[]") @db.Text
   komentar   Komentar[]
@@ -77,6 +88,7 @@ model Akun {
   soalselesai     Solusi[]
   buatsoal        Soal[]
   komentar        Komentar[]
+  favorit         Favorit[]
   akungithub      AkunGithub?
   githubstate     String?     @db.VarChar(30)
   gambarurl       String      @default("/gambar/profile.png")
@@ -97,7 +109,7 @@ model AkunGithub {
   email    String
   username String
   gambar   String  @default("")
-  user     Akun?   @relation(fields: [iduser], references: [id])
+  user     Akun?   @relation(fields: [iduser], references: [id], onDelete: Cascade)
   iduser   String? @unique
 
   @@unique([email, username])

@@ -1,8 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { verify } from '../../../../services/jwt_sign';
-import { DapatinSQL, parseCookies } from "../../../../database/db";
-import { decrypt } from "../../../../database/UbahKeHash";
-import { Komentar } from "../../../../types/tipe";
 import { prisma } from "../../../../database/prisma";
 import Verifikasi from "../../../../services/VerifikasiAkun";
 
@@ -35,7 +31,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
             const DataKomentar = await prisma.komentar.findMany({
                 include: {
                     user: {
-                        select: { username: true }
+                        select: { username: true, gambarurl: true }
                     }
                 }
             })

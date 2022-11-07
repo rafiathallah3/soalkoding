@@ -6,26 +6,12 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { DataSolusi, Solusi as TipeSolusi } from "../../../../types/tipe";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
 import { UpdateInfoAkun } from "../../../../services/Servis";
-
-const TemplateKoding = `
-function Roblox() {
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-    console.log("Minecraft adalah game yang terbaik");
-}
-`.trim()
+import { Akun } from "@prisma/client";
+import FavoritKomponen from "../../../../components/Favorit";
 
 export async function getServerSideProps({ params, req, res, query }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse, query: { lihat: string, berdasarkan: string } }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, false) as { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
@@ -39,6 +25,7 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
         return {
             props: {
                 data,
+                profile: { username: DapatinUser.username, gambar: DapatinUser.gambarurl },
                 ...query
             }
         }
@@ -49,26 +36,10 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
     }
 }
 
-export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined }) {
+export default function Solusi({ data, lihat, berdasarkan, profile }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined, profile: { username: string, gambar: string } }) {
     const router = useRouter();
 
-    const [Favorit, setFavorit] = useState<{ suka_ngk: boolean, berapa: number }>({
-        suka_ngk: data.suka_ngk,
-        berapa: JSON.parse(data.soal.suka).length
-    });
-
     const [Solusi, setSolusi] = useState<TipeSolusi[]>(data.solusi);
-
-    const FavoritSoal = async () => {
-        const _data = await axios.post("/api/soal/favorit", {
-            idsoal: data.idsoal
-        }).then(d => d.data);
-
-        setFavorit({
-            suka_ngk: _data.suka_ngk,
-            berapa: _data.berapa
-        })
-    }
 
     const KlikKepintaran = async (elementTombol: MouseEvent, idsolusi: string) => {
         const _data = await axios.post("/api/soal/solusi/pintar", {
@@ -104,7 +75,7 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
 
     return (
         <>
-            <Navbar profile={data.profile} />
+            <Navbar profile={profile} />
             <div className="px-3">
                 <style jsx>{`
             .tombol-kerjakan {
@@ -232,10 +203,8 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
                     <div className="row">
                         <div className="col">
                             <div className="mb-2">
-                                <Link href={`/soal/${data.idsoal}/latihan`}>
-                                    <a className="me-3 text-white text-decoration-none">{data.soal.namasoal}</a>
-                                </Link>
-                                <span className="p-2 fs-6 me-2" style={{ background: "rgb(55, 55, 55)" }}>Level {data.soal.level}</span>
+                                <a href={`/soal/${data.idsoal}/latihan`} className="me-3 text-white text-decoration-none">{data.soal.namasoal}</a>
+                                <span className={"p-2 fs-6 me-2 " + (data.soal.level <= 2 ? "text-white" : data.soal.level <= 4 ? "text-warning" : "text-danger")} style={{ background: "rgb(55, 55, 55)" }}>Level {data.soal.level}</span>
                                 {data.ApakahSudahSelesai &&
                                     <i className="bi bi-check-lg"></i>
                                 }
@@ -245,14 +214,7 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
                                     <i className="bi bi-person-fill me-2"></i>
                                     <a className="text-decoration-none text-white" href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
                                 </span>
-                                <span className="me-3 favorit" onClick={FavoritSoal}>
-                                    {Favorit.suka_ngk ?
-                                        <i className="bi bi-star-fill me-1"></i>
-                                        :
-                                        <i className="bi bi-star me-1"></i>
-                                    }
-                                    {Favorit.berapa}
-                                </span>
+                                <FavoritKomponen data={{ suka_ngk: data.suka_ngk, berapa: data.soal.favorit.length, idsoal: data.idsoal }} />
                                 <span title="Jumlah solusi">
                                     <i className="bi bi-calendar-check me-1"></i>
                                     {data.JumlahSolusi}
@@ -261,9 +223,7 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
                         </div>
                         <div className="col">
                             <div className="d-flex flex-row justify-content-end h-100">
-                                <Link href={`/soal/${data.idsoal}/latihan`}>
-                                    <a className="text-decoration-none align-self-center tombol-kerjakan me-2">Kerjakan</a>
-                                </Link>
+                                <a href={`/soal/${data.idsoal}/latihan`} className="text-decoration-none align-self-center tombol-kerjakan me-2">Kerjakan</a>
                                 <button className="align-self-center tombol-soalberikutnya">Soal berikutnya <i className="bi bi-caret-right-fill"></i></button>
                             </div>
                         </div>
@@ -284,9 +244,7 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
                                         <div className="d-flex">
                                             <div className="text-white flex-grow-1">
                                                 <i className="bi bi-person me-1"></i>
-                                                <Link href={`/profile/${v.user.username}`}>
-                                                    <a className="me-3 text-white text-decoration-none">{v.user.username}</a>
-                                                </Link>
+                                                <a href={`/profile/${v.user.username}`} className="me-3 text-white text-decoration-none">{v.user.username}</a>
                                             </div>
                                             <div className="text-white-50">
                                                 {new Date(v.kapan).getDate() + '/' + (new Date(v.kapan).getMonth() + 1) + '/' + new Date(v.kapan).getFullYear()}
@@ -301,12 +259,10 @@ export default function Solusi({ data, lihat, berdasarkan }: { data: DataSolusi,
                                                 Pintar
                                                 <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
                                             </button>
-                                            <Link href={`/soal/${v.idsoal}/solusi/${v.id}`}>
-                                                <a className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
-                                                    <i className="bi bi-chat-right-fill me-2 fs-5"></i>
-                                                    {v.komentar.length}
-                                                </a>
-                                            </Link>
+                                            <a href={`/soal/${v.idsoal}/solusi/${v.id}`} className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
+                                                <i className="bi bi-chat-right-fill me-2 fs-5"></i>
+                                                {v.komentar.length}
+                                            </a>
                                         </div>
                                     </div>
                                 )

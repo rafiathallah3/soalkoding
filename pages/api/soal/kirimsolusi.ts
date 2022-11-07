@@ -1,16 +1,21 @@
-import axios from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../database/prisma';
 import { JalaninKompiler } from '../../../services/Servis';
-import { DapatinServisKompiler } from '../../../services/TemplateBahasaProgram';
 import Verifikasi from '../../../services/VerifikasiAkun';
-import { OutputCompilerGodbolt, OutputCompilerWandbox, TipeKonfirmasiJawaban } from '../../../types/tipe';
 
 export default async function KirimSolusi(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {
         const verifikasi = Verifikasi(req, res);
         if(typeof verifikasi === 'number') return res.status(verifikasi).send(`Error: ${verifikasi}`);
 
+        const DataUser = await prisma.akun.findUnique({
+            where: {
+                id: verifikasi
+            }
+        });
+
+        if(DataUser === null) return res.status(401);
+        
         const { kode, idsoal, bahasa } = req.body;
         if(kode === undefined || idsoal === undefined) return res.status(403).send("Error: 403");
 
