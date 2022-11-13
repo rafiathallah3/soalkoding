@@ -212,10 +212,10 @@ export default function Cari({ data, query, profile }: { data: (DataSoal & { apa
                                                         <i className="bi bi-calendar-check me-1"></i>
                                                         {v.jumlahsolusi}
                                                     </span>
-                                                    <span className="me-3" title="Kepuasan orang dalam mengerjakan soal">
+                                                    {/* <span className="me-3" title="Kepuasan orang dalam mengerjakan soal">
                                                         <i className="bi bi-eyeglasses me-1"></i>
                                                         30
-                                                    </span>
+                                                    </span> */}
                                                 </div>
                                             </div>
                                         </div>
