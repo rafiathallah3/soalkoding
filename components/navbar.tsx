@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Navbar({ profile }: { profile: { username?: string, gambar?: string } }) {
+export default function Navbar({ profile }: { profile: { username: string | null, gambar: string | null } }) {
     return (
         <nav className="navbar navbar-expand-lg navbar-light">
             <style jsx>{`
@@ -24,25 +24,55 @@ export default function Navbar({ profile }: { profile: { username?: string, gamb
                 left: auto;
                 right: 0;
             }
+
+            .donasi {
+                color: white;
+                transition: .2s;
+            }
+
+            .donasi:hover {
+                color: #c92479;
+            }
+
+            .warna-discord {
+                color: white;
+                transition: .2s;
+            }
+
+            .warna-discord:hover {
+                color: #7289da;
+            }
             
             `}</style>
             <div className="container-fluid">
                 <ul className="navbar-nav me-auto px-4 text-white">
                     <li className="navbar-nav align-self-center">
                         <Link href="/dashboard">
-                            <a className="text-decoration-none text-white">Soalkoding</a>
+                            <a className="text-decoration-none text-white" style={{ fontSize: "17px" }}>Soalkoding</a>
                         </Link>
                     </li>
                 </ul>
-                <ul className={"navbar-nav ms-auto px-4 barangnavbar " + (Object.keys(profile).length === 0 ? 'p-2' : '')}>
-                    {Object.keys(profile).length !== 0 ?
+                <ul className={"navbar-nav ms-auto px-4 barangnavbar"}>
+                    {!Object.values(profile).some((v) => v === null) ?
                         <>
                             <li className='nav-item me-4 align-self-center'>
-                                <i className='bi bi-bell-fill text-white fs-3'></i>
+                                <a href="https://discord.gg/kaqs2j4W">
+                                    <i className='bi bi-discord fs-2 warna-discord'></i>
+                                </a>
                             </li>
+                            <li className='nav-item me-4 align-self-center'>
+                                <Link href="/donasi">
+                                    <a>
+                                        <i className='bi bi-piggy-bank-fill donasi fs-2'></i>
+                                    </a>
+                                </Link>
+                            </li>
+                            {/* <li className='nav-item me-4 align-self-center'>
+                                <i className='bi bi-bell-fill text-white fs-2'></i>
+                            </li> */}
                             <li className="nav-item dropdown-center">
                                 <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" onClick={() => window.location = `/profile/${profile.username}` as any} role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-                                    <Image src={profile.gambar === undefined || profile.gambar === "" ? "/gambar/profile.png" : profile.gambar} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />
+                                    <Image src={profile.gambar === null || profile.gambar === "" ? "/gambar/profile.png" : profile.gambar} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />
                                 </a>
                                 <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end" style={{ minWidth: "125px", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black" }}>
                                     <li>

@@ -26,6 +26,7 @@
     "react-ace": "^10.1.0",
     "react-dom": "18.2.0",
     "react-markdown": "^8.0.3",
+    "react-modal": "^3.16.1",
     "react-select": "^5.5.6",
     "react-syntax-highlighter": "^15.5.0"
   },
@@ -37,6 +38,7 @@
     "@types/node": "18.7.6",
     "@types/react": "18.0.17",
     "@types/react-dom": "18.0.6",
+    "@types/react-modal": "^3.13.1",
     "@types/react-syntax-highlighter": "^15.5.5",
     "eslint": "8.22.0",
     "eslint-config-next": "12.2.5",

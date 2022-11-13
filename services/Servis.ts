@@ -65,9 +65,6 @@ export async function JalaninKompiler(req: NextApiRequest) {
         if(ParseBuat[bahasa] === undefined || ParseBuat[bahasa].listjawaban === undefined) return 403;
         
         HasilGabunganKode = InfoKompiler.GabunganKode + '\n' + ParseBuat[bahasa].listjawaban;
-        if(bahasa === "javascript") {
-            HasilGabunganKode += '\n' + 'console.timeEnd("waktu");';
-        }
     } else {
         const DataSoal = await prisma.soal.findUnique({
             where: {
@@ -85,11 +82,14 @@ export async function JalaninKompiler(req: NextApiRequest) {
         if(DataSoal === null || StatusJawaban === undefined) return 404;
         // HasilGabunganKode = 'import json\n' + kode + '\n' + InfoKompiler.FungsiApakahSama + '\n' + (StatusJawaban === "jawaban" ? DataSoal.listjawaban : DataSoal.contohjawaban);
         HasilGabunganKode = InfoKompiler.GabunganKode + '\n' + (StatusJawaban === "jawaban" ? DataSoal.kumpulanjawaban[0].listjawaban : DataSoal.kumpulanjawaban[0].contohjawaban);
-        if(bahasa === "javascript") {
-            HasilGabunganKode += '\n' + 'console.timeEnd("waktu");';
-        }
     }
 
+    if(bahasa === "javascript") {
+        HasilGabunganKode += '\n' + 'console.timeEnd("waktu");';
+    } else if(bahasa === "lua") {
+        HasilGabunganKode += '\n' + 'print("waktu: "..os.clock() - waktu);'
+    }
+    
     // console.log(HasilGabunganKode);
 
     try {
@@ -158,10 +158,10 @@ export async function JalaninKompiler(req: NextApiRequest) {
             code: HasilGabunganKode,
             compiler: InfoKompiler.Kompiler
         }).then(d =>  d.data) as OutputCompilerWandbox;
-
         if(data.status === "1") return {error: data.program_error};
 
         const ParseOutput: TipeKonfirmasiJawaban[] = data.program_output.split('\n').filter((v) => !v.includes("waktu") && v !== "").map((v) => JSON.parse(v));
+        
         return { 
             data: ParseOutput,
             waktu: data.program_output.split('\n').filter((v) => v.includes("waktu"))[0].split(' ')[1].replace('ms', "").split('.')[1].replace('0', ""),
@@ -171,6 +171,35 @@ export async function JalaninKompiler(req: NextApiRequest) {
     } catch {
         return 500;
     }
+}
+
+//Sumber: https://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
+export function SemenjakWaktu(date: any) {
+    var seconds = Math.floor((new Date() as any - date) / 1000);
+
+    let interval = seconds / 31536000;
+
+    if (interval >= 1) {
+        return Math.floor(interval) + " tahun lalu";
+    }
+    interval = seconds / 2592000;
+    if (interval >= 1) {
+        return Math.floor(interval) + " bulan lalu";
+    }
+    interval = seconds / 86400;
+    if (interval >= 1) {
+        return Math.floor(interval) + " hari lalu";
+    }
+    interval = seconds / 3600;
+    if (interval >= 1) {
+        return Math.floor(interval) + " jam lalu";
+    }
+    interval = seconds / 60;
+    if (interval >= 1) {
+        return Math.floor(interval) + " menit lalu";
+    }
+
+    return Math.floor(seconds) + " detik lalu";
 }
 
 export const KirimNotifikasi = (status: WarnaStatus, pesan: string, { req, res }: { req: NextApiRequest, res: NextApiResponse }): void => setCookie('notif', { status, pesan }, { req, res, maxAge: 2 })

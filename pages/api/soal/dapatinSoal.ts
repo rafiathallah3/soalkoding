@@ -35,7 +35,12 @@ export default async function dapatinSoal(req: NextApiRequest, res: NextApiRespo
                         bahasa: true
                     }
                 },
-                favorit: true
+                favorit: true,
+                solusi: {
+                    select: {
+                        idusername: true
+                    }
+                }
             }
         });
 
@@ -43,7 +48,8 @@ export default async function dapatinSoal(req: NextApiRequest, res: NextApiRespo
         if(DataSoal === null) return res.status(404).send("Error 404");
         return res.json({
             ...DataSoal,
-            suka_ngk: DataSoal.favorit.find((d) => d.iduser === verifikasi) !== undefined
+            suka_ngk: DataSoal.favorit.find((d) => d.iduser === verifikasi) !== undefined,
+            ApakahSudahSelesai: DataSoal.solusi.map((v) => v.idusername).includes(verifikasi)
         })
     } else {
         res.status(405).send("Error 405");

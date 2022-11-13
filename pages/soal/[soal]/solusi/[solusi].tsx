@@ -2,7 +2,6 @@ import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import Navbar from "../../../../components/navbar";
 import Image from "next/image";
-import Link from "next/link";
 import { DataSolusi, Komentar } from "../../../../types/tipe";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
@@ -10,6 +9,29 @@ import { useState } from "react";
 import { UpdateInfoAkun } from "../../../../services/Servis";
 import { Akun } from "@prisma/client";
 import FavoritKomponen from "../../../../components/Favorit";
+import { useRouter } from "next/router";
+import Modal from 'react-modal';
+import { CSSProperties } from "react";
+
+const StyleModalKonten: CSSProperties = {
+    top: "50%",
+    left: "50%",
+    right: "auto",
+    bottom: "auto",
+    marginRight: "-50%",
+    transform: "translate(-50%, -50%)",
+    background: "rgb(50, 50, 50)",
+    border: "1px solid rgb(50, 50, 50)"
+}
+
+const StyleModalOverlay: CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(40, 40, 40, 0.25)',
+}
 
 export async function getServerSideProps({ params, req, res }: { params: { soal: string, solusi: string }, req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
@@ -34,8 +56,12 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
     }
 }
 
+Modal.setAppElement("#__next")
 export default function SolusiId({ data, profile }: { data: DataSolusi, profile: { username: string, gambar: string } }) {
     const [ListKomentar, setListKomentar] = useState<Komentar[]>(data.solusi[0].komentar);
+    const [TunjukkinModal, setTunjukkinModal] = useState(false);
+    const [IdKomenHapus, setIdKomenHapus] = useState<number>();
+    const router = useRouter();
 
     const KlikKepintaran = async (elementTombol: MouseEvent, idsolusi: string) => {
         const _data = await axios.post("/api/soal/solusi/pintar", {
@@ -89,42 +115,11 @@ export default function SolusiId({ data, profile }: { data: DataSolusi, profile:
     }
 
     const HapusKomen = async (idkomen: number) => {
-        const maukah = confirm('Apa kamu yakin ingin menghapus komen ini?');
-
-        if (maukah) {
-            const _data: { suka: "biasa" | "up" | "down", berapa: number } = await axios.post('/api/soal/solusi/komentar', {
-                idkomen,
-                tipe: "hapus",
-            }).then(d => d.data);
-        }
-    }
-
-    //Sumber: https://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
-    function SemenjakWaktu(date: any) {
-        var seconds = Math.floor((new Date() as any - date) / 1000);
-
-        let interval = seconds / 31536000;
-
-        if (interval >= 1) {
-            return Math.floor(interval) + " tahun lalu";
-        }
-        interval = seconds / 2592000;
-        if (interval >= 1) {
-            return Math.floor(interval) + " bulan lalu";
-        }
-        interval = seconds / 86400;
-        if (interval >= 1) {
-            return Math.floor(interval) + " hari lalu";
-        }
-        interval = seconds / 3600;
-        if (interval >= 1) {
-            return Math.floor(interval) + " jam lalu";
-        }
-        interval = seconds / 60;
-        if (interval >= 1) {
-            return Math.floor(interval) + " menit lalu";
-        }
-        return Math.floor(seconds) + " detik lalu";
+        const _data: { suka: "biasa" | "up" | "down", berapa: number } = await axios.post('/api/soal/solusi/komentar', {
+            idkomen,
+            tipe: "hapus",
+        }).then(d => d.data);
+        router.reload();
     }
 
     return (
@@ -238,11 +233,9 @@ export default function SolusiId({ data, profile }: { data: DataSolusi, profile:
                                         </div>
                                         <div className="ms-2 w-100">
                                             <div className="mb-1">
-                                                <Link href={`/profile/${v.user.username}`}>
-                                                    <a className="me-2 text-white text-decoration-none">{v.user.username}</a>
-                                                </Link>
-                                                <span className="text-white-50 me-2">{SemenjakWaktu(new Date(v.bikin))}</span>
-                                                <i className="bi bi-trash hapus-komen" onClick={() => HapusKomen(v.id)} style={{ color: "red" }}></i>
+                                                <a href={`/profile/${v.user.username}`} className="me-2 text-white text-decoration-none">{v.user.username}</a>
+                                                <span className="text-white-50 me-2">{v.bikin as any}</span>
+                                                <i className="bi bi-trash hapus-komen" onClick={() => { setIdKomenHapus(v.id); setTunjukkinModal(true) }} style={{ color: "red" }}></i>
                                             </div>
                                             <div className="text-white mb-2">{v.komen}</div>
                                             <div>
@@ -258,6 +251,18 @@ export default function SolusiId({ data, profile }: { data: DataSolusi, profile:
                     </div>
                 }
             </div>
+            <Modal
+                isOpen={TunjukkinModal}
+                onRequestClose={() => setTunjukkinModal(false)}
+                style={{ content: StyleModalKonten, overlay: StyleModalOverlay }}
+            >
+                <div className="fs-5 text-white mb-2">Hapus Komen</div>
+                <p className="fs-6" style={{ color: "rgb(200, 200, 200)" }}>Kamu yakin ingin menghapus komen?</p>
+                <div className="float-end">
+                    <button className="me-4" onClick={() => setTunjukkinModal(false)} style={{ background: "transparent", border: "0px solid", color: "#1392bd" }}>Tidak</button>
+                    <button className="me-3" onClick={() => { setTunjukkinModal(false); HapusKomen(IdKomenHapus!) }} style={{ background: "transparent", border: "0px solid", color: "#1392bd" }}>Iya</button>
+                </div>
+            </Modal>
         </>
     )
 }

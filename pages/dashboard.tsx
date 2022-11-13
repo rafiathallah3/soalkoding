@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Navbar from '../components/navbar';
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -21,7 +20,7 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
 
     return {
         props: {
-            data: DapatinSoal.data,
+            data: DapatinSoal.data ?? null,
             profile: {
                 username: DapatinUser.username,
                 gambar: DapatinUser.gambarurl
@@ -30,12 +29,12 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
     }
 }
 
-export default function Dashboard({ profile, data }: { profile: { username: string, gambar: string }, data: DataSoal }) {
-    const [DataSoal, setDataSoal] = useState<DataSoal>(data);
+export default function Dashboard({ profile, data }: { profile: { username: string, gambar: string }, data: DataSoal | null }) {
+    const [HasilDataSoal, setHasilDataSoal] = useState<DataSoal | null>(data);
 
     const DapatinRandomSoal = async () => {
         const Data = await axios.post("/api/soal/dapatinRandomSoal", {}).then(d => d.data);
-        setDataSoal(Data.data);
+        setHasilDataSoal(Data.data);
     }
 
     return (
@@ -84,37 +83,49 @@ export default function Dashboard({ profile, data }: { profile: { username: stri
                             {"Berikutnya "}
                             <i className='bi bi-arrow-right'></i>
                         </button>
-                        <button onClick={() => Router.push(`/soal/${DataSoal.id}/latihan`)} className='me-4 btn btn-outline-success' style={{ float: "right" }}>Latihan</button>
-                        <span className={"me-4 fs-6 " + (DataSoal.level <= 2 ? "text-white" : DataSoal.level > 2 ? DataSoal.level > 4 ? "text-danger" : "text-warning" : "text-warning")}>Level {DataSoal.level}</span>
+                        {HasilDataSoal &&
+                            <>
+                                <button onClick={() => Router.push(`/soal/${HasilDataSoal.id}/latihan`)} className='me-4 btn btn-outline-success' style={{ float: "right" }}>Latihan</button>
+                                <span className={"me-4 fs-6 " + (HasilDataSoal.level <= 2 ? "text-white" : HasilDataSoal.level > 2 ? HasilDataSoal.level > 4 ? "text-danger" : "text-warning" : "text-warning")}>Level {HasilDataSoal.level}</span>
+                                <span className='text-white'>
+                                    <i className='bi bi-person-fill me-1'></i>
+                                    <a className='text-decoration-none text-white' href={`/profile/${HasilDataSoal.pembuat.username}`}>{HasilDataSoal.pembuat.username}</a>
+                                </span>
+                            </>
+                        }
                     </div>
-                    <div className="mb-4 px-3 py-2 text-white fs-5" style={{ maxHeight: "180px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
-                        <div className='mb-2'>
-                            <a className='fs-4 text-white text-decoration-none' href={`soal/${DataSoal.id}/latihan`}>{DataSoal.namasoal}</a>
+                    {HasilDataSoal &&
+                        <div className="mb-4 px-3 py-2 text-white fs-5" style={{ maxHeight: "180px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
+                            <div className='mb-2'>
+                                <a className='fs-4 text-white text-decoration-none' href={`soal/${HasilDataSoal.id}/latihan`}>{HasilDataSoal.namasoal}</a>
+                            </div>
+                            <ReactMarkdown
+                                // eslint-disable-next-line react/no-children-prop
+                                children={HasilDataSoal.soal}
+                                components={{
+                                    code({ node, inline, className, children, ...props }) {
+                                        const match = /language-(\w+)/.exec(className || '');
+                                        return !inline && match ? (
+                                            <SyntaxHighlighter
+                                                // eslint-disable-next-line react/no-children-prop
+                                                children={String(children).replace(/\n$/, '')}
+                                                style={tomorrow as any}
+                                                language={match[1]}
+                                                PreTag="div"
+                                                {...props}
+                                            />
+                                        ) : (
+                                            <code className={className} {...props}>
+                                                {children}
+                                            </code>
+                                        )
+                                    }
+                                }}
+                            />
                         </div>
-                        <ReactMarkdown
-                            // eslint-disable-next-line react/no-children-prop
-                            children={DataSoal.soal}
-                            components={{
-                                code({ node, inline, className, children, ...props }) {
-                                    const match = /language-(\w+)/.exec(className || '');
-                                    return !inline && match ? (
-                                        <SyntaxHighlighter
-                                            // eslint-disable-next-line react/no-children-prop
-                                            children={String(children).replace(/\n$/, '')}
-                                            style={tomorrow as any}
-                                            language={match[1]}
-                                            PreTag="div"
-                                            {...props}
-                                        />
-                                    ) : (
-                                        <code className={className} {...props}>
-                                            {children}
-                                        </code>
-                                    )
-                                }
-                            }}
-                        />
-                    </div>
+                        ||
+                        <h3 className='text-white text-center'>Ada kesalahan saat mencari soal random mohon dicoba lagi</h3>
+                    }
                 </div>
 
                 <div className="row mb-4">
@@ -145,43 +156,7 @@ export default function Dashboard({ profile, data }: { profile: { username: stri
                 </div>
 
                 <div className="row p-3 mb-4 rounded-3" style={{ background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)" }}>
-                    <div className='table-responsive'>
-                        <table className="table text-white">
-                            <thead>
-                                <tr>
-                                    <th scope="col" style={{ width: "4.6%" }}>Status</th>
-                                    <th scope="col" style={{ width: "30.6%" }}>Judul</th>
-                                    <th scope="col" style={{ width: "40.6%" }}>Deskripsi</th>
-                                    <th scope="col" style={{ width: "15%" }}>Tingkat Kesulitan</th>
-                                    <th scope="col">Pembuat</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <th scope="row" className='text-center'><i className='bi bi-check-lg text-success'></i></th>
-                                    <td>
-                                        <a href="#!" className='text-decoration-none text-white'>Siapa Menang</a>
-                                    </td>
-                                    <td>Baris yang paling banyak dia pemenang!</td>
-                                    <td className='text-success'>Mudah</td>
-                                    <td>rapithon39125346</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row" className='text-center'><i className='bi bi-dash-lg'></i></th>
-                                    <td>Jacob</td>
-                                    <td>Thornton</td>
-                                    <td className='text-warning'>Lumayan</td>
-                                    <td>rapithon39125346</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row" className='text-center'><i className='bi bi-dash-lg'></i></th>
-                                    <td colSpan={2}>Larry the Bird</td>
-                                    <td className='text-danger'>Susah</td>
-                                    <td>rapithon39125346</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <h5 className='text-white text-center'>Masih belum tau mau diberi apa, kalau ada saran boleh diberitahu</h5>
                 </div>
             </div>
         </>

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../../database/prisma";
+import { SemenjakWaktu } from "../../../../services/Servis";
 import Verifikasi from "../../../../services/VerifikasiAkun";
 
 export default async function dapatinSolusi(req: NextApiRequest, res: NextApiResponse) {
@@ -34,10 +35,14 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                         select: { username: true, gambarurl: true }
                     }
                 }
-            })
+            });
+            
 
             return res.json({
-                komentar: DataKomentar
+                komentar: DataKomentar.map((v) => ({
+                    ...v,
+                    bikin: SemenjakWaktu(new Date(v.bikin))
+                }))
             });
         } else if(tipe === "vote") {
             if(idkomen === undefined) return res.status(404).send("Tidak ketemu");

@@ -14,13 +14,27 @@ const JavascriptGabungaKode = `
 %s
 function ApakahSama(fungsi, parameter, jawaban) {
     try {
-        hasil = fungsi(...parameter);
-        console.log(JSON.stringify({hasil, jawaban, status: "Sukses", koreksi: jawaban === hasil}));
+        const hasil = fungsi(...parameter);
+        console.log("SplitIniUntukTestCase"+JSON.stringify({hasil, jawaban, status: "Sukses", koreksi: jawaban === hasil}));
     } catch (e) {
-        console.log(JSON.stringify({hasil: e.toString(), jawaban, status: "Error"}));
+        console.log("SplitIniUntukTestCase"+JSON.stringify({hasil: e.toString(), jawaban, status: "Error"}));
     }
 }
 console.time("waktu");
+`.trim();
+
+const LuaGabunganKode = `
+%s
+function ApakahSama(fungsi, parameter, jawaban) 
+    local success, err = pcall(fungsi, table.unpack(parameter));
+    if success then
+        local hasil = fungsi(table.unpack(parameter));
+        print('{"hasil": '..hasil..', "jawaban": '..jawaban..', "status": "Sukses", "koreksi": '..tostring(jawaban==hasil)..'}');
+    else
+        print('{"hasil": '..err..', "jawaban": '..jawaban..', status: "Error"'..'}');
+    end
+end
+local waktu = os.clock();
 `.trim();
 
 const PythonContohSoal = {
@@ -83,8 +97,40 @@ Solusi(2, 2) // 2 + 2 -> 4;
 `.trim()
 }
 
+const LuaContohSoal = {
+Kode: `
+function Solusi(angka1, angka2)
+    return angka1 + angka2;
+end
+`.trim(),
+ListJawaban: `
+ApakahSama(Solusi, {1, 1}, 2);
+ApakahSama(Solusi, {2, 2}, 4);
+ApakahSama(Solusi, {3, 3}, 6);
+`.trim(),
+ContohJawaban: `
+ApakahSama(Solusi, {1, 1}, 2);
+ApakahSama(Solusi, {2, 2}, 4);
+`.trim(),
+LiatanKode: `
+function Solusi(angka1, angka2)
+
+end
+`.trim(),
+Soal: `
+Jumlahin angka yang sudah diberikan!
+
+Contoh
+~~~lua
+Solusi(1, 1) -- 1 + 1 -> 2;
+Solusi(2, 2) -- 2 + 2 -> 4;
+~~~
+`.trim()
+}
+
 const KompilerWandbox = {
     javascript: "nodejs-16.14.0",
+    lua: "lua-5.4.3"
 }
 
 const KompilerGodbolt = {
@@ -94,11 +140,13 @@ const KompilerGodbolt = {
 const KumpulanFungsi = {
     python: PythonGabunganKode,
     javascript: JavascriptGabungaKode,
+    lua: LuaGabunganKode
 }
 
 const ContohSoal = {
     python: PythonContohSoal,
-    javascript: JavascriptContohSoal
+    javascript: JavascriptContohSoal,
+    lua: LuaContohSoal
 }
 
 function parse(str: string, ...argumen: any[]) {

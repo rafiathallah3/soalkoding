@@ -17,6 +17,7 @@ import "ace-builds/src-noconflict/theme-tomorrow_night_eighties";
 import 'ace-builds/src-noconflict/snippets/python';
 import "ace-builds/src-noconflict/ext-language_tools";
 
+//Perlu
 export default function CodeEditor({ refData, mode, value, onChange, autoComplete = true, placeholder = "" }: { refData: any, mode: string, value: string, onChange: any, autoComplete?: boolean, placeholder?: string }) {
     return (
         <AceEditor

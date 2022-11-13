@@ -3,12 +3,35 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { DataSolusi, Solusi as TipeSolusi } from "../../../../types/tipe";
+import { DataSoal, DataSolusi, Solusi as TipeSolusi } from "../../../../types/tipe";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { UpdateInfoAkun } from "../../../../services/Servis";
 import { Akun } from "@prisma/client";
 import FavoritKomponen from "../../../../components/Favorit";
+import Modal from 'react-modal';
+import { CSSProperties } from "react";
+import styles from '../../../../styles/IndexSolusi.module.css'
+
+const StyleModalKonten: CSSProperties = {
+    top: "50%",
+    left: "50%",
+    right: "auto",
+    bottom: "auto",
+    marginRight: "-50%",
+    transform: "translate(-50%, -50%)",
+    background: "rgb(50, 50, 50)",
+    border: "1px solid rgb(50, 50, 50)"
+}
+
+const StyleModalOverlay: CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(40, 40, 40, 0.25)',
+}
 
 export async function getServerSideProps({ params, req, res, query }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse, query: { lihat: string, berdasarkan: string } }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
@@ -36,10 +59,13 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
     }
 }
 
+Modal.setAppElement("#__next")
 export default function Solusi({ data, lihat, berdasarkan, profile }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined, profile: { username: string, gambar: string } }) {
-    const router = useRouter();
-
     const [Solusi, setSolusi] = useState<TipeSolusi[]>(data.solusi);
+    const [TunjukkinModal, setTunjukkinModal] = useState(false);
+    const [IdSolusiHapus, setIdSolusiHapus] = useState<string>();
+
+    const router = useRouter();
 
     const KlikKepintaran = async (elementTombol: MouseEvent, idsolusi: string) => {
         const _data = await axios.post("/api/soal/solusi/pintar", {
@@ -73,132 +99,23 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
         setSolusi(DataSolusi.solusi);
     }
 
+    const SoalBerikutnya = async () => {
+        const RandomSoal = await axios.post("/api/soal/dapatinRandomSoal", {}).then(d => d.data.data) as DataSoal;
+        router.push(`/soal/${RandomSoal.id}/latihan`);
+    }
+
+    const HapusSolusi = async (id: string) => {
+        await axios.post("/api/soal/solusi/hapusSolusi", {
+            idsolusi: id
+        });
+
+        router.reload();
+    }
+
     return (
         <>
             <Navbar profile={profile} />
             <div className="px-3">
-                <style jsx>{`
-            .tombol-kerjakan {
-                background: rgb(45, 45, 45);
-                border: 1px solid #306634;
-                padding: 5px 10px;
-                color: #408845;
-                transition: .2s;
-            }
-
-            .tombol-kerjakan:hover {
-                color: #50aa57;
-                border-color: #50aa57;
-            }
-
-            .tombol-soalberikutnya {
-                background: rgb(45, 45, 45);
-                border: 1px solid #079c96;
-                padding: 5px 10px;
-                color: #079c96;
-                transition: .2s;
-            }
-
-            .tombol-soalberikutnya:hover {
-                border-color: #09c8c1;
-                color: #09c8c1;
-            }
-
-            .tombol-puas {
-                background: transparent;
-                border: 1px solid rgb(150, 150, 150);
-                color: white;
-                transition: 2s;
-            }
-
-            .tombol-keren {
-                background: rgb(50, 50, 50);
-                color: rgb(170, 170, 170);
-                border: 1px solid rgb(150, 150, 150);
-                transition: 0.2s;
-            }
-
-            .tombol-keren:hover { 
-                color: white !important;
-            }
-
-            .radio-container {
-                display: block;
-                position: relative;
-                cursor: pointer;
-                color: rgb(200, 200, 200);
-                user-select: none;
-            }
-
-            .radio-container input {
-                position: absolute;
-                opacity: 0;
-                cursor: pointer;
-            }              
-            
-            .checkmark {
-                position: absolute;
-                top: 7px;
-                left: 0px;
-                height: 13px;
-                width: 13px;
-                background-color: rgb(50, 50, 50);
-                border-radius: 50%;
-            } 
-
-            .radio-container input:checked ~ .checkmark {
-                background-color: #2196F3;
-            }
-
-            .checkmark:after {
-                position: absolute;
-                display: none;
-            }
-
-            .radio-container input:checked ~ .checkmark:after {
-                display: block;
-            }
-
-            .filter-jawaban {
-                background: rgb(60, 60, 60);
-                position: -webkit-sticky;
-                position: sticky;
-                top: 10px;
-            }
-              
-            /* Style the indicator (dot/circle) */
-            .radio-container .checkmark:after {
-                top: 8px;
-                left: 8px;
-                width: 11px;
-                height: 11px;
-                border-radius: 50%;
-                background: white;
-            }
-
-            .favorit:hover {
-                color: rgb(180, 180, 180);
-                cursor: pointer;
-            }
-
-            ::-webkit-scrollbar {
-                background: rgb(36, 36, 36);
-                opacity: 1;
-                width: 10px;
-            }
-
-            ::-webkit-scrollbar-thumb {
-                background: rgb(74, 74, 74);
-                border-radius: 10px;
-            }
-
-            ::-webkit-scrollbar-corner {
-                border-radius: 2xpx;
-                background: rgb(74, 74, 74);
-            }
-
-            `}</style>
-
                 <div className="p-3 text-white rounded-1 mb-2" style={{ background: "rgb(48, 48, 48)" }}>
                     <div className="row">
                         <div className="col">
@@ -223,18 +140,22 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                         </div>
                         <div className="col">
                             <div className="d-flex flex-row justify-content-end h-100">
-                                <a href={`/soal/${data.idsoal}/latihan`} className="text-decoration-none align-self-center tombol-kerjakan me-2">Kerjakan</a>
-                                <button className="align-self-center tombol-soalberikutnya">Soal berikutnya <i className="bi bi-caret-right-fill"></i></button>
+                                <a href={`/soal/${data.idsoal}/latihan`} className={`text-decoration-none align-self-center ${styles["tombol-kerjakan"]} me-2`}>Kerjakan</a>
+                                <button className={`align-self-center ${styles["tombol-soalberikutnya"]}`} onClick={SoalBerikutnya}>Soal berikutnya <i className="bi bi-caret-right-fill"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
                 {/* <div className="p-3 rounded-1 text-white mb-2" style={{ background: 'rgb(60, 60, 60)' }}>
-                <span className="me-3">Seberapa puasnya kamu dengan soal ini?</span>
-                <button className="me-2 tombol-puas">Tidak puas</button>
-                <button className="me-2 tombol-puas">Biasa</button>
-                <button className="me-2 tombol-puas">Sangat puas</button>
-            </div> */}
+                    <span className="me-3">Seberapa puasnya kamu dengan soal ini?</span>
+                    <button className="me-2 tombol-puas">Tidak puas</button>
+                    <button className="me-2 tombol-puas">Biasa</button>
+                    <button className="me-2 tombol-puas">Sangat puas</button>
+                </div> */}
+                <div className="p-1 rounded-1 text-white mb-2">
+                    <button className={`${styles['tombol-lainnya']} ${styles['tombol-lainnya-aktif']}`}>Solusi</button>
+                    <button className={styles['tombol-lainnya']} onClick={() => router.push(`/soal/${data.idsoal}/diskusi`)}>Diskusi</button>
+                </div>
                 {data.ApakahSudahSelesai ?
                     <div className="row">
                         <div className="col-10">
@@ -254,52 +175,55 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                                             <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={v.bahasa} style={tomorrow as any}>{v.kode}</SyntaxHighlighter>
                                         </div>
                                         <div>
-                                            <button className="tombol-keren me-3" style={{ "borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, v.id)}>
+                                            <button className={`${styles["tombol-keren"]} me-3`} style={{ "borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, v.id)}>
                                                 <i className="bi bi-arrow-up-short"></i>
                                                 Pintar
                                                 <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
                                             </button>
-                                            <a href={`/soal/${v.idsoal}/solusi/${v.id}`} className="border-0 text-decoration-none" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
+                                            <a href={`/soal/${v.idsoal}/solusi/${v.id}`} className="border-0 text-decoration-none me-3" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
                                                 <i className="bi bi-chat-right-fill me-2 fs-5"></i>
                                                 {v.komentar.length}
                                             </a>
+                                            {v.user.username === profile.username &&
+                                                <a className="fs-5 text-decoration-none float-end hapus-solusi" onClick={() => { setIdSolusiHapus(v.id); setTunjukkinModal(true) }} style={{ color: "#f20a13" }}>Hapus</a>
+                                            }
                                         </div>
                                     </div>
                                 )
                             })}
                         </div>
                         <div className="col">
-                            <div className="p-2 rounded-1 filter-jawaban">
+                            <div className={`p-2 rounded-1 ${styles["filter-jawaban"]}`}>
                                 <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Lihat</div>
                                 <form id="test" onChange={GantiQuery}>
                                     <fieldset className="mb-2" name="lihat">
-                                        <label className="radio-container">
+                                        <label className={styles['radio-container']}>
                                             <input type="radio" name="lihat" value="semua" defaultChecked={lihat === "semua"} />
                                             <span style={{ marginLeft: "20px" }}>Semua</span>
-                                            <span className="checkmark"></span>
+                                            <span className={styles.checkmark}></span>
                                         </label>
-                                        <label className="radio-container">
+                                        <label className={styles['radio-container']}>
                                             <input type="radio" name="lihat" value="sendiri" defaultChecked={lihat === "sendiri"} />
                                             <span style={{ marginLeft: "20px" }}>Sendiri</span>
-                                            <span className="checkmark"></span>
+                                            <span className={styles.checkmark}></span>
                                         </label>
                                     </fieldset>
                                     <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Berdasarkan</div>
                                     <fieldset name="berdasarkan">
-                                        <label className="radio-container">
+                                        <label className={styles['radio-container']}>
                                             <input type="radio" name="berdasarkan" id="berdasarkan" value="kepintaran" defaultChecked={berdasarkan === "kepintaran"} />
                                             <span style={{ marginLeft: "20px" }}>Kepintaran</span>
-                                            <span className="checkmark"></span>
+                                            <span className={styles.checkmark}></span>
                                         </label>
-                                        <label className="radio-container">
+                                        <label className={styles['radio-container']}>
                                             <input type="radio" name="berdasarkan" id="berdasarkan" value="baru" defaultChecked={berdasarkan === "baru"} />
                                             <span style={{ marginLeft: "20px" }}>Baru</span>
-                                            <span className="checkmark"></span>
+                                            <span className={styles.checkmark}></span>
                                         </label>
-                                        <label className="radio-container">
+                                        <label className={styles['radio-container']}>
                                             <input type="radio" name="berdasarkan" id="berdasarkan" value="lama" defaultChecked={berdasarkan === "lama"} />
                                             <span style={{ marginLeft: "20px" }}>Lama</span>
-                                            <span className="checkmark"></span>
+                                            <span className={styles.checkmark}></span>
                                         </label>
                                     </fieldset>
                                 </form>
@@ -315,6 +239,18 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                     </div>
                 }
             </div>
+            <Modal
+                isOpen={TunjukkinModal}
+                onRequestClose={() => setTunjukkinModal(false)}
+                style={{ content: StyleModalKonten, overlay: StyleModalOverlay }}
+            >
+                <div className="fs-5 text-white mb-2">Hapus solusi</div>
+                <p className="fs-6" style={{ color: "rgb(200, 200, 200)" }}>Kamu yakin ingin menghapus solusi yang kamu sudah kerjakan??</p>
+                <div className="float-end">
+                    <button className="me-4" onClick={() => setTunjukkinModal(false)} style={{ background: "transparent", border: "0px solid", color: "#1392bd" }}>Tidak</button>
+                    <button className="me-3" onClick={() => { setTunjukkinModal(false); HapusSolusi(IdSolusiHapus!) }} style={{ background: "transparent", border: "0px solid", color: "#1392bd" }}>Iya</button>
+                </div>
+            </Modal>
         </>
     )
 }

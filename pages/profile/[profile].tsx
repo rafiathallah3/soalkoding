@@ -178,11 +178,11 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                                 </div>
                                 {StatusTable === "soalselesai" &&
                                     <div className="d-flex flex-column">
-                                        {data.soalselesai.length <= 0 ?
+                                        {data.soalselesai.filter((v, i, a) => a.findIndex((t) => t.id === v.id) !== -1).length <= 0 ?
                                             <div className="text-center fs-5">{data.username} tidak pernah menyelesaikan satu soal</div>
                                             :
                                             <>
-                                                {data.soalselesai.filter((v, i, a) => a.findIndex((t) => t.id === v.id)).map((v, i) => {
+                                                {data.soalselesai.filter((v, i, a) => a.findIndex((t) => t.id === v.id) !== -1).map((v, i) => {
                                                     return (
                                                         <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                             <a className="text-white text-decoration-none" href={`/soal/${v.soal.id}/latihan`}>{v.soal.namasoal}</a>

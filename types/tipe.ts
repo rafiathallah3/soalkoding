@@ -49,7 +49,9 @@ export interface DataSoal {
         liatankode: string,
         jawabankode: string
     }[],
-    solusi: Solusi[]
+    solusi: Solusi[],
+    ApakahSudahSelesai: boolean,
+    suka_ngk: boolean
 }
 
 export interface Solusi {
@@ -135,6 +137,6 @@ export type KumpulanBahasaProgram = "python" | "javascript" | "c++" | "lua";
 
 export enum WarnaStatus {
     kuning = "#9ba308",
-    biru = "blue",
-    merah = "red"
+    biru = "#7AC5CD",
+    merah = "#F5646B"
 }

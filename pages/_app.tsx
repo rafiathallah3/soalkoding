@@ -10,9 +10,9 @@ function MyApp({ Component, pageProps }: AppProps) {
 		require("bootstrap/dist/js/bootstrap.bundle.min.js");
 	}, []);
 
-    return (
+	return (
 		<>
-		<Component {...pageProps} />
+			<Component {...pageProps} />
 		</>
 	)
 }

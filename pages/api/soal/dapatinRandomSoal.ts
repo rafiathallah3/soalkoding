@@ -15,7 +15,23 @@ export default async function DapatinRandomSoal(req: NextApiRequest, res: NextAp
 
         if(DataUser === null) return res.status(401);
 
-        const DataSoal = await prisma.soal.findMany();
+        const DataSoal = await prisma.soal.findMany({
+            where: {
+                public: true
+            },
+            include: {
+                pembuat: {
+                    select: {
+                        username: true
+                    }
+                },
+                solusi: {
+                    select: {
+                        idusername: true
+                    }
+                }
+            }
+        }).then((v) => v.filter(d => d.solusi.filter(x => x.idusername === verifikasi).length <= 0));
 
         return res.json({
             data: DataSoal[Math.floor(Math.random() * DataSoal.length)]

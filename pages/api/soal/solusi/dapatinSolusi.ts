@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../../database/prisma";
 import Verifikasi from "../../../../services/VerifikasiAkun";
+import { SemenjakWaktu } from "../../../../services/Servis";
 
 export default async function dapatinSolusi(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {
@@ -61,6 +62,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                     komentar: v.komentar.map((komentar) => {
                         return {
                             ...komentar,
+                            bikin: SemenjakWaktu(new Date(komentar.bikin)),
                             apakahSudahVote: JSON.parse(komentar.upvote).includes(verifikasi) ? 'up' : JSON.parse(komentar.downvote).includes(verifikasi) ? 'down' : 'biasa'
                         }
                     }),

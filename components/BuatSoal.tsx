@@ -101,7 +101,12 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
             }).then(v => v.data);
 
             setOutputKonfirmasiJawaban({ ...d, statuskompiler: "Sukses" });
-        } catch (e) { }
+        } catch (e) {
+            setOutputKonfirmasiJawaban({
+                error: "Ada masalah kompiler",
+                statuskompiler: "Sukses"
+            } as any)
+        }
     }
 
     const KirimBuatanSoal = async () => {
@@ -202,21 +207,12 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
             return (e.returnValue = warningText);
         };
 
-        const handleBrowseAway = () => {
-            if (SudahDiSave) return;
-            if (window.confirm(warningText)) return;
-            router.events.emit('routeChangeError');
-            throw 'routeChange aborted.';
-        };
-
         window.addEventListener('beforeunload', handleWindowClose);
-        router.events.on('routeChangeStart', handleBrowseAway);
 
         setSudahDiSave(false);
 
         return () => {
             window.removeEventListener('beforeunload', handleWindowClose);
-            router.events.off('routeChangeStart', handleBrowseAway);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [InfoKode, Soal]);
@@ -547,9 +543,13 @@ return "Solusinya mana";
                                 </div>
                             }
                             {StatusKodeJawaban === "bantuan" &&
-                                <div className="text-white p-3 fs-5" style={{ height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px" }}>
-                                    <h3>Cara kerja kode jawaban</h3>
+                                <div className="text-white p-3 fs-5" style={{ height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
+                                    <h3>Kode Jawaban</h3>
                                     <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
+                                    <h3>Liatan Kode</h3>
+                                    <p>Menunjukkan template kode untuk ke orang yang dikerjakan</p>
+                                    <h3>Output</h3>
+                                    <p>Output kode saat menekan konfirmasi jawaban</p>
                                 </div>
                             }
                         </div>
@@ -582,22 +582,28 @@ return "Solusinya mana";
                                 </div>
                             }
                             {StatusJawaban === "bantuan" &&
-                                <div className="text-white p-3 fs-5" style={{ height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px" }}>
-                                    <h3>Cara kerja kode jawaban</h3>
-                                    <p>Tulis kode solusi jawaban pembuatan soal kamu</p>
+                                <div className="text-white p-3 fs-5" style={{ height: "420px", backgroundColor: "rgb(48, 48, 48)", border: "1px solid rgb(59, 59, 59)", borderRadius: "5px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
+                                    <p>Dalam test case sudah disiapkan function yang namanya &quot;ApakahSama&quot; yang bisa dijalanin dalam server, fungsi ini menerima 3 parameter yaitu:</p>
+                                    <p>{`1. "Fungsi" tipe <Function>: Nama fungsi yang dituliskan dalam kode jawaban yang akan dijalanin di dalam server untuk mengetahui kalau jawabannya sama dengan parameter "Hasil"`}</p>
+                                    <p>{`2. "Parameter" tipe <List[any]>: "Fungsi" parameter yang ingin diberi dalam kondisi list, Terserah tipe parameternya mau number, string, list, set, enum, dll`}</p>
+                                    <p>{`3. "Hasil" tipe <any>: Hasil yang ingin diberikan`}</p>
+                                    <h3>List jawaban</h3>
+                                    <p>Semua Test yang ingin diuji dan akan disubmit ketika semua test case lulus</p>
+                                    <h3>Contoh jawaban</h3>
+                                    <p>Sama dengan List jawaban tapi ini hanya ingin di uji coba</p>
                                 </div>
                             }
                         </div>
                     </div>
                 </div>
-                <footer className="text-white text-center p-2">
+                {/* <footer className="text-white text-center p-2">
                     <ul className="list-unstyled">
                         <li className="d-inline me-3">(C) 2022 Soalkoding</li>
                         <li className="d-inline me-3"><a className="text-decoration-none text-white" href="#">Dashboard</a></li>
                         <li className="d-inline me-3"><a className="text-decoration-none text-white" href="#">Utama</a></li>
                         <li className="d-inline me-3"><a className="text-decoration-none text-white" href="#">Kontak</a></li>
                     </ul>
-                </footer>
+                </footer> */}
             </div>
         </>
     )
