@@ -85,7 +85,7 @@ export default function Dashboard({ profile, data }: { profile: { username: stri
                         </button>
                         {HasilDataSoal &&
                             <>
-                                <button onClick={() => Router.push(`/soal/${HasilDataSoal.id}/latihan`)} className='me-4 btn btn-outline-success' style={{ float: "right" }}>Latihan</button>
+                                <button onClick={() => Router.push(`/soal/${HasilDataSoal.id}/latihan`)} className='me-4 btn btn-outline-success' style={{ float: "right" }}>Kerjakan</button>
                                 <span className={"me-4 fs-6 " + (HasilDataSoal.level <= 2 ? "text-white" : HasilDataSoal.level > 2 ? HasilDataSoal.level > 4 ? "text-danger" : "text-warning" : "text-warning")}>Level {HasilDataSoal.level}</span>
                                 <span className='text-white'>
                                     <i className='bi bi-person-fill me-1'></i>

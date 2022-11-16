@@ -4,6 +4,8 @@ export interface SettingProfile {
     nama: string,
     bio: string
     tinggal: string,
+    admin: boolean,
+    moderator: boolean,
     akungithub?: { username: string },
     favorit: { id: number, soal: DataSoal }[]
     githuburl: string,
@@ -40,7 +42,8 @@ export interface DataSoal {
     pembuat: { username: string },
     public: boolean,
     suka: string,
-    favorit: { id: number }[]
+    favorit: { id: number }[],
+    diskusi: Diskusi[]
     bikin: Date,
     kumpulanjawaban: {
         bahasa: string,
@@ -54,10 +57,27 @@ export interface DataSoal {
     suka_ngk: boolean
 }
 
+export interface Diskusi {
+    id: number,
+    user: { username: string, gambarurl: string },
+    text: string,
+    bikin: Date,
+    upvote: string,
+    downvote: string,
+    apakahSudahVote?: "up" | "down" | "biasa"
+}
+
+export interface TipeProfile {
+    username: string,
+    gambar: string,
+    admin: boolean,
+    moderator: boolean
+}
+
 export interface Solusi {
     id: string
     idsoal: string,
-    user: { username: string },
+    user: { username: string, admin: boolean, moderator: boolean },
     pintar: string,
     komentar: Komentar[],
     kode: string,

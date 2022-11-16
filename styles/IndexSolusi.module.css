@@ -43,7 +43,7 @@
 }
 
 .tombol-lainnya {
-    margin-right: 1rem;
+    margin-right: .5rem;
     padding: 5px;
     width: 4.5rem;
     background: transparent;
@@ -52,7 +52,7 @@
 }
 
 .tombol-lainnya-aktif {
-    background: rgb(50, 50, 50);
+    background: rgb(60, 60, 60);
 }
 
 .radio-container {

@@ -3,7 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { DataSoal, DataSolusi, Solusi as TipeSolusi } from "../../../../types/tipe";
+import { DataSoal, DataSolusi, Solusi as TipeSolusi, TipeProfile } from "../../../../types/tipe";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { UpdateInfoAkun } from "../../../../services/Servis";
@@ -48,7 +48,7 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
         return {
             props: {
                 data,
-                profile: { username: DapatinUser.username, gambar: DapatinUser.gambarurl },
+                profile: { username: DapatinUser.username, gambar: DapatinUser.gambarurl, admin: DapatinUser.admin, moderator: DapatinUser.moderator },
                 ...query
             }
         }
@@ -60,7 +60,7 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
 }
 
 Modal.setAppElement("#__next")
-export default function Solusi({ data, lihat, berdasarkan, profile }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined, profile: { username: string, gambar: string } }) {
+export default function Solusi({ data, lihat, berdasarkan, profile }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined, profile: TipeProfile }) {
     const [Solusi, setSolusi] = useState<TipeSolusi[]>(data.solusi);
     const [TunjukkinModal, setTunjukkinModal] = useState(false);
     const [IdSolusiHapus, setIdSolusiHapus] = useState<string>();
@@ -184,8 +184,8 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                                                 <i className="bi bi-chat-right-fill me-2 fs-5"></i>
                                                 {v.komentar.length}
                                             </a>
-                                            {v.user.username === profile.username &&
-                                                <a className="fs-5 text-decoration-none float-end hapus-solusi" onClick={() => { setIdSolusiHapus(v.id); setTunjukkinModal(true) }} style={{ color: "#f20a13" }}>Hapus</a>
+                                            {(v.user.username === profile.username || profile.moderator || profile.admin) &&
+                                                <a className="fs-5 text-decoration-none float-end" role={"button"} onClick={() => { setIdSolusiHapus(v.id); setTunjukkinModal(true) }} style={{ color: "#f20a13" }}>Hapus</a>
                                             }
                                         </div>
                                     </div>
@@ -245,7 +245,7 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                 style={{ content: StyleModalKonten, overlay: StyleModalOverlay }}
             >
                 <div className="fs-5 text-white mb-2">Hapus solusi</div>
-                <p className="fs-6" style={{ color: "rgb(200, 200, 200)" }}>Kamu yakin ingin menghapus solusi yang kamu sudah kerjakan??</p>
+                <p className="fs-6" style={{ color: "rgb(200, 200, 200)" }}>Kamu yakin ingin menghapus solusi yang kamu sudah kerjakan?</p>
                 <div className="float-end">
                     <button className="me-4" onClick={() => setTunjukkinModal(false)} style={{ background: "transparent", border: "0px solid", color: "#1392bd" }}>Tidak</button>
                     <button className="me-3" onClick={() => { setTunjukkinModal(false); HapusSolusi(IdSolusiHapus!) }} style={{ background: "transparent", border: "0px solid", color: "#1392bd" }}>Iya</button>

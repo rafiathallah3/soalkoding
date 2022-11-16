@@ -70,7 +70,6 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                             downvote: JSON.stringify(JSON.parse(DataKomen.downvote).filter((v: any) => v !== verifikasi))
                         }
                     });
-                    // await DapatinSQL('UPDATE komentar SET downvote = ? WHERE id = ?', [JSON.stringify(JSON.parse(DataKomen.downvote).filter((v: any) => v !== verifikasi)), DataKomen.id])
                 } else if(kondisi === "down" && JSON.parse(DataKomen.upvote).includes(verifikasi)) {
                     await prisma.komentar.update({
                         where: {
@@ -80,7 +79,6 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                             upvote: JSON.stringify(JSON.parse(DataKomen.upvote).filter((v: any) => v !== verifikasi))
                         }
                     });
-                    // await DapatinSQL('UPDATE komentar SET upvote = ? WHERE id = ?', [JSON.stringify(JSON.parse(DataKomen.upvote).filter((v: any) => v !== verifikasi)), DataKomen.id])
                 }
 
                 const TipeKONdisi = {
@@ -95,8 +93,6 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                     where: { id: DataKomen.id },
                     data: { [TipeKONdisi[kondisi]]: JSON.stringify(Hasil) }
                 })
-                // await DapatinSQL(`UPDATE komentar SET ${TipeKONdisi[kondisi]} = ? WHERE id = ?`, [JSON.stringify(Hasil), DataKomen.id]);
-                // const UpdateDataKomentar = (await DapatinSQL('SELECT * FROM komentar WHERE id = ?', [DataKomen.id]) as Komentar[])[0];
 
                 return res.json({
                     suka: ApakahAda ? "biasa" : kondisi,
@@ -104,18 +100,21 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                 });
             }
         } else if(tipe === "hapus") {
-            if(idkomen === undefined) return res.status(404).send("Tidak ketemu");
-
-            const DataKomentar = await prisma.komentar.deleteMany({
+            const DataKomentar = await prisma.komentar.findUnique({
                 where: {
                     id: idkomen,
-                    iduser: verifikasi
                 }
             });
 
-            return res.json({
-                komentar: DataKomentar
-            });
+            if(DataKomentar !== null && (DataKomentar.iduser === verifikasi || DataUser.admin || DataUser.moderator)) {
+                await prisma.komentar.delete({
+                    where: {
+                        id: idkomen
+                    }
+                });
+            }
+
+            return res.send("Sukses");
         }
         // const DataKue: { infoakun: string } = parseCookies(req);
         // if(Object.keys(DataKue).length <= 0) {

@@ -67,9 +67,9 @@ export default function Navbar({ profile }: { profile: { username: string | null
                                     </a>
                                 </Link>
                             </li>
-                            {/* <li className='nav-item me-4 align-self-center'>
+                            <li className='nav-item me-4 align-self-center'>
                                 <i className='bi bi-bell-fill text-white fs-2'></i>
-                            </li> */}
+                            </li>
                             <li className="nav-item dropdown-center">
                                 <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" onClick={() => window.location = `/profile/${profile.username}` as any} role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                                     <Image src={profile.gambar === null || profile.gambar === "" ? "/gambar/profile.png" : profile.gambar} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />

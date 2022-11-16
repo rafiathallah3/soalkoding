@@ -22,6 +22,8 @@ export default async function dapatinProfile(req: NextApiRequest, res: NextApiRe
                     gambarurl: true,
                     website: true,
                     sudahVerifikasi: true,
+                    admin: true,
+                    moderator: true,
                     soalselesai: {
                         select: {
                             id: true,

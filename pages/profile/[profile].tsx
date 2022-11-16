@@ -126,8 +126,14 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                                         </div>
                                     </div>
                                     <div className="d-flex flex-column">
-                                        <h5>{data.nama}</h5>
-                                        <p className="text-white-50">{data.username}</p>
+                                        <h5>{data.username}</h5>
+                                        <p className="text-white-50 m-0">{data.nama}</p>
+                                        {data.admin ?
+                                            <h6 className="text-white m-0">Admin</h6>
+                                            : data.moderator ?
+                                                <h6 className="text-white m-0">Moderator</h6>
+                                                : <></>
+                                        }
                                     </div>
                                 </div>
                             </div>

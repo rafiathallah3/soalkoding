@@ -2,7 +2,7 @@ import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import Navbar from "../../../../components/navbar";
 import Image from "next/image";
-import { DataSolusi, Komentar } from "../../../../types/tipe";
+import { DataSolusi, Komentar, TipeProfile } from "../../../../types/tipe";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useState } from "react";
@@ -50,14 +50,16 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
             data,
             profile: {
                 username: DapatinUser.username,
-                gambar: DapatinUser.gambarurl
+                gambar: DapatinUser.gambarurl,
+                admin: DapatinUser.admin,
+                moderator: DapatinUser.moderator
             }
         }
     }
 }
 
 Modal.setAppElement("#__next")
-export default function SolusiId({ data, profile }: { data: DataSolusi, profile: { username: string, gambar: string } }) {
+export default function SolusiId({ data, profile }: { data: DataSolusi, profile: TipeProfile }) {
     const [ListKomentar, setListKomentar] = useState<Komentar[]>(data.solusi[0].komentar);
     const [TunjukkinModal, setTunjukkinModal] = useState(false);
     const [IdKomenHapus, setIdKomenHapus] = useState<number>();
@@ -115,10 +117,11 @@ export default function SolusiId({ data, profile }: { data: DataSolusi, profile:
     }
 
     const HapusKomen = async (idkomen: number) => {
-        const _data: { suka: "biasa" | "up" | "down", berapa: number } = await axios.post('/api/soal/solusi/komentar', {
+        await axios.post('/api/soal/solusi/komentar', {
             idkomen,
             tipe: "hapus",
         }).then(d => d.data);
+
         router.reload();
     }
 
@@ -235,14 +238,14 @@ export default function SolusiId({ data, profile }: { data: DataSolusi, profile:
                                             <div className="mb-1">
                                                 <a href={`/profile/${v.user.username}`} className="me-2 text-white text-decoration-none">{v.user.username}</a>
                                                 <span className="text-white-50 me-2">{v.bikin as any}</span>
-                                                <i className="bi bi-trash hapus-komen" onClick={() => { setIdKomenHapus(v.id); setTunjukkinModal(true) }} style={{ color: "red" }}></i>
+                                                {(profile.username === v.user.username || profile.admin || profile.moderator) &&
+                                                    <i className="bi bi-trash hapus-komen" onClick={() => { setIdKomenHapus(v.id); setTunjukkinModal(true) }} style={{ color: "red" }}></i>
+                                                }
                                             </div>
                                             <div className="text-white mb-2">{v.komen}</div>
-                                            <div>
-                                                <span className="text-white me-2" id={'komen-' + v.id}>{JSON.parse(v.upvote).length - JSON.parse(v.downvote).length}</span>
-                                                <i className="bi bi-caret-up-fill me-2 voting" id={'up-' + v.id} style={{ color: (v.apakahSudahVote === "up" ? 'green' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "up", v.id)}></i>
-                                                <i className="bi bi-caret-down-fill voting" id={'down-' + v.id} style={{ color: (v.apakahSudahVote === "down" ? 'red' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "down", v.id)}></i>
-                                            </div>
+                                            <span className="text-white me-2" id={'komen-' + v.id}>{JSON.parse(v.upvote).length - JSON.parse(v.downvote).length}</span>
+                                            <i className="bi bi-caret-up-fill me-2" id={'up-' + v.id} role={"button"} style={{ color: (v.apakahSudahVote === "up" ? 'green' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "up", v.id)}></i>
+                                            <i className="bi bi-caret-down-fill" id={'down-' + v.id} role={"button"} style={{ color: (v.apakahSudahVote === "down" ? 'red' : 'rgb(150, 150, 150)') }} onClick={(e) => VoteKomen(e, "down", v.id)}></i>
                                         </div>
                                     </div>
                                 )

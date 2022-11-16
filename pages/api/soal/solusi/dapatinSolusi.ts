@@ -49,12 +49,22 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
 
         if(DataSoal === null) return res.status(404).send("Soal tidak ada");
 
+        const DataSolusi = await prisma.solusi.findMany({
+            where: {
+                idsoal
+            },
+            include: {
+                user: {
+                    select: { id: true }
+                }
+            }
+        })
+
         return res.json({
-            profile: DataUser.username,
             idsoal,
             soal: DataSoal,
             suka_ngk: DataSoal.favorit.find((v) => v.iduser === verifikasi) !== undefined,
-            ApakahSudahSelesai: DataSoal.solusi.map((v) => v.idusername).includes(verifikasi),
+            ApakahSudahSelesai: DataSolusi.map((v) => v.idusername).includes(verifikasi),
             JumlahSolusi: DataSoal.solusi.filter((v, i, a) => a.findIndex((t) => t.idusername === v.idusername) === i).length,
             solusi: DataSoal.solusi.map((v) => {
                 return {

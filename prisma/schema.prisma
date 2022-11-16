@@ -34,6 +34,22 @@ model Komentar {
   @@map("komentar")
 }
 
+model Diskusi {
+  id       Int      @default(autoincrement())
+  text     String   @db.Text
+  iduser   String
+  user     Akun     @relation(fields: [iduser], references: [id], onDelete: Cascade)
+  idsoal   String
+  soal     Soal     @relation(fields: [idsoal], references: [id], onDelete: Cascade)
+  bikin    DateTime @default(now())
+  upvote   String   @default("[]") @db.Text
+  downvote String   @default("[]") @db.Text
+
+  @@id([id, iduser, idsoal])
+  @@unique([id])
+  @@map("diskusi")
+}
+
 model KumpulanJawaban {
   id            Int    @id @default(autoincrement())
   idsoal        String
@@ -57,6 +73,7 @@ model Soal {
   favorit         Favorit[]
   solusi          Solusi[]
   kumpulanjawaban KumpulanJawaban[]
+  diskusi         Diskusi[]
   bikin           DateTime          @default(now())
 
   @@map("soal")
@@ -88,6 +105,7 @@ model Akun {
   soalselesai     Solusi[]
   buatsoal        Soal[]
   komentar        Komentar[]
+  diskusi         Diskusi[]
   favorit         Favorit[]
   akungithub      AkunGithub?
   githubstate     String?     @db.VarChar(30)
@@ -100,6 +118,8 @@ model Akun {
   perbaruiToken   String?     @db.Text
   bikin           DateTime    @default(now())
   terminate       Boolean     @default(false)
+  admin           Boolean     @default(false)
+  moderator       Boolean     @default(false)
 
   @@map("akun")
 }

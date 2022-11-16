@@ -20,17 +20,18 @@ export default async function hapusSolusi(req: NextApiRequest, res: NextApiRespo
         const DataSolusi = await prisma.solusi.findFirst({
             where: {
                 id: idsolusi,
-                idusername: verifikasi
             }
         });
 
         if(DataSolusi === null) return res.send("Dihapus!");
 
-        await prisma.solusi.delete({
-            where: {
-                id: DataSolusi.id
-            }
-        });
+        if(DataUser.moderator || DataUser.admin || DataSolusi.idusername === verifikasi) {
+            await prisma.solusi.delete({
+                where: {
+                    id: DataSolusi.id
+                }
+            });
+        }
 
         return res.status(200).send("Sukses di hapus!");
     }
