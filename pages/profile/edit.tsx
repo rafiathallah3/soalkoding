@@ -1,7 +1,7 @@
 import Navbar from "../../components/navbar"
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { SettingProfile } from "../../types/tipe";
+import { SettingProfile, TipeProfile } from "../../types/tipe";
 import Link from "next/link";
 import { UpdateInfoAkun } from '../../services/Servis';
 import { Akun } from "@prisma/client";
@@ -21,8 +21,8 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
             props: {
                 data,
                 profile: {
-                    username: DapatinUser.username,
-                    gambar: DapatinUser.gambarurl
+                    username: data.username ?? null,
+                    gambar: data.gambarurl ?? null,
                 }
             }
         }
@@ -31,7 +31,7 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
     }
 }
 
-export default function Edit({ data, profile }: { data: SettingProfile, profile: { username: string, gambar: string } }) {
+export default function Edit({ data, profile }: { data: SettingProfile, profile: TipeProfile }) {
     const [Notif, setNotif] = useState<{ status: string, pesan: string } | undefined>(undefined);
 
     useEffect(() => {
