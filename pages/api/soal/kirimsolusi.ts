@@ -24,27 +24,87 @@ export default async function KirimSolusi(req: NextApiRequest, res: NextApiRespo
                 id: idsoal
             },
             include: {
-                kumpulanjawaban: true
+                kumpulanjawaban: true,
+                pembuat: {
+                    select: { jumlahNotif: true }
+                }
             }
         });
 
         if(DataSoal === null) return res.status(403).send("Error: 403");
         
-        req.body.w = "jawaban";
-        const HasilKompiler = await JalaninKompiler(req);
+        req.body.w = "jawaban"; //Ini beneran penting, jangan dihapus
+        const HasilKompiler = await JalaninKompiler(req.body);
 
         if(typeof HasilKompiler === "number") 
             return res.status(HasilKompiler).send(`Error: ${HasilKompiler}`);
         
         if(HasilKompiler.gagal === 0) {
-            await prisma.solusi.create({
-                data: {
+            const ApakahAdaSolusi = await prisma.solusi.findFirst({
+                where: {
                     idsoal: DataSoal.id,
                     idusername: verifikasi,
-                    kode: kode,
                     bahasa
                 }
-            })
+            });
+
+            if(ApakahAdaSolusi === null) {
+                await prisma.solusi.create({
+                    data: {
+                        idsoal: DataSoal.id,
+                        idusername: verifikasi,
+                        kode: kode,
+                        bahasa
+                    }
+                });
+            } else {
+                await prisma.solusi.update({
+                    where: {
+                        id: ApakahAdaSolusi.id
+                    },
+                    data: {
+                        kode
+                    }
+                })
+            }
+            
+            const SemuaSolusi = await prisma.solusi.findMany({
+                where: {
+                    idsoal: DataSoal.id
+                }
+            });
+            
+            const DapatinNotifikasi = await prisma.notifikasi.findMany();
+
+            const AchievementSolusi = async (berapa: number) => {
+                if(SemuaSolusi.filter((v, i, a) => a.findIndex((t) => t.idusername === v.idusername) === i).length >= berapa) {
+                    if(DapatinNotifikasi[DapatinNotifikasi.findIndex((t) => t.tipe === `${berapa} solusi ${DataSoal.id}`)] === undefined) {
+                        await prisma.notifikasi.create({
+                            data: {
+                                iduserKirim: DataSoal.idpembuat,
+                                iduserDari: verifikasi,
+                                konten: `Soal kamu ${DataSoal.namasoal} mencapai ${berapa} solusi!`,
+                                tipe: `${berapa} solusi ${DataSoal.id}`,
+                                link: `/soal/${DataSoal.id}/solusi`
+                            }
+                        });
+
+                        await prisma.akun.update({
+                            where: {
+                                id: DataSoal.idpembuat
+                            },
+                            data: {
+                                jumlahNotif: DataSoal.pembuat.jumlahNotif + 1
+                            }
+                        });
+                    }
+                }
+            }
+
+            AchievementSolusi(10);
+            AchievementSolusi(100);
+            AchievementSolusi(1000);
+
             return res.redirect(200, 'sukses');
         }
         

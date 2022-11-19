@@ -1,23 +1,20 @@
-import { Akun } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Link from "next/link";
 import Navbar from "../components/navbar";
 import { UpdateInfoAkun } from "../services/Servis";
+import { HasilDapatinUser, TipeProfile } from "../types/tipe";
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
 
     return {
         props: {
-            profile: {
-                username: DapatinUser.username ?? null,
-                gambar: DapatinUser.gambarurl ?? null
-            }
+            profile: DapatinUser.profile
         }
     }
 }
 
-export default function Donasi({ profile }: { profile: { username: string, gambar: string } }) {
+export default function Donasi({ profile }: { profile: TipeProfile }) {
     return (
         <>
             <Navbar profile={profile} />

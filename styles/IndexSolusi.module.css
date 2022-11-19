@@ -103,6 +103,18 @@
     background: transparent;
 }
 
+.bahasaSelect {
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    font-size: 16px;
+    color: #fff;
+    width: 220px;
+    height: 40px;
+    background-color: rgb(48, 48, 48);
+    border: 1px solid rgb(80, 80, 80);
+}
+
 /* Style the indicator (dot/circle) */
 .radio-container .checkmark:after {
     top: 8px;
@@ -120,4 +132,31 @@
 
 .hapus-solusi:hover {
     cursor: pointer;
+}
+
+.text-moderator {
+    color: #ed11d3;
+}
+
+.text-moderator:hover {
+    color: #ed11d3;
+}
+
+.text-admin {
+    color: #00b8ff;
+    animation: warnaadmin 2.5s linear;
+    animation-iteration-count: infinite;
+}
+
+.text-admin:hover {
+    color: #00b8ff;
+}
+
+@keyframes warnaadmin {
+    100%, 0%{
+        color: #00b8ff;
+    }
+    50%{
+        color: rgb(0, 234, 255);
+    }
 }

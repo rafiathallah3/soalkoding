@@ -2,6 +2,17 @@ import Link from "next/link";
 import axios from 'axios';
 import { SyntheticEvent, useState } from "react";
 import Router from "next/router";
+import { getCookie } from "cookies-next";
+import { NextApiRequest, NextApiResponse } from "next";
+
+export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
+    const infoakun = getCookie('infoakun', { req, res }) as string;
+    if (infoakun !== undefined) return { redirect: { destination: '/dashboard', permanent: false } };
+
+    return {
+        props: {}
+    }
+}
 
 export default function Register() {
     const [AdaError, setAdaError] = useState('');

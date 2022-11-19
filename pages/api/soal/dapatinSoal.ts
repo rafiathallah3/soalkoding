@@ -24,9 +24,7 @@ export default async function dapatinSoal(req: NextApiRequest, res: NextApiRespo
             },
             include: {
                 pembuat: {
-                    select: {
-                        username: true
-                    }
+                    select: { username: true, gambarurl: true, admin: true, moderator: true }
                 },
                 kumpulanjawaban: {
                     select: {
@@ -46,7 +44,7 @@ export default async function dapatinSoal(req: NextApiRequest, res: NextApiRespo
                     select: {
                         id: true,
                         user: {
-                            select: { username: true, gambarurl: true },
+                            select: { username: true, gambarurl: true, admin: true, moderator: true },
                         },
                         text: true,
                         bikin: true,

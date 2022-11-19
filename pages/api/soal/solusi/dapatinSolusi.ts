@@ -16,7 +16,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
 
         if(DataUser === null) return res.status(401);
         
-        const { idsolusi, idsoal, lihat, berdasarkan } = req.body;
+        const { idsolusi, idsoal, lihat, berdasarkan, bahasa } = req.body;
 
         const DataSoal = await prisma.soal.findUnique({
             where: {
@@ -28,12 +28,13 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                 solusi: {
                     where: {
                         idusername: lihat === "sendiri" ? verifikasi : undefined,
+                        bahasa,
                         id: idsolusi
                     },
                     orderBy: berdasarkan === undefined ? undefined : berdasarkan === "kepintaran" ? { pintar: 'asc' } : { kapan: berdasarkan === "baru" ? 'asc' : 'desc' },
                     include: {
                         user: {
-                            select: { username: true }
+                            select: { username: true, admin: true, moderator: true }
                         },
                         komentar: {
                             include: {
@@ -44,6 +45,7 @@ export default async function dapatinSolusi(req: NextApiRequest, res: NextApiRes
                         }
                     }
                 },
+                kumpulanjawaban: true
             }
         });
 

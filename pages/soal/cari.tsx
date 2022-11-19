@@ -8,11 +8,10 @@ import Select from 'react-select';
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { UpdateInfoAkun } from "../../services/Servis";
-import { Akun } from "@prisma/client";
-import { DataSoal } from "../../types/tipe";
+import { DataSoal, HasilDapatinUser, TipeProfile } from "../../types/tipe";
 
 export async function getServerSideProps({ query, req, res }: { query: any, req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
@@ -25,7 +24,7 @@ export async function getServerSideProps({ query, req, res }: { query: any, req:
         return {
             props: {
                 data: data.kumpulandata,
-                profile: { username: DapatinUser.username, gambar: DapatinUser.gambarurl },
+                profile: DapatinUser.profile,
                 query,
             }
         }
@@ -36,7 +35,7 @@ export async function getServerSideProps({ query, req, res }: { query: any, req:
     }
 }
 
-export default function Cari({ data, query, profile }: { data: (DataSoal & { apakahsudah: boolean, suka_ngk: boolean, jumlahsolusi: number })[], query: { kesusahan: string, urutan: string, kerjakan: string, tags: string, bahasa: string }, profile: { username: string, gambar: string } }) {
+export default function Cari({ data, query, profile }: { data: (DataSoal & { apakahsudah: boolean, suka_ngk: boolean, jumlahsolusi: number })[], query: { kesusahan: string, urutan: string, kerjakan: string, tags: string, bahasa: string }, profile: TipeProfile }) {
     const [QueryURL, setQueryURL] = useState<{
         kerjakan?: string,
         tags?: string,

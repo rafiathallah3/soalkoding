@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `akun` ADD COLUMN `jumlahNotif` INTEGER NOT NULL DEFAULT 0;

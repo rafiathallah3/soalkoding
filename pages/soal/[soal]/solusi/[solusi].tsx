@@ -2,12 +2,11 @@ import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import Navbar from "../../../../components/navbar";
 import Image from "next/image";
-import { DataSolusi, Komentar, TipeProfile } from "../../../../types/tipe";
+import { DataSolusi, HasilDapatinUser, Komentar, TipeProfile } from "../../../../types/tipe";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useState } from "react";
 import { UpdateInfoAkun } from "../../../../services/Servis";
-import { Akun } from "@prisma/client";
 import FavoritKomponen from "../../../../components/Favorit";
 import { useRouter } from "next/router";
 import Modal from 'react-modal';
@@ -34,7 +33,7 @@ const StyleModalOverlay: CSSProperties = {
 }
 
 export async function getServerSideProps({ params, req, res }: { params: { soal: string, solusi: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     const data = await axios.post(`${process.env.NAMAWEBSITE}/api/soal/solusi/dapatinSolusi`, {
@@ -48,12 +47,7 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
     return {
         props: {
             data,
-            profile: {
-                username: DapatinUser.username,
-                gambar: DapatinUser.gambarurl,
-                admin: DapatinUser.admin,
-                moderator: DapatinUser.moderator
-            }
+            profile: DapatinUser.profile
         }
     }
 }

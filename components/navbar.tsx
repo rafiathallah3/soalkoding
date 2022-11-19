@@ -1,7 +1,19 @@
+import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { Notifikasi, TipeProfile } from "../types/tipe";
 
-export default function Navbar({ profile }: { profile: { username: string | null, gambar: string | null } }) {
+export default function Navbar({ profile }: { profile: TipeProfile }) {
+    const [DataNotifikasi, setDataNotifikasi] = useState<Notifikasi[]>(profile.notifikasi);
+    const [BerapaNotifikasi, setBerapaNotifikasi] = useState<number>(profile.jumlahNotif);
+
+    const DapatinNotifikasi = async () => {
+        const HasilNotifikasi = await axios.get("/api/profile/dapatinNotifikasi").then(d => d.data);
+        setDataNotifikasi(HasilNotifikasi.data);
+        setBerapaNotifikasi(0);
+    }
+
     return (
         <nav className="navbar navbar-expand-lg navbar-light">
             <style jsx>{`
@@ -23,6 +35,10 @@ export default function Navbar({ profile }: { profile: { username: string | null
                 margin-top: 0;
                 left: auto;
                 right: 0;
+            }
+
+            .komponen-notifikasi:hover {
+                background: rgb(50, 50, 50);
             }
 
             .donasi {
@@ -60,15 +76,50 @@ export default function Navbar({ profile }: { profile: { username: string | null
                                     <i className='bi bi-discord fs-2 warna-discord'></i>
                                 </a>
                             </li>
-                            <li className='nav-item me-4 align-self-center'>
+                            <li className='nav-item me-3 align-self-center'>
                                 <Link href="/donasi">
                                     <a>
                                         <i className='bi bi-piggy-bank-fill donasi fs-2'></i>
                                     </a>
                                 </Link>
                             </li>
-                            <li className='nav-item me-4 align-self-center'>
-                                <i className='bi bi-bell-fill text-white fs-2'></i>
+                            <li role={"button"} className='nav-item align-self-center me-3'>
+                                <a className="nav-link" id="navbarDropdownMenuLink" role="button" onClick={DapatinNotifikasi} data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                    {(BerapaNotifikasi >= 1) &&
+                                        <span className="d-inline-block float-end align-bottom text-white text-center" style={{ background: "red", width: "20px", height: "20px", fontSize: "15px" }}>
+                                            1
+                                        </span>
+                                    }
+                                    <i className='bi bi-bell-fill text-white fs-2 d-inline-block'></i>
+                                </a>
+                                <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end py-3" style={{ width: "11%", right: "0.6rem", top: "4rem", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black" }}>
+                                    <h5 className="px-3">Notifikasi</h5>
+                                    {DataNotifikasi?.map((v, i) => {
+                                        return (
+                                            <>
+                                                <li className="p-2 w-100 komponen-notifikasi">
+                                                    <div className="d-inline-block me-3 align-top" style={{ left: "5px", top: "10px", position: 'relative' }}>
+                                                        <Image src={v.userDari.gambarurl} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />
+                                                    </div>
+                                                    <div className="d-inline-block align-middle" style={{ width: "75%" }}>
+                                                        {v.konten}
+                                                    </div>
+                                                </li>
+                                                {i >= 2 &&
+                                                    <hr className="my-1" />
+                                                }
+                                            </>
+                                        )
+                                    })}
+                                    {/* <li className="p-2 w-100 komponen-notifikasi">
+                                        <div className="d-inline-block me-3 align-top" style={{ left: "5px", top: "10px", position: 'relative' }}>
+                                            <Image src={profile.gambar === null || profile.gambar === "" ? "/gambar/profile.png" : profile.gambar} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />
+                                        </div>
+                                        <div className="d-inline-block align-middle" style={{ width: "75%" }}>
+                                            Soal kamu 3 Angka Kalkulator mempunyai total 10 solusi user!
+                                        </div>
+                                    </li> */}
+                                </ul>
                             </li>
                             <li className="nav-item dropdown-center">
                                 <a className="nav-link d-flex align-items-center" id="navbarDropdownMenuLink" onClick={() => window.location = `/profile/${profile.username}` as any} role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">

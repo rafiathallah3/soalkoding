@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import axios from "axios";
-import { DataSoal, HasilKompiler, KumpulanBahasaProgram, TipeInfoKode, TipeProfile } from "../types/tipe";
+import { DataSoal, HasilKompiler, KumpulanBahasaProgram, TipeInfoKode, TipeProfile, WarnaStatus } from "../types/tipe";
 import { DapatinContohSoal } from "../services/TemplateBahasaProgram";
 import { useRouter } from "next/router";
 import { getCookie } from "cookies-next";
@@ -32,6 +32,7 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
     const [TagsDitambahin, setTagsDitambahin] = useState<string[]>(data === undefined ? [] : JSON.parse(data.tags));
     const [KurangData, setKurangData] = useState('');
     const [BahasaProgram, setBahasaProgram] = useState<KumpulanBahasaProgram>('python');
+    const [Notif, setNotif] = useState<{ status: string, pesan: string } | undefined>(undefined);
     const [SudahDiSave, setSudahDiSave] = useState(true);
     const [OutputKonfirmasiJawaban, setOutputKonfirmasiJawaban] = useState<HasilKompiler>({
         data: [{
@@ -85,7 +86,6 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
                 contohjawaban: HasilContohSoal.ContohJawaban,
             }
         });
-        setSoal(HasilContohSoal.Soal);
     }
 
     const KonfirmasiJawaban = async () => {
@@ -102,6 +102,7 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
 
             setOutputKonfirmasiJawaban({ ...d, statuskompiler: "Sukses" });
         } catch (e) {
+            console.log(e);
             setOutputKonfirmasiJawaban({
                 error: "Ada masalah kompiler",
                 statuskompiler: "Sukses"
@@ -145,7 +146,7 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
             setKurangData("Soal tidak boleh kosong");
         }
 
-        const d: { id: string } = await axios.post("/api/soal/buat/updatesoal", {
+        const d = await axios.post("/api/soal/buat/updatesoal", {
             namasoal: NamaSoal,
             level: Level,
             tags: JSON.stringify(TagsDitambahin),
@@ -153,10 +154,14 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
             infokode: JSON.stringify(InfoKode),
             idsoal: data?.id,
             publicsoal: Public
-        }).then(d => d.data);
-        setSudahDiSave(true);
+        }).then(d => d.data) as { error?: string };
 
-        router.reload();
+        if (d.error) {
+            setNotif({ status: WarnaStatus.kuning, pesan: d.error });
+        } else {
+            setSudahDiSave(true);
+            router.reload();
+        }
     }
 
     const HapusBuatanSoal = async () => {
@@ -193,8 +198,6 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
         });
     }
 
-    const [Notif, setNotif] = useState<{ status: string, pesan: string } | undefined>(undefined);
-
     useEffect(() => {
         setNotif(!getCookie('notif') ? undefined : JSON.parse(getCookie('notif') as string))
     }, []);
@@ -209,14 +212,14 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
 
         window.addEventListener('beforeunload', handleWindowClose);
 
-        setSudahDiSave(false);
+        // setSudahDiSave(false);
 
         return () => {
             window.removeEventListener('beforeunload', handleWindowClose);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [InfoKode, Soal]);
-    console.log(data)
+
     return (
         <>
             <Navbar profile={profile} />

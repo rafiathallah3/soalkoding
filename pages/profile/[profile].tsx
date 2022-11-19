@@ -2,14 +2,13 @@ import Navbar from "../../components/navbar";
 import Image from "next/image"
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { DataProfile } from "../../types/tipe";
+import { DataProfile, HasilDapatinUser, TipeProfile, WarnaAkun } from "../../types/tipe";
 import { getCookie } from "cookies-next";
 import { useState } from "react";
 import { UpdateInfoAkun } from "../../services/Servis";
-import { Akun } from "@prisma/client";
 
 export async function getServerSideProps({ params, req, res }: { params: { profile: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
@@ -20,10 +19,7 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
         return {
             props: {
                 data,
-                profile: {
-                    username: DapatinUser.username,
-                    gambar: DapatinUser.gambarurl
-                }
+                profile: DapatinUser.profile
             }
         }
     } catch (e) {
@@ -33,13 +29,21 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
     }
 }
 
-export default function Profile({ data, profile }: { data: DataProfile, profile: { username: string, gambar: string } }) {
+export default function Profile({ data, profile }: { data: DataProfile, profile: TipeProfile }) {
     const [StatusTable, setStatusTable] = useState<"soalselesai" | "solusi" | "favorit">('soalselesai');
     const InformasiDariUpdate = getCookie('infoedit');
 
     const namaBulan = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
+
+    const JadikanModerator = async (username: string) => {
+        await axios.post("/api/profile/moderator", {
+            username
+        });
+
+        window.location.reload();
+    }
 
     //Sumber: https://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
     function SemenjakWaktu(date: any) {
@@ -129,9 +133,9 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                                         <h5>{data.username}</h5>
                                         <p className="text-white-50 m-0">{data.nama}</p>
                                         {data.admin ?
-                                            <h6 className="text-white m-0">Admin</h6>
+                                            <h6 className="m-0" style={{ color: WarnaAkun.admin }}>Admin</h6>
                                             : data.moderator ?
-                                                <h6 className="text-white m-0">Moderator</h6>
+                                                <h6 className="m-0" style={{ color: WarnaAkun.moderator }}>Moderator</h6>
                                                 : <></>
                                         }
                                     </div>
@@ -164,6 +168,15 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                                         <i className="bi bi-globe2"></i>
                                     </a>
                                 }
+                                {profile.admin &&
+                                    <>
+                                        {data.moderator ?
+                                            <button className="btn btn-danger" onClick={() => JadikanModerator(data.username)}>Turunin moderator</button>
+                                            :
+                                            <button className="btn btn-success" onClick={() => JadikanModerator(data.username)}>Jadikan moderator</button>
+                                        }
+                                    </>
+                                }
                             </div>
                             <a href={"/profile/edit"} className="btn btn-dark form-control">
                                 Edit Profile
@@ -184,11 +197,11 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
                                 </div>
                                 {StatusTable === "soalselesai" &&
                                     <div className="d-flex flex-column">
-                                        {data.soalselesai.filter((v, i, a) => a.findIndex((t) => t.id === v.id) !== -1).length <= 0 ?
+                                        {data.soalselesai.filter((v, i, a) => i === a.findIndex((t) => t.soal.id === v.soal.id)).length <= 0 ?
                                             <div className="text-center fs-5">{data.username} tidak pernah menyelesaikan satu soal</div>
                                             :
                                             <>
-                                                {data.soalselesai.filter((v, i, a) => a.findIndex((t) => t.id === v.id) !== -1).map((v, i) => {
+                                                {data.soalselesai.filter((v, i, a) => i === a.findIndex((t) => t.soal.id === v.soal.id)).map((v, i) => {
                                                     return (
                                                         <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                             <a className="text-white text-decoration-none" href={`/soal/${v.soal.id}/latihan`}>{v.soal.namasoal}</a>

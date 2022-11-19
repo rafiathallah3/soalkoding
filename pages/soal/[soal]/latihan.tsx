@@ -8,17 +8,16 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Navbar from "../../../components/navbar";
-import styles from '../../../styles/latihan.module.css'
-import { DataSoal, HasilKompiler } from "../../../types/tipe";
+import styles from "../../../styles/IndexSolusi.module.css";
+import { DataSoal, HasilDapatinUser, HasilKompiler, TipeProfile } from "../../../types/tipe";
 import FavoritKomponen from "../../../components/Favorit";
 import { prisma } from "../../../database/prisma";
 import { UpdateInfoAkun } from "../../../services/Servis";
-import { Akun } from "@prisma/client";
 
 const CodeEditor = dynamic(import('../../../components/codeEditor'), { ssr: false });
 
 export async function getServerSideProps({ params, req, res }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     const DataSoal = await prisma.soal.findUnique({
@@ -42,10 +41,7 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
         return {
             props: {
                 data,
-                profile: {
-                    username: DapatinUser.username,
-                    gambar: DapatinUser.gambarurl
-                }
+                profile: DapatinUser.profile
             }
         }
     } catch (e) {
@@ -58,7 +54,7 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
     }
 }
 
-export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: boolean }, profile: { username: string, gambar: string } }) {
+export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: boolean }, profile: TipeProfile }) {
     const [BahasaProgram, setBahasaProgram] = useState('python');
     const [Output, setOutput] = useState<HasilKompiler>({
         data: [{
@@ -256,7 +252,7 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
                                             <FavoritKomponen data={{ suka_ngk: data.suka_ngk, berapa: data.favorit.length, idsoal: data.id }} />
                                             <span>
                                                 <i className="bi bi-person-fill me-2"></i>
-                                                <a className="text-decoration-none text-white" href={`/profile/${data.pembuat.username}`}>{data.pembuat.username}</a>
+                                                <a className={`me-3 text-decoration-none ${data.pembuat.admin ? styles['text-admin'] : data.pembuat.moderator ? styles['text-moderator'] : 'text-white'}`} href={`/profile/${data.pembuat.username}`}>{data.pembuat.username}</a>
                                             </span>
                                         </div>
                                     </div>

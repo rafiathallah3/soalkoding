@@ -4,14 +4,13 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { UpdateInfoAkun } from '../services/Servis';
-import { Akun } from '@prisma/client';
 import axios from 'axios';
-import { DataSoal } from '../types/tipe';
+import { DataSoal, HasilDapatinUser } from '../types/tipe';
 import Router from 'next/router';
 import { useState } from 'react';
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     const DapatinSoal = await axios.post(`${process.env.NAMAWEBSITE}/api/soal/dapatinRandomSoal`, {}, {
@@ -21,10 +20,7 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
     return {
         props: {
             data: DapatinSoal.data ?? null,
-            profile: {
-                username: DapatinUser.username,
-                gambar: DapatinUser.gambarurl
-            }
+            profile: DapatinUser.profile
         }
     }
 }

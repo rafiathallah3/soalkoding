@@ -1,3 +1,5 @@
+import { Akun } from "@prisma/client"
+
 export interface SettingProfile {
     email: string,
     username: string,
@@ -39,7 +41,7 @@ export interface DataSoal {
     tags: string,
     soal: string,
     id: string,
-    pembuat: { username: string },
+    pembuat: TipeProfile,
     public: boolean,
     suka: string,
     favorit: { id: number }[],
@@ -59,7 +61,7 @@ export interface DataSoal {
 
 export interface Diskusi {
     id: number,
-    user: { username: string, gambarurl: string },
+    user: TipeProfile & { gambarurl: string },
     text: string,
     bikin: Date,
     upvote: string,
@@ -67,11 +69,23 @@ export interface Diskusi {
     apakahSudahVote?: "up" | "down" | "biasa"
 }
 
+export interface Notifikasi {
+    id: number,
+    userDari: { username: string, gambarurl: string },
+    userKirim: { username: string, gambarurl: string },
+    konten: string,
+    link: string,
+    tipe: string,
+    bikin: string,
+}
+
 export interface TipeProfile {
     username: string,
     gambar: string,
     admin: boolean,
-    moderator: boolean
+    moderator: boolean,
+    notifikasi: Notifikasi[],
+    jumlahNotif: number
 }
 
 export interface Solusi {
@@ -84,6 +98,14 @@ export interface Solusi {
     kapan: string,
     bahasa: string,
     apakahSudahPintar: boolean
+}
+
+export interface KeperluanKompiler {
+    buat?: string,
+    idsoal?: string,
+    w?: string,
+    kode: string,
+    bahasa: string,
 }
 
 export interface Komentar {
@@ -105,14 +127,7 @@ export interface DataSolusi {
     ApakahSudahSelesai: boolean,
     JumlahSolusi: number,
     solusi: Solusi[],
-    soal: {
-        namasoal: string,
-        level: number,
-        tags: string,
-        pembuat: { username: string },
-        suka: string,
-        favorit: { id: string }[]
-    }
+    soal: DataSoal
 }
 
 export interface TipeInfoKode {
@@ -153,10 +168,20 @@ export interface OutputCompilerWandbox {
     status: "0" | "1"
 }
 
+export interface HasilDapatinUser extends Akun {
+    redirect: string,
+    profile: TipeProfile
+}
+
 export type KumpulanBahasaProgram = "python" | "javascript" | "c++" | "lua";
 
 export enum WarnaStatus {
     kuning = "#9ba308",
     biru = "#7AC5CD",
     merah = "#F5646B"
+}
+
+export enum WarnaAkun {
+    admin = "#00b8ff",
+    moderator = "#c21faf"
 }

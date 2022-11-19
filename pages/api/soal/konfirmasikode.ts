@@ -14,7 +14,7 @@ export default async function KonfirmasiKode(req: NextApiRequest, res: NextApiRe
         const { buat, kode, idsoal, w: StatusJawaban, bahasa } = req.body;
     
         if(kode === undefined && bahasa === undefined) return res.status(404).send("Tidak ketemu");
-        const HasilKompiler = await JalaninKompiler(req);
+        const HasilKompiler = await JalaninKompiler(req.body);
 
         if(typeof HasilKompiler === "number") 
             return res.status(HasilKompiler).send(`Error: ${HasilKompiler}`);

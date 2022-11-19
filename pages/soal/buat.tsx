@@ -1,23 +1,20 @@
-import { Akun } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import BuatKomponen from "../../components/BuatSoal";
 import { UpdateInfoAkun } from "../../services/Servis";
+import { HasilDapatinUser, TipeProfile } from "../../types/tipe";
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     return {
         props: {
-            profile: {
-                username: DapatinUser.username,
-                gambar: DapatinUser.gambarurl
-            }
+            profile: DapatinUser.profile
         }
     }
 }
 
-export default function Buat({ profile }: { profile: { username: string, gambar: string } }) {
+export default function Buat({ profile }: { profile: TipeProfile }) {
     return (
         <BuatKomponen
             profile={profile}

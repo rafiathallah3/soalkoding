@@ -24,9 +24,6 @@ export default async function BuatSoal(req: NextApiRequest, res: NextApiResponse
         });
         
         const ParseInfoKode = JSON.parse(infokode) as { [bahasa: string]: TipeInfoKode };
-        console.log([
-            ...Object.values(ParseInfoKode).filter((v) => v.listjawaban.trim() !== "" || v.contohjawaban.trim() !== "").map((v) => ({...v, idsoal: DataSoal.id}))
-        ])
         await prisma.kumpulanJawaban.createMany({
             data: [
                 ...Object.values(ParseInfoKode).filter((v) => v.listjawaban.trim() !== "" || v.contohjawaban.trim() !== "").map((v) => ({...v, idsoal: DataSoal.id})),

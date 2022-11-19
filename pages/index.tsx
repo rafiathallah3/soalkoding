@@ -1,14 +1,31 @@
-import type { NextPage } from 'next'
+import type { NextApiRequest, NextApiResponse, NextPage } from 'next'
 import Navbar from '../components/navbar'
 import styles from '../styles/Home.module.css'
 import { useRouter } from 'next/router'
+import { UpdateInfoAkun } from '../services/Servis';
+import { Akun } from '@prisma/client';
+import { TipeProfile } from '../types/tipe';
 
-const Home: NextPage = () => {
+export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
+	const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+	// if (DapatinUser.redirect !== undefined) return DapatinUser;
+
+	return {
+		props: {
+			profile: {
+				username: DapatinUser.username,
+				gambar: DapatinUser.gambarurl
+			}
+		}
+	}
+}
+
+const Home = ({ profile }: { profile: TipeProfile }) => {
 	const router = useRouter();
 
 	return (
 		<>
-			<Navbar profile={{}} />
+			<Navbar profile={profile} />
 			<div className='container'>
 				<div className='d-flex align-items-center justify-content-center flex-column' style={{ paddingRight: "10rem", paddingLeft: "10rem", height: "50vh" }}>
 					<h1 className='text-white mb-3'>Soalkoding</h1>

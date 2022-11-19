@@ -3,15 +3,15 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { DataSoal, DataSolusi, Solusi as TipeSolusi, TipeProfile } from "../../../../types/tipe";
+import { DataSoal, DataSolusi, HasilDapatinUser, Solusi as TipeSolusi, TipeProfile } from "../../../../types/tipe";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { UpdateInfoAkun } from "../../../../services/Servis";
-import { Akun } from "@prisma/client";
 import FavoritKomponen from "../../../../components/Favorit";
 import Modal from 'react-modal';
 import { CSSProperties } from "react";
 import styles from '../../../../styles/IndexSolusi.module.css'
+import { DapatinSemuaBahasa } from "../../../../services/TemplateBahasaProgram";
 
 const StyleModalKonten: CSSProperties = {
     top: "50%",
@@ -34,7 +34,7 @@ const StyleModalOverlay: CSSProperties = {
 }
 
 export async function getServerSideProps({ params, req, res, query }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse, query: { lihat: string, berdasarkan: string } }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
@@ -48,7 +48,7 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
         return {
             props: {
                 data,
-                profile: { username: DapatinUser.username, gambar: DapatinUser.gambarurl, admin: DapatinUser.admin, moderator: DapatinUser.moderator },
+                profile: DapatinUser.profile,
                 ...query
             }
         }
@@ -60,7 +60,7 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
 }
 
 Modal.setAppElement("#__next")
-export default function Solusi({ data, lihat, berdasarkan, profile }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined, profile: TipeProfile }) {
+export default function Solusi({ data, lihat, berdasarkan, bahasa, profile }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined, bahasa: string, profile: TipeProfile }) {
     const [Solusi, setSolusi] = useState<TipeSolusi[]>(data.solusi);
     const [TunjukkinModal, setTunjukkinModal] = useState(false);
     const [IdSolusiHapus, setIdSolusiHapus] = useState<string>();
@@ -87,13 +87,15 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
         // (document.getElementById("test")! as HTMLFormElement).submit();
         const Lihat = document.querySelector('input[name="lihat"]:checked') as HTMLInputElement;
         const Berdasarkan = document.querySelector('input[name="berdasarkan"]:checked') as HTMLInputElement;
+        const Bahasa = document.querySelector('input[name="bahasa"]:checked') as HTMLInputElement;
 
-        router.push({ pathname: `/soal/${data.idsoal}/solusi`, query: { lihat: Lihat?.value, berdasarkan: Berdasarkan?.value } }, undefined, { shallow: true })
+        router.push({ pathname: `/soal/${data.idsoal}/solusi`, query: { lihat: Lihat?.value, berdasarkan: Berdasarkan?.value, bahasa: Bahasa?.value } }, undefined, { shallow: true })
 
         const DataSolusi = await axios.post(`/api/soal/solusi/dapatinSolusi`, {
             idsoal: data.idsoal,
             lihat: Lihat?.value,
-            berdasarkan: Berdasarkan?.value
+            berdasarkan: Berdasarkan?.value,
+            bahasa: Bahasa?.value
         }).then(d => d.data);
 
         setSolusi(DataSolusi.solusi);
@@ -129,7 +131,7 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                             <div className="mb-1">
                                 <span className="me-3">
                                     <i className="bi bi-person-fill me-2"></i>
-                                    <a className="text-decoration-none text-white" href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
+                                    <a className={`me-3 text-decoration-none ${data.soal.pembuat.admin ? styles['text-admin'] : data.soal.pembuat.moderator ? styles['text-moderator'] : 'text-white'}`} href={`/profile/` + data.soal.pembuat.username}>{data.soal.pembuat.username}</a>
                                 </span>
                                 <FavoritKomponen data={{ suka_ngk: data.suka_ngk, berapa: data.soal.favorit.length, idsoal: data.idsoal }} />
                                 <span title="Jumlah solusi">
@@ -165,7 +167,10 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                                         <div className="d-flex">
                                             <div className="text-white flex-grow-1">
                                                 <i className="bi bi-person me-1"></i>
-                                                <a href={`/profile/${v.user.username}`} className="me-3 text-white text-decoration-none">{v.user.username}</a>
+                                                <a href={`/profile/${v.user.username}`} className={`me-2 text-decoration-none ${v.user.admin ? styles['text-admin'] : v.user.moderator ? styles['text-moderator'] : 'text-white'}`}>{v.user.username}</a>
+                                                {v.user.username === data.soal.pembuat.username &&
+                                                    <span className="text-white fw-bold">(Pembuat Soal)</span>
+                                                }
                                             </div>
                                             <div className="text-white-50">
                                                 {new Date(v.kapan).getDate() + '/' + (new Date(v.kapan).getMonth() + 1) + '/' + new Date(v.kapan).getFullYear()}
@@ -209,7 +214,7 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                                         </label>
                                     </fieldset>
                                     <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Berdasarkan</div>
-                                    <fieldset name="berdasarkan">
+                                    <fieldset className="mb-2" name="berdasarkan">
                                         <label className={styles['radio-container']}>
                                             <input type="radio" name="berdasarkan" id="berdasarkan" value="kepintaran" defaultChecked={berdasarkan === "kepintaran"} />
                                             <span style={{ marginLeft: "20px" }}>Kepintaran</span>
@@ -225,6 +230,18 @@ export default function Solusi({ data, lihat, berdasarkan, profile }: { data: Da
                                             <span style={{ marginLeft: "20px" }}>Lama</span>
                                             <span className={styles.checkmark}></span>
                                         </label>
+                                    </fieldset>
+                                    <div className="mb-2 fw-bold" style={{ color: "rgb(220, 220, 220)", fontSize: "17px" }}>Bahasa</div>
+                                    <fieldset name="bahasa">
+                                        {data.soal.kumpulanjawaban.map((v, i) => {
+                                            return (
+                                                <label key={i} className={styles['radio-container']}>
+                                                    <input type="radio" name="bahasa" id="bahasa" value={v.bahasa} defaultChecked={bahasa === v.bahasa} />
+                                                    <span style={{ marginLeft: "20px" }}>{v.bahasa.at(0)?.toUpperCase() + v.bahasa.slice(1)}</span>
+                                                    <span className={styles.checkmark}></span>
+                                                </label>
+                                            )
+                                        })}
                                     </fieldset>
                                 </form>
                             </div>

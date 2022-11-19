@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../database/prisma";
 import { decrypt } from "../database/UbahKeHash";
 import jwt from 'jsonwebtoken';
-import { HasilKompiler, OutputCompilerGodbolt, OutputCompilerWandbox, TipeInfoKode, TipeKonfirmasiJawaban, WarnaStatus } from "../types/tipe";
+import { KeperluanKompiler, OutputCompilerGodbolt, OutputCompilerWandbox, TipeInfoKode, TipeKonfirmasiJawaban, WarnaStatus } from "../types/tipe";
 import { DapatinServisKompiler } from "./TemplateBahasaProgram";
 
 export async function UpdateInfoAkun(req: NextApiRequest, res: NextApiResponse, DapatinUser: boolean) {
@@ -50,11 +50,25 @@ export async function UpdateInfoAkun(req: NextApiRequest, res: NextApiResponse, 
     if(DataUser === null) return { redirect: { destination: '/login', permanent: false } }
     if(DataUser.username === "" || DataUser.email === "") return { redirect: { destination: '/register/daftargithub', permanent: false } }
 
-    return DataUser;
+    const DataNotifikasi = await prisma.notifikasi.findMany({
+        where: {
+            iduserKirim: DataUser.id
+        },
+        include: {
+            userDari: {
+                select: { username: true, gambarurl: true }
+            },
+            userKirim: {
+                select: { username: true, gambarurl: true }
+            }
+        }
+    });
+
+    return {...DataUser, profile: { username: DataUser.username ?? null, gambar: DataUser.gambarurl ?? null, admin: DataUser.admin, moderator: DataUser.moderator, notifikasi: DataNotifikasi.map((v) => ({...v, bikin: SemenjakWaktu(v.bikin)})), jumlahNotif: DataUser.jumlahNotif }};
 }
 
-export async function JalaninKompiler(req: NextApiRequest) {
-    const { buat, kode, idsoal, w: StatusJawaban, bahasa } = req.body;
+export async function JalaninKompiler(DataKompiler: KeperluanKompiler) {
+    const { buat, kode, idsoal, w: StatusJawaban, bahasa } = DataKompiler;
 
     const InfoKompiler = DapatinServisKompiler(bahasa, kode);
     if(InfoKompiler.NamaKompiler === "Tidak Ada") return 404;
@@ -90,8 +104,6 @@ export async function JalaninKompiler(req: NextApiRequest) {
         HasilGabunganKode += '\n' + 'print("waktu: "..os.clock() - waktu);'
     }
     
-    // console.log(HasilGabunganKode);
-
     try {
         if(InfoKompiler.NamaKompiler === "Godbolt") {
             const data = await axios.post(`https://godbolt.org/api/compiler/${InfoKompiler.Kompiler}/compile`, {
@@ -159,8 +171,8 @@ export async function JalaninKompiler(req: NextApiRequest) {
             compiler: InfoKompiler.Kompiler
         }).then(d =>  d.data) as OutputCompilerWandbox;
         if(data.status === "1") return {error: data.program_error};
-
-        const ParseOutput: TipeKonfirmasiJawaban[] = data.program_output.split('\n').filter((v) => !v.includes("waktu") && v !== "").map((v) => JSON.parse(v));
+        
+        const ParseOutput: TipeKonfirmasiJawaban[] = data.program_output.split('\n').filter((v) => !v.includes("waktu") && v !== "").map((v) => JSON.parse(v.replace("SplitIniUntukTestCase", "")));
         
         return { 
             data: ParseOutput,

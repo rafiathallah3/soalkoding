@@ -1,7 +1,6 @@
-import { Akun } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { UpdateInfoAkun } from "../../../services/Servis";
-import { DataSoal, TipeProfile } from "../../../types/tipe";
+import { DataSoal, HasilDapatinUser, TipeProfile } from "../../../types/tipe";
 import { useRouter } from "next/router";
 import { CSSProperties, useState } from "react";
 import styles from '../../../styles/IndexSolusi.module.css'
@@ -39,7 +38,7 @@ const StyleModalOverlay: CSSProperties = {
 }
 
 export async function getServerSideProps({ params, req, res }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
@@ -52,7 +51,7 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
         return {
             props: {
                 data,
-                profile: { username: DapatinUser.username, gambar: DapatinUser.gambarurl, admin: DapatinUser.admin, moderator: DapatinUser.moderator },
+                profile: DapatinUser.profile,
             }
         }
     } catch {
@@ -233,7 +232,7 @@ export default function Diksusi({ data, profile }: { data: DataSoal, profile: Ti
                                     </div>
                                     <div className="ms-2 w-100">
                                         <div className="mb-1">
-                                            <a href={`/profile/`} className="me-3 text-white text-decoration-none">{v.user.username}</a>
+                                            <a href={`/profile/`} className={`me-3 text-decoration-none ${v.user.admin ? styles['text-admin'] : v.user.moderator ? styles['text-moderator'] : 'text-white'}`}>{v.user.username}</a>
                                             <span className="text-white-50 me-3">{v.bikin as any}</span>
                                             {(v.user.username === profile.username || profile.moderator || profile.admin) &&
                                                 <i className="bi bi-trash" role={"button"} onClick={() => { setIdDiskusiHapus(v.id); setTunjukkinModal(true) }} style={{ color: "red" }}></i>

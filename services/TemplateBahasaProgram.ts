@@ -55,15 +55,6 @@ LiatanKode: `
 def Solusi(angka1, angka2):
     ...
 `.trim(),
-Soal: `
-Jumlahin angka yang sudah diberikan!
-
-Contoh
-~~~python
-Solusi(1, 1) # 1 + 1 -> 2;
-Solusi(2, 2) # 2 + 2 -> 4;
-~~~
-`.trim(),
 }
 
 const JavascriptContohSoal = {
@@ -86,15 +77,6 @@ function Solusi(angka1, angka2) {
 
 }
 `.trim(),
-Soal: `
-Jumlahin angka yang sudah diberikan!
-
-Contoh
-~~~javascript
-Solusi(1, 1) // 1 + 1 -> 2;
-Solusi(2, 2) // 2 + 2 -> 4;
-~~~
-`.trim()
 }
 
 const LuaContohSoal = {
@@ -117,15 +99,6 @@ function Solusi(angka1, angka2)
 
 end
 `.trim(),
-Soal: `
-Jumlahin angka yang sudah diberikan!
-
-Contoh
-~~~lua
-Solusi(1, 1) -- 1 + 1 -> 2;
-Solusi(2, 2) -- 2 + 2 -> 4;
-~~~
-`.trim()
 }
 
 const KompilerWandbox = {
@@ -175,3 +148,5 @@ export function DapatinServisKompiler(bahasa: string, kode: string): { NamaKompi
 export function DapatinContohSoal(bahasa: string) {
     return ContohSoal[bahasa as keyof typeof ContohSoal]
 }
+
+export const DapatinSemuaBahasa = () => Object.keys(ContohSoal);
