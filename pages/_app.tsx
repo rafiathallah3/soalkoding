@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import { useEffect } from 'react'
 import type { AppProps } from 'next/app'
+import Head from 'next/head';
 
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -12,6 +13,9 @@ function MyApp({ Component, pageProps }: AppProps) {
 
 	return (
 		<>
+			<Head>
+				<link rel="shortcut icon" href="/soalkoding.png" />
+			</Head>
 			<Component {...pageProps} />
 		</>
 	)
