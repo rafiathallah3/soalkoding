@@ -5,7 +5,7 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { UpdateInfoAkun } from '../services/Servis';
 import axios from 'axios';
-import { DataSoal, HasilDapatinUser } from '../types/tipe';
+import { DataSoal, HasilDapatinUser, TipeProfile } from '../types/tipe';
 import Router from 'next/router';
 import { useState } from 'react';
 
@@ -25,7 +25,7 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
     }
 }
 
-export default function Dashboard({ profile, data }: { profile: { username: string, gambar: string }, data: DataSoal | null }) {
+export default function Dashboard({ profile, data }: { profile: TipeProfile, data: DataSoal | null }) {
     const [HasilDataSoal, setHasilDataSoal] = useState<DataSoal | null>(data);
 
     const DapatinRandomSoal = async () => {
