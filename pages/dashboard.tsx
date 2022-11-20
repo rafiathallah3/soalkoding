@@ -8,6 +8,7 @@ import axios from 'axios';
 import { DataSoal, HasilDapatinUser, TipeProfile } from '../types/tipe';
 import Router from 'next/router';
 import { useState } from 'react';
+import Head from 'next/head';
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
@@ -35,6 +36,10 @@ export default function Dashboard({ profile, data }: { profile: TipeProfile, dat
 
     return (
         <>
+            <Head>
+                <title>Dashboard</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <style jsx>{`
             .scrollbar-primary::-webkit-scrollbar-thumb {
                 border-radius: 10px;

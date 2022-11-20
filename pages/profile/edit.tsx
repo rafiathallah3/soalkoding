@@ -1,15 +1,16 @@
 import Navbar from "../../components/navbar"
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { SettingProfile, TipeProfile } from "../../types/tipe";
+import { HasilDapatinUser, SettingProfile, TipeProfile } from "../../types/tipe";
 import Link from "next/link";
 import { UpdateInfoAkun } from '../../services/Servis';
 import { Akun } from "@prisma/client";
 import { getCookie } from "cookies-next";
 import { useEffect, useState } from "react";
+import Head from "next/head";
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+    const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
     if (DapatinUser.redirect !== undefined) return DapatinUser;
 
     try {
@@ -97,6 +98,10 @@ export default function Edit({ data, profile }: { data: SettingProfile, profile:
 
     return (
         <>
+            <Head>
+                <title>Edit profile</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <style>{`
             .gambarProfile:hover {

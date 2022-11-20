@@ -11,6 +11,7 @@ import FavoritKomponen from "../../../../components/Favorit";
 import { useRouter } from "next/router";
 import Modal from 'react-modal';
 import { CSSProperties } from "react";
+import Head from "next/head";
 
 const StyleModalKonten: CSSProperties = {
     top: "50%",
@@ -121,6 +122,10 @@ export default function SolusiId({ data, profile }: { data: DataSolusi, profile:
 
     return (
         <>
+            <Head>
+                <title>Solusi untuk {data.soal.namasoal} buatan {data.solusi[0].user.username}</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <style jsx>{`
             .tombol-keren {

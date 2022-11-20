@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import Head from "next/head";
 import BuatKomponen from "../../components/BuatSoal";
 import { UpdateInfoAkun } from "../../services/Servis";
 import { HasilDapatinUser, TipeProfile } from "../../types/tipe";
@@ -16,9 +17,15 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
 
 export default function Buat({ profile }: { profile: TipeProfile }) {
     return (
-        <BuatKomponen
-            profile={profile}
-            mode="buat"
-        />
+        <>
+            <Head>
+                <title>Buat soal</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
+            <BuatKomponen
+                profile={profile}
+                mode="buat"
+            />
+        </>
     )
 }

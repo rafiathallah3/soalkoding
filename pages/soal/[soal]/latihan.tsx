@@ -13,6 +13,7 @@ import { DataSoal, HasilDapatinUser, HasilKompiler, TipeProfile } from "../../..
 import FavoritKomponen from "../../../components/Favorit";
 import { prisma } from "../../../database/prisma";
 import { UpdateInfoAkun } from "../../../services/Servis";
+import Head from "next/head";
 
 const CodeEditor = dynamic(import('../../../components/codeEditor'), { ssr: false });
 
@@ -188,6 +189,10 @@ export default function Soal({ data, profile }: { data: DataSoal & { suka_ngk: b
 
     return (
         <>
+            <Head>
+                <title>{data.namasoal}</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <style>{`
             .favorit:hover {

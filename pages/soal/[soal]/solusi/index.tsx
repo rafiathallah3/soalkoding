@@ -12,6 +12,7 @@ import Modal from 'react-modal';
 import { CSSProperties } from "react";
 import styles from '../../../../styles/IndexSolusi.module.css'
 import { DapatinSemuaBahasa } from "../../../../services/TemplateBahasaProgram";
+import Head from "next/head";
 
 const StyleModalKonten: CSSProperties = {
     top: "50%",
@@ -116,6 +117,10 @@ export default function Solusi({ data, lihat, berdasarkan, bahasa, profile }: { 
 
     return (
         <>
+            <Head>
+                <title>Solusi</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <div className="px-3">
                 <div className="p-3 text-white rounded-1 mb-2" style={{ background: "rgb(48, 48, 48)" }}>

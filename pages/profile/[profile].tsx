@@ -6,6 +6,7 @@ import { DataProfile, HasilDapatinUser, TipeProfile, WarnaAkun } from "../../typ
 import { getCookie } from "cookies-next";
 import { useState } from "react";
 import { UpdateInfoAkun } from "../../services/Servis";
+import Head from "next/head";
 
 export async function getServerSideProps({ params, req, res }: { params: { profile: string }, req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
@@ -75,6 +76,10 @@ export default function Profile({ data, profile }: { data: DataProfile, profile:
 
     return (
         <>
+            <Head>
+                <title>{data.username}</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <div className="container">
                 {typeof data === "string" ?

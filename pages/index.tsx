@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { UpdateInfoAkun } from '../services/Servis';
 import { Akun } from '@prisma/client';
 import { TipeProfile } from '../types/tipe';
+import Head from 'next/head';
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
 	const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
@@ -25,6 +26,10 @@ const Home = ({ profile }: { profile: TipeProfile }) => {
 
 	return (
 		<>
+			<Head>
+				<title>Soalkoding</title>
+				<meta name="viewport" content="initial-scale=1.0, width=device-width" />
+			</Head>
 			<Navbar profile={profile} />
 			<div className='container'>
 				<div className='d-flex align-items-center justify-content-center flex-column' style={{ paddingRight: "10rem", paddingLeft: "10rem", height: "50vh" }}>

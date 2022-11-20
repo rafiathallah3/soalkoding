@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import Head from "next/head";
 import Link from "next/link";
 import Navbar from "../components/navbar";
 import { UpdateInfoAkun } from "../services/Servis";
@@ -17,6 +18,10 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
 export default function Donasi({ profile }: { profile: TipeProfile }) {
     return (
         <>
+            <Head>
+                <title>Donasi</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <div className="container">
                 <div className="d-flex align-items-center justify-content-center flex-column" style={{ height: "50vh" }}>

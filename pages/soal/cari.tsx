@@ -9,6 +9,7 @@ import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { UpdateInfoAkun } from "../../services/Servis";
 import { DataSoal, HasilDapatinUser, TipeProfile } from "../../types/tipe";
+import Head from "next/head";
 
 export async function getServerSideProps({ query, req, res }: { query: any, req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
@@ -62,6 +63,10 @@ export default function Cari({ data, query, profile }: { data: (DataSoal & { apa
     //08115730346
     return (
         <>
+            <Head>
+                <title>Cari Soal</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <style jsx>{`
             .tombol-kerjakan {

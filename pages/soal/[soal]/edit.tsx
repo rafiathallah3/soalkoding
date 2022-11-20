@@ -3,6 +3,7 @@ import { prisma } from '../../../database/prisma';
 import { UpdateInfoAkun } from '../../../services/Servis';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { DataSoal, HasilDapatinUser, TipeProfile } from '../../../types/tipe';
+import Head from 'next/head';
 
 export async function getServerSideProps({ params, req, res }: { params: { soal: string }, req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
@@ -42,10 +43,16 @@ export async function getServerSideProps({ params, req, res }: { params: { soal:
 
 export default function Edit({ data, profile }: { data: DataSoal, profile: TipeProfile }) {
     return (
-        <BuatKomponen
-            mode="edit"
-            profile={profile}
-            data={data}
-        />
+        <>
+            <Head>
+                <title>Edit soal</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
+            <BuatKomponen
+                mode="edit"
+                profile={profile}
+                data={data}
+            />
+        </>
     )
 }

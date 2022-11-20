@@ -14,6 +14,7 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Modal from 'react-modal';
 import FavoritKomponen from "../../../components/Favorit";
 import Navbar from "../../../components/navbar";
+import Head from "next/head";
 
 const CodeEditor = dynamic(import('../../../components/codeEditor'), { ssr: false });
 
@@ -124,6 +125,10 @@ export default function Diksusi({ data, profile }: { data: DataSoal, profile: Ti
 
     return (
         <>
+            <Head>
+                <title>Diskusi</title>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
             <Navbar profile={profile} />
             <div className="px-3">
                 <div className="p-3 text-white rounded-1 mb-2" style={{ background: "rgb(48, 48, 48)" }}>
