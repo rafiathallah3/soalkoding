@@ -29,6 +29,14 @@ export default async function BuatSoal(req: NextApiRequest, res: NextApiResponse
                 ...Object.values(ParseInfoKode).filter((v) => v.listjawaban.trim() !== "" || v.contohjawaban.trim() !== "").map((v) => ({...v, idsoal: DataSoal.id})),
             ]
         })
+        await prisma.solusi.createMany({
+            data: Object.values(ParseInfoKode).filter((v) => v.listjawaban.trim() !== "" || v.contohjawaban.trim() !== "").map((v) => ({...v, idsoal: DataSoal.id})).map((v) => ({
+                bahasa: v.bahasa,
+                kode: v.jawabankode,
+                idsoal: v.idsoal,
+                idusername: verifikasi
+            }))
+        })
 
         return res.json({ id: DataSoal.id });
     }

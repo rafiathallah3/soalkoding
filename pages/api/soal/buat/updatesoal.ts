@@ -59,7 +59,6 @@ export default async function UpdateSoal(req: NextApiRequest, res: NextApiRespon
                             }
                         })
                     } else {
-                        console.time("test");
                         await prisma.kumpulanJawaban.update({
                             where: {
                                 id: KumpulanJawaban.id
@@ -69,7 +68,6 @@ export default async function UpdateSoal(req: NextApiRequest, res: NextApiRespon
                             }
                         });
 
-                        console.log(i);
                         await prisma.solusi.updateMany({
                             where: {
                                 idsoal,
@@ -81,7 +79,6 @@ export default async function UpdateSoal(req: NextApiRequest, res: NextApiRespon
                                 bahasa: i.bahasa
                             }
                         })
-                        console.timeEnd("test");
                     }
                 } else {
                     return res.json({ error: `List jawaban dari kode bahasa ${i.bahasa} tidak sesuai dengan jawaban yang ditentukan` })

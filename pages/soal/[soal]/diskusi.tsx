@@ -144,7 +144,7 @@ export default function Diksusi({ data, profile }: { data: DataSoal, profile: Ti
                             <div className="mb-1">
                                 <span className="me-3">
                                     <i className="bi bi-person-fill me-2"></i>
-                                    <a className="text-decoration-none text-white" href={`/profile/` + data.pembuat.username}>{data.pembuat.username}</a>
+                                    <a className={`me-3 text-decoration-none ${data.pembuat.admin ? styles['text-admin'] : data.pembuat.moderator ? styles['text-moderator'] : 'text-white'}`} href={`/profile/` + data.pembuat.username}>{data.pembuat.username}</a>
                                 </span>
                                 <FavoritKomponen data={{ suka_ngk: data.suka_ngk, berapa: data.favorit.length, idsoal: data.id }} />
                                 <span title="Jumlah solusi">
