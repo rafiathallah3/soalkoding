@@ -4,7 +4,7 @@ import next from 'next'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
-const port: any = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler()
@@ -14,7 +14,7 @@ app.prepare().then(() => {
         try {
         // Be sure to pass `true` as the second argument to `url.parse`.
         // This tells it to parse the query portion of the URL.
-        const parsedUrl = parse(req.url!, true)
+        const parsedUrl = parse(req.url, true)
         const { pathname, query } = parsedUrl
 
         if (pathname === '/a') {
