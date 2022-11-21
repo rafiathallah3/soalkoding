@@ -19,7 +19,7 @@ export default async function DapatinCari(req: NextApiRequest, res: NextApiRespo
                     select: {bahasa: true}
                 },
                 pembuat: {
-                    select: {username: true}
+                    select: {username: true, admin: true, moderator: true}
                 },
                 favorit: true
             },

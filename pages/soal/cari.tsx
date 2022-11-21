@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
@@ -10,6 +10,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { UpdateInfoAkun } from "../../services/Servis";
 import { DataSoal, HasilDapatinUser, TipeProfile } from "../../types/tipe";
 import Head from "next/head";
+import InfiniteScroll from 'react-infinite-scroller';
+import styles from '../../styles/IndexSolusi.module.css';
 
 export async function getServerSideProps({ query, req, res }: { query: any, req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
@@ -47,9 +49,19 @@ export default function Cari({ data, query, profile }: { data: (DataSoal & { apa
         orangnya?: string
     }>({ ...query });
     const [TutupMenu, setTutupMenu] = useState(false);
+    const [KumpulanSoal, setKumpulanSoal] = useState<(DataSoal & { apakahsudah: boolean, suka_ngk: boolean, jumlahsolusi: number })[]>(data.slice(undefined, 10));
+    const [BerapaSoal, setBerapaSoal] = useState(10);
+    const [ApakahMasiAda, setApakahMasiAda] = useState(true);
 
     const TambahinQuery = async () => {
         window.location = `/soal/cari?${new URLSearchParams(QueryURL).toString()}` as any;
+    }
+
+    const SoalLainnya = (n: number) => {
+        setKumpulanSoal(data.slice(undefined, BerapaSoal + 10));
+        setBerapaSoal(BerapaSoal + 10);
+
+        setApakahMasiAda(!(KumpulanSoal.length >= data.length));
     }
 
     useEffect(() => {
@@ -60,7 +72,6 @@ export default function Cari({ data, query, profile }: { data: (DataSoal & { apa
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [TutupMenu])
 
-    //08115730346
     return (
         <>
             <Head>
@@ -193,82 +204,90 @@ export default function Cari({ data, query, profile }: { data: (DataSoal & { apa
                 <div className="px-3">
                     <div className="row">
                         <div className="col-10">
-                            {data.map((v, i) => {
-                                return (
-                                    <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
-                                        <div className="d-flex">
-                                            <div className="text-white flex-grow-1">
-                                                <div className="px-1 mb-2" style={{ fontSize: "17px" }}>
-                                                    <a href={`/soal/${v.id}/latihan`} className="text-white text-decoration-none me-3">{v.namasoal}</a>
-                                                    <span className={"p-2 fs-6 me-2 " + (v.level <= 2 ? "text-white" : v.level <= 4 ? "text-warning" : "text-danger")} style={{ background: "rgb(55, 55, 55)" }}>Level {v.level}</span>
-                                                    {v.apakahsudah &&
-                                                        <i className="bi bi-check-lg"></i>
-                                                    }
-                                                    <span className="float-end text-white-50">{new Date(v.bikin).getDate() + '/' + (new Date(v.bikin).getMonth() + 1) + '/' + new Date(v.bikin).getFullYear()}</span>
-                                                </div>
-                                                <div className="mb-1">
-                                                    <span className="me-3">
-                                                        <i className="bi bi-person-fill me-1"></i>
-                                                        <a className="text-white text-decoration-none" href={`/profile/${v.pembuat.username}`}>{v.pembuat.username}</a>
-                                                    </span>
-                                                    <FavoritKomponen data={{ suka_ngk: v.suka_ngk, berapa: v.favorit.length, idsoal: v.id }} />
-                                                    <span className="me-3" title="Jumlah solusi">
-                                                        <i className="bi bi-calendar-check me-1"></i>
-                                                        {v.jumlahsolusi}
-                                                    </span>
-                                                    {/* <span className="me-3" title="Kepuasan orang dalam mengerjakan soal">
+                            <InfiniteScroll
+                                pageStart={0}
+                                loadMore={SoalLainnya}
+                                hasMore={ApakahMasiAda}
+                                loader={<span className="text-white text-center">Loading...</span>}
+                                useWindow={false}
+                            >
+                                {KumpulanSoal.map((v, i) => {
+                                    return (
+                                        <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
+                                            <div className="d-flex">
+                                                <div className="text-white flex-grow-1">
+                                                    <div className="px-1 mb-2" style={{ fontSize: "17px" }}>
+                                                        <a href={`/soal/${v.id}/latihan`} className="text-white text-decoration-none me-3">{v.namasoal}</a>
+                                                        <span className={"p-2 fs-6 me-2 " + (v.level <= 2 ? "text-white" : v.level <= 4 ? "text-warning" : "text-danger")} style={{ background: "rgb(55, 55, 55)" }}>Level {v.level}</span>
+                                                        {v.apakahsudah &&
+                                                            <i className="bi bi-check-lg"></i>
+                                                        }
+                                                        <span className="float-end text-white-50">{new Date(v.bikin).getDate() + '/' + (new Date(v.bikin).getMonth() + 1) + '/' + new Date(v.bikin).getFullYear()}</span>
+                                                    </div>
+                                                    <div className="mb-1">
+                                                        <span className="me-3">
+                                                            <i className="bi bi-person-fill me-1"></i>
+                                                            <a className={`me-3 text-decoration-none ${v.pembuat.admin ? styles['text-admin'] : v.pembuat.moderator ? styles['text-moderator'] : 'text-white'}`} href={`/profile/` + v.pembuat.username}>{v.pembuat.username}</a>
+                                                        </span>
+                                                        <FavoritKomponen data={{ suka_ngk: v.suka_ngk, berapa: v.favorit.length, idsoal: v.id }} />
+                                                        <span className="me-3" title="Jumlah solusi">
+                                                            <i className="bi bi-calendar-check me-1"></i>
+                                                            {v.jumlahsolusi}
+                                                        </span>
+                                                        {/* <span className="me-3" title="Kepuasan orang dalam mengerjakan soal">
                                                         <i className="bi bi-eyeglasses me-1"></i>
                                                         30
                                                     </span> */}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="mb-4 px-3 py-2 text-white" style={{ maxHeight: "180px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
+                                                <ReactMarkdown
+                                                    // eslint-disable-next-line react/no-children-prop
+                                                    children={v.soal}
+                                                    components={{
+                                                        code({ node, inline, className, children, ...props }) {
+                                                            const match = /language-(\w+)/.exec(className || '');
+                                                            return !inline && match ? (
+                                                                <SyntaxHighlighter
+                                                                    // eslint-disable-next-line react/no-children-prop
+                                                                    children={String(children).replace(/\n$/, '')}
+                                                                    style={tomorrow as any}
+                                                                    language={match[1]}
+                                                                    PreTag="div"
+                                                                    {...props}
+                                                                />
+                                                            ) : (
+                                                                <code className={className} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            )
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <hr className="text-white mb-2" style={{ marginBottom: "0px" }} />
+                                            <div className="row">
+                                                <div className="col-6">
+                                                    {v.kumpulanjawaban.map((d, di) => {
+                                                        return (
+                                                            <a key={di} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }} href="#">{d.bahasa.charAt(0).toUpperCase() + d.bahasa.slice(1)}</a>
+                                                        )
+                                                    })}
+                                                </div>
+                                                <div className="col-6 text-end">
+                                                    {JSON.parse(v.tags).map((t: string, ti: number) => {
+                                                        return (
+                                                            <a key={ti} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }}>{t}</a>
+                                                        )
+                                                    })}
+                                                    <i className="bi bi-tags-fill me-3 fs-5" style={{ color: "rgb(200, 200, 200)" }}></i>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mb-4 px-3 py-2 text-white" style={{ maxHeight: "180px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
-                                            <ReactMarkdown
-                                                // eslint-disable-next-line react/no-children-prop
-                                                children={v.soal}
-                                                components={{
-                                                    code({ node, inline, className, children, ...props }) {
-                                                        const match = /language-(\w+)/.exec(className || '');
-                                                        return !inline && match ? (
-                                                            <SyntaxHighlighter
-                                                                // eslint-disable-next-line react/no-children-prop
-                                                                children={String(children).replace(/\n$/, '')}
-                                                                style={tomorrow as any}
-                                                                language={match[1]}
-                                                                PreTag="div"
-                                                                {...props}
-                                                            />
-                                                        ) : (
-                                                            <code className={className} {...props}>
-                                                                {children}
-                                                            </code>
-                                                        )
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                        <hr className="text-white mb-2" style={{ marginBottom: "0px" }} />
-                                        <div className="row">
-                                            <div className="col-6">
-                                                {v.kumpulanjawaban.map((d, di) => {
-                                                    return (
-                                                        <a key={di} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }} href="#">{d.bahasa.charAt(0).toUpperCase() + d.bahasa.slice(1)}</a>
-                                                    )
-                                                })}
-                                            </div>
-                                            <div className="col-6 text-end">
-                                                {JSON.parse(v.tags).map((t: string, ti: number) => {
-                                                    return (
-                                                        <a key={ti} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }}>{t}</a>
-                                                    )
-                                                })}
-                                                <i className="bi bi-tags-fill me-3 fs-5" style={{ color: "rgb(200, 200, 200)" }}></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </InfiniteScroll>
                         </div>
                         <div className="col">
                             <div className="p-2 rounded-1 filter-jawaban">

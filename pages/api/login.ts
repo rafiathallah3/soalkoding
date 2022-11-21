@@ -1,10 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import jwt from 'jsonwebtoken';
-import kue from 'cookie'
 import bcrypt from 'bcrypt';
 import { encrypt } from "../../database/UbahKeHash";
-import { DapatinSQL } from '../../database/db';
 import { prisma } from '../../database/prisma';
 import { setCookie } from 'cookies-next';
 

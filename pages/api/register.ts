@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { DapatinSQL } from "../../database/db";
 import bcrypt from 'bcrypt'
 import { prisma } from "../../database/prisma";
 

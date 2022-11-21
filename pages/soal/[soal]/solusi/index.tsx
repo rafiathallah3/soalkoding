@@ -11,7 +11,7 @@ import FavoritKomponen from "../../../../components/Favorit";
 import Modal from 'react-modal';
 import { CSSProperties } from "react";
 import styles from '../../../../styles/IndexSolusi.module.css'
-import { DapatinSemuaBahasa } from "../../../../services/TemplateBahasaProgram";
+import InfiniteScroll from 'react-infinite-scroller';
 import Head from "next/head";
 
 const StyleModalKonten: CSSProperties = {
@@ -62,7 +62,9 @@ export async function getServerSideProps({ params, req, res, query }: { params: 
 
 Modal.setAppElement("#__next")
 export default function Solusi({ data, lihat, berdasarkan, bahasa, profile }: { data: DataSolusi, lihat: "semua" | "sendiri" | undefined, berdasarkan: "kepintaran" | "baru" | "lama" | undefined, bahasa: string, profile: TipeProfile }) {
-    const [Solusi, setSolusi] = useState<TipeSolusi[]>(data.solusi);
+    const [Solusi, setSolusi] = useState<TipeSolusi[]>(data.solusi.slice(undefined, 10));
+    const [BerapaSolusi, setBerapaSolusi] = useState(10);
+    const [ApakahMasiAda, setApakahMasiAda] = useState(true);
     const [TunjukkinModal, setTunjukkinModal] = useState(false);
     const [IdSolusiHapus, setIdSolusiHapus] = useState<string>();
 
@@ -100,6 +102,13 @@ export default function Solusi({ data, lihat, berdasarkan, bahasa, profile }: { 
         }).then(d => d.data);
 
         setSolusi(DataSolusi.solusi);
+    }
+
+    const SolusiLainnya = () => {
+        setSolusi(data.solusi.slice(undefined, BerapaSolusi + 10));
+        setBerapaSolusi(BerapaSolusi + 10);
+
+        setApakahMasiAda(!(Solusi.length >= data.solusi.length));
     }
 
     const SoalBerikutnya = async () => {
@@ -166,41 +175,49 @@ export default function Solusi({ data, lihat, berdasarkan, bahasa, profile }: { 
                 {data.ApakahSudahSelesai ?
                     <div className="row">
                         <div className="col-10">
-                            {Solusi.map((v, i) => {
-                                return (
-                                    <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
-                                        <div className="d-flex">
-                                            <div className="text-white flex-grow-1">
-                                                <i className="bi bi-person me-1"></i>
-                                                <a href={`/profile/${v.user.username}`} className={`me-2 text-decoration-none ${v.user.admin ? styles['text-admin'] : v.user.moderator ? styles['text-moderator'] : 'text-white'}`}>{v.user.username}</a>
-                                                {v.user.username === data.soal.pembuat.username &&
-                                                    <span className="text-white fw-bold">(Pembuat Soal)</span>
+                            <InfiniteScroll
+                                pageStart={0}
+                                loadMore={SolusiLainnya}
+                                hasMore={ApakahMasiAda}
+                                loader={<span className="text-white text-center">Loading...</span>}
+                                useWindow={false}
+                            >
+                                {Solusi.map((v, i) => {
+                                    return (
+                                        <div key={i} className="p-3 mb-3 rounded-2" style={{ background: "rgb(48, 48, 48)" }}>
+                                            <div className="d-flex">
+                                                <div className="text-white flex-grow-1">
+                                                    <i className="bi bi-person me-1"></i>
+                                                    <a href={`/profile/${v.user.username}`} className={`me-2 text-decoration-none ${v.user.admin ? styles['text-admin'] : v.user.moderator ? styles['text-moderator'] : 'text-white'}`}>{v.user.username}</a>
+                                                    {v.user.username === data.soal.pembuat.username &&
+                                                        <span className="text-white fw-bold">(Pembuat Soal)</span>
+                                                    }
+                                                </div>
+                                                <div className="text-white-50">
+                                                    {new Date(v.kapan).getDate() + '/' + (new Date(v.kapan).getMonth() + 1) + '/' + new Date(v.kapan).getFullYear()}
+                                                </div>
+                                            </div>
+                                            <div className="px-2 mb-3">
+                                                <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={v.bahasa} style={tomorrow as any}>{v.kode}</SyntaxHighlighter>
+                                            </div>
+                                            <div>
+                                                <button className={`${styles["tombol-keren"]} me-3`} style={{ "borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, v.id)}>
+                                                    <i className="bi bi-arrow-up-short"></i>
+                                                    Pintar
+                                                    <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
+                                                </button>
+                                                <a href={`/soal/${v.idsoal}/solusi/${v.id}`} className="border-0 text-decoration-none me-3" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
+                                                    <i className="bi bi-chat-right-fill me-2 fs-5"></i>
+                                                    {v.komentar.length}
+                                                </a>
+                                                {(v.user.username === profile.username || profile.moderator || profile.admin) &&
+                                                    <a className="fs-5 text-decoration-none float-end" role={"button"} onClick={() => { setIdSolusiHapus(v.id); setTunjukkinModal(true) }} style={{ color: "#f20a13" }}>Hapus</a>
                                                 }
                                             </div>
-                                            <div className="text-white-50">
-                                                {new Date(v.kapan).getDate() + '/' + (new Date(v.kapan).getMonth() + 1) + '/' + new Date(v.kapan).getFullYear()}
-                                            </div>
                                         </div>
-                                        <div className="px-2 mb-3">
-                                            <SyntaxHighlighter customStyle={{ maxHeight: "200px" }} language={v.bahasa} style={tomorrow as any}>{v.kode}</SyntaxHighlighter>
-                                        </div>
-                                        <div>
-                                            <button className={`${styles["tombol-keren"]} me-3`} style={{ "borderColor": (v.apakahSudahPintar ? 'white' : 'rgb(150, 150, 150)'), "color": (v.apakahSudahPintar ? 'white' : 'rgb(170, 170, 170)') }} onClick={(e) => KlikKepintaran(e as any, v.id)}>
-                                                <i className="bi bi-arrow-up-short"></i>
-                                                Pintar
-                                                <span className={"ms-2"} id={v.id}>{JSON.parse(v.pintar).length}</span>
-                                            </button>
-                                            <a href={`/soal/${v.idsoal}/solusi/${v.id}`} className="border-0 text-decoration-none me-3" style={{ background: 'transparent', color: 'rgb(160, 160, 160)' }}>
-                                                <i className="bi bi-chat-right-fill me-2 fs-5"></i>
-                                                {v.komentar.length}
-                                            </a>
-                                            {(v.user.username === profile.username || profile.moderator || profile.admin) &&
-                                                <a className="fs-5 text-decoration-none float-end" role={"button"} onClick={() => { setIdSolusiHapus(v.id); setTunjukkinModal(true) }} style={{ color: "#f20a13" }}>Hapus</a>
-                                            }
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                                    )
+                                })}
+                            </InfiniteScroll>
                         </div>
                         <div className="col">
                             <div className={`p-2 rounded-1 ${styles["filter-jawaban"]}`}>
