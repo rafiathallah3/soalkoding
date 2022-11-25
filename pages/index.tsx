@@ -3,19 +3,18 @@ import Navbar from '../components/navbar'
 import styles from '../styles/Home.module.css'
 import { useRouter } from 'next/router'
 import { UpdateInfoAkun } from '../services/Servis';
-import { Akun } from '@prisma/client';
-import { TipeProfile } from '../types/tipe';
+import { HasilDapatinUser, TipeProfile } from '../types/tipe';
 import Head from 'next/head';
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-	const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { redirect: string };
+	const DapatinUser = await UpdateInfoAkun(req, res, true) as HasilDapatinUser;
 	// if (DapatinUser.redirect !== undefined) return DapatinUser;
 
 	return {
 		props: {
 			profile: {
-				username: DapatinUser.username,
-				gambar: DapatinUser.gambarurl
+				username: DapatinUser.username ?? null,
+				gambar: DapatinUser.gambarurl ?? null
 			}
 		}
 	}
