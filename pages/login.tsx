@@ -1,10 +1,10 @@
 import axios from 'axios';
 import Link from 'next/link';
 import { SyntheticEvent, useEffect, useState } from 'react';
-import Router from "next/router";
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCookie } from 'cookies-next';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
     const infoakun = getCookie('infoakun', { req, res }) as string;
@@ -17,6 +17,7 @@ export async function getServerSideProps({ req, res }: { req: NextApiRequest, re
 
 export default function Login() {
     const [AdaError, setAdaError] = useState('');
+    const router = useRouter();
 
     const KirimLogin = async (e: SyntheticEvent) => {
         e.preventDefault();
@@ -27,8 +28,9 @@ export default function Login() {
             password: password.value
         }).then(d => d.data);
 
+        console.log("login status", data);
         if (data === "benar") {
-            Router.push("/dashboard");
+            router.push("/dashboard");
         } else {
             setAdaError('Password atau Email SALAH!');
         }
