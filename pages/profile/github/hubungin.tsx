@@ -8,7 +8,7 @@ import { setCookie } from "cookies-next";
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
     const DapatinUser = await UpdateInfoAkun(req, res, true) as Akun & { akungithub: { username: string } } & { redirect: string };
     const hasil = kuripto.randomBytes(10).toString('hex');
-    const params = `client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=http://localhost:3003/api/auth/callback/github&response_type=code&scope=read:user,user:email&state=${hasil}`;
+    const params = `client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=${process.env.NAMAWEBSITE}/api/auth/callback/github&response_type=code&scope=read:user,user:email&state=${hasil}`;
 
     if (DapatinUser.redirect !== undefined) {
         setCookie('IniStateGithub_NantiJugaDihapus', hasil, { req, res, maxAge: 30 });
