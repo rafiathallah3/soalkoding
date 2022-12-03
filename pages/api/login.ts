@@ -33,8 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				}
 			});
 
-			setCookie('infoakun', token, {req, res, httpOnly: false, maxAge: 60 * 60 * 24 * 30, path: '/'});
-			setCookie('perbaruitoken', PerbaruiToken, {req, res, httpOnly: false, maxAge: 60 * 60 * 24 * 30, path: '/'});
+			setCookie('infoakun', token, {req, res, httpOnly: false, maxAge: 60 * 60 * 24 * 30, path: '/', secure: process.env.NODE_ENV !== "development"});
+			setCookie('perbaruitoken', PerbaruiToken, {req, res, httpOnly: false, maxAge: 60 * 60 * 24 * 30, path: '/', secure: process.env.NODE_ENV !== "development"});
 			// setCookie('perbaruitoken', PerbaruiToken, {req, res, httpOnly: true, secure: process.env.NODE_ENV !== "development", sameSite: 'strict', maxAge: 60 * 60 * 24 * 30, path: '/'})
 
 			// const hasilKue = kue.serialize("infoakun", token, {
