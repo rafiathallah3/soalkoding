@@ -1,14 +1,14 @@
-import axios from 'axios';
 import Link from 'next/link';
-import { SyntheticEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { getSession, signIn } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { ApakahSudahMasuk } from '../../lib/Servis';
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const session = await getSession({ req });
-    if(session) {
+    const session = await ApakahSudahMasuk(req, res);
+    if(session.props) {
         return {
             redirect: {
                 destination: '/dashboard',

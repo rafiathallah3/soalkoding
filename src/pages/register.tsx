@@ -5,10 +5,18 @@ import Router from "next/router";
 import { NextApiRequest, NextApiResponse } from "next";
 import Head from "next/head";
 import { signIn } from "next-auth/react";
+import { ApakahSudahMasuk } from "../../lib/Servis";
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
-    const infoakun = req.cookies.infoakun;
-    if (infoakun !== undefined) return { redirect: { destination: '/dashboard', permanent: false } };
+    const session = await ApakahSudahMasuk(req, res);
+    if(session.props) {
+        return {
+            redirect: {
+                destination: '/dashboard',
+                permanent: false,
+            }
+        }
+    }
 
     return {
         props: {}
