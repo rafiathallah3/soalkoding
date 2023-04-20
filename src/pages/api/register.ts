@@ -8,13 +8,13 @@ export default async function Register(req: NextApiRequest, res: NextApiResponse
     if(req.method === "POST") {
         const { username, email, password } = req.body;
         if(username.replace(/\s\s+/g, ' ').trim().length <= 4) 
-            return res.status(404).send("Username harus lebih dari 4 karakter!");
+            return res.json({ kondisi: "error", pesan: "Username harus lebih dari 4 karakter!"});
 
         if(email.replace(/\s\s+/g, ' ').trim().length <= 10)
-            return res.status(404).send("Email harus lebih dari 10 karakter!");
+            return res.json({ kondisi: "error", pesan: "Email harus lebih dari 10 karakter!"});
 
         if(password.replace(/\s\s+/g, ' ').trim().length <= 8) 
-            return res.status(404).send("Password harus lebih dari 8 karakter!");
+            return res.json({ kondisi: "error", pesan: "Password harus lebih dari 8 karakter!"});
 
         connectDb();
         

@@ -6,16 +6,18 @@ const UserSchema = new Schema<IAkun>({
         type: String,
         required: true,
         unique: true,
+        minlength: 4,
         maxlength: 30,
     },
     email: {
         type: String,
         required: true,
         unique: true,
+        minlength: 10,
         maxlength: 40,
     },
     password: {
-        type: String
+        type: String,
     },
     nama: {
         type: String,
