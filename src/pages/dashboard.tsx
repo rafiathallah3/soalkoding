@@ -1,21 +1,40 @@
 import Head from "next/head";
 import { NextApiRequest, NextApiResponse } from "next";
 import { ApakahSudahMasuk } from "../../lib/Servis";
-import { IAkun } from "../../types/tipe";
+import { IAkun, ISoal } from "../../types/tipe";
 import Navbar from "../../components/navbar";
+import axios from "axios";
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { useRouter } from 'next/router';
+import styles from '../styles/IndexSolusi.module.css';
 
 export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
     const session = await ApakahSudahMasuk(req, res);
-    return session
+    if(!session.props) return session;
+
+    const DapatinSoal = await axios.post(`${process.env.ROOT}/api/soal/dapatinRandomSoal`, {}, {
+        headers: { cookie: req.headers.cookie } as any
+    }).then(d => d.data) as { data: ISoal | undefined };
+
+    return {
+        props: {
+            data: DapatinSoal.data ?? null,
+            Akun: session.props.Akun
+        }
+    }
 }
 
-export default function Dashboard({ Akun }: { Akun: IAkun | null }) {
-    // const [HasilDataSoal, setHasilDataSoal] = useState<DataSoal | null>(data);
+export default function Dashboard({ data, Akun }: { data: ISoal | null, Akun: IAkun | null }) {
+    const [HasilDataSoal, setHasilDataSoal] = useState<ISoal | null>(data);
+    const router = useRouter();
 
-    // const DapatinRandomSoal = async () => {
-    //     const Data = await axios.post("/api/soal/dapatinRandomSoal", {}).then(d => d.data);
-    //     setHasilDataSoal(Data.data);
-    // }
+    const DapatinRandomSoal = async () => {
+        const Data = await axios.post("/api/soal/dapatinRandomSoal", {}).then(d => d.data);
+        setHasilDataSoal(Data.data);
+    }
 
     return (
         <>
@@ -58,25 +77,25 @@ export default function Dashboard({ Akun }: { Akun: IAkun | null }) {
             <div className="container">
                 <div className="row p-3 mb-4 rounded-3" style={{ background: "linear-gradient(rgb(39, 40, 41), rgb(41, 42, 43))", border: "1px solid rgb(61, 61, 61)" }}>
                     <div className='container-fluid mb-2'>
-                        {/* <button onClick={DapatinRandomSoal} className='btn btn-outline-danger' style={{ float: "right" }}>
+                        <button onClick={DapatinRandomSoal} className='btn btn-outline-danger' style={{ float: "right" }}>
                             {"Berikutnya "}
                             <i className='bi bi-arrow-right'></i>
-                        </button> */}
-                        {/* {HasilDataSoal &&
+                        </button>
+                        {HasilDataSoal &&
                             <>
-                                <button onClick={() => Router.push(`/soal/${HasilDataSoal.id}/latihan`)} className='me-4 btn btn-outline-success' style={{ float: "right" }}>Kerjakan</button>
+                                <button onClick={() => router.push(`/soal/${HasilDataSoal._id}/latihan`)} className='me-4 btn btn-outline-success' style={{ float: "right" }}>Kerjakan</button>
                                 <span className={"me-4 fs-6 " + (HasilDataSoal.level <= 2 ? "text-white" : HasilDataSoal.level > 2 ? HasilDataSoal.level > 4 ? "text-danger" : "text-warning" : "text-warning")}>Level {HasilDataSoal.level}</span>
                                 <span className='text-white'>
                                     <i className='bi bi-person-fill me-1'></i>
-                                    <a className='text-decoration-none text-white' href={`/profile/${HasilDataSoal.pembuat.username}`}>{HasilDataSoal.pembuat.username}</a>
+                                    <a className={`me-3 text-decoration-none ${data?.pembuat.admin ? styles['text-admin'] : data?.pembuat.moderator ? styles['text-moderator'] : 'text-white'}`} href={`/profile/` + data?.pembuat.username}>{data?.pembuat.username}</a>
                                 </span>
                             </>
-                        } */}
+                        }
                     </div>
-                    {/* {HasilDataSoal &&
+                    {HasilDataSoal &&
                         <div className="mb-4 px-3 py-2 text-white fs-5" style={{ maxHeight: "180px", overflowX: "hidden", overflowY: "scroll", scrollbarWidth: "thin" }}>
                             <div className='mb-2'>
-                                <a className='fs-4 text-white text-decoration-none' href={`soal/${HasilDataSoal.id}/latihan`}>{HasilDataSoal.namasoal}</a>
+                                <a className='fs-4 text-white text-decoration-none' href={`soal/${HasilDataSoal._id}/latihan`}>{HasilDataSoal.namasoal}</a>
                             </div>
                             <ReactMarkdown
                                 // eslint-disable-next-line react/no-children-prop
@@ -104,7 +123,7 @@ export default function Dashboard({ Akun }: { Akun: IAkun | null }) {
                         </div>
                         ||
                         <h3 className='text-white text-center'>Ada kesalahan saat mencari soal random mohon dicoba lagi</h3>
-                    } */}
+                    }
                 </div>
 
                 <div className="row mb-4">

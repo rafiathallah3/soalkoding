@@ -45,6 +45,7 @@ export default async function Register(req: NextApiRequest, res: NextApiResponse
             
             return res.status(404).send("Ada Error");
         } catch(e) {
+            console.log(e);
             return res.status(500).send("Ada Error");
         }
     }

@@ -1,5 +1,5 @@
 import mongoose, { model, Schema } from 'mongoose';
-import { IAkun, IKomentar, ISoal, ISolusi } from '../types/tipe';
+import { IAkun, IDiskusi, IFavorit, ISoal, ISolusi } from '../types/tipe';
 
 const UserSchema = new Schema<IAkun>({
     username: {
@@ -49,38 +49,15 @@ const UserSchema = new Schema<IAkun>({
     },
     soalselesai: {
         type: [{
-            soal: {
-                type: {
-                    namasoal: String,
-                },
-                required: true,
-            },
-            kapan: {
-                type: Date,
-                default: Date.now()
-            },
-            bahasa: {
-                type: String,
-                required: true,
-            }
+            type: Schema.Types.ObjectId,
+            ref: "solusi",
         }],
-        required: true,
         default: []
     },
-    favorit: {
-        type: [{
-            id: {
-                type: String,
-                required: true
-            },
-            namasoal: {
-                type: String,
-                required: true,
-            }
-        }],
-        required: true,
-        default: []
-    },
+    favorit: [{
+        type: Schema.Types.ObjectId,
+        ref: "favorit"
+    }],
     MasukDenganGithub: {
         type: Boolean,
         required: true,
@@ -95,6 +72,59 @@ const UserSchema = new Schema<IAkun>({
         type: Boolean,
         required: true,
         default: false,
+    },
+}, { timestamps: true });
+
+const SolusiSchema = new Schema<ISolusi>({
+    soal: {
+        type: Schema.Types.ObjectId,
+        ref: "soal",
+    },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "akun",
+        required: true
+    },
+    pintar: {
+        type: [String],
+        default: []
+    },
+    diskusi: [{
+        type: Schema.Types.ObjectId,
+        ref: "diskusi"
+    }],
+    kode: {
+        type: String,
+        required: true
+    },
+    bahasa: {
+        type: String,
+        required: true
+    }
+}, { timestamps: true });
+
+const DiskusiSchema = new Schema<IDiskusi>({
+    soal: {
+        type: Schema.Types.ObjectId,
+        ref: "soal",
+    },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "akun",
+        required: true
+    },
+    text: {
+        type: String,
+        required: true,
+        maxlength: 100
+    },
+    upvote: {
+        type: [String],
+        default: []
+    },
+    downvote: {
+        type: [String],
+        default: []
     },
 }, { timestamps: true });
 
@@ -117,50 +147,25 @@ const SoalSchema = new Schema<ISoal>({
     soal: {
         type: String,
         required: true,
-        maxlength: 200
+        maxlength: 800
     },
     pembuat: {
-        type: UserSchema,
+        type: Schema.Types.ObjectId,
+        ref: "akun",
         required: true,
     },
     public: {
         type: Boolean,
         default: false
     },
-    favorit: {
-        type: [String],
-        default: [],
-    },
-    diskusi: {
-        type: [{
-            id: {
-                type: String,
-                required: true,
-                unique: true
-            },
-            user: {
-                type: UserSchema,
-                required: true
-            },
-            text: {
-                type: String,
-                required: true,
-                maxlength: 100
-            },
-            bikin: {
-                type: Date,
-                default: Date.now()
-            },
-            upvote: {
-                type: [String],
-                default: []
-            },
-            downvote: {
-                type: [String],
-                default: []
-            },
-        }]
-    },
+    favorit: [{
+        type: Schema.Types.ObjectId,
+        ref: "favorit"
+    }],
+    diskusi: [{
+        type: Schema.Types.ObjectId,
+        ref: "diskusi"     
+    }],
     BahasaSoal: {
         type: [{
             bahasa: {
@@ -186,70 +191,35 @@ const SoalSchema = new Schema<ISoal>({
                 type: String,
                 required: true,
                 maxlength: 500,
-            }
-        }]
-    },
-    solusi: {
-        type: [{
-            id: {
-                type: String,
-                required: true,
             },
-            idsoal: {
-                type: String,
-            }
-        }]
-    }
+            _id: false
+        }],
+    },
+    solusi: [{
+        type: Schema.Types.ObjectId,
+        ref: "solusi",
+    }]
 }, { timestamps: true });
 
-const KomentarSchema = new Schema<IKomentar>({
-    komen: {
-        type: String,
-        required: true
-    },
+const FavoritSchema = new Schema<IFavorit>({
     user: {
-        type: UserSchema,
+        type: Schema.Types.ObjectId,
+        ref: "akun",
         required: true
     },
-    upvote: {
-        type: [String],
-        default: []
+    soal: {
+        type: Schema.Types.ObjectId,
+        ref: "soal",
+        required: true
     },
-    downvote: {
-        type: [String],
-        default: []
-    }
 });
 
-const SolusiSchema = new Schema<ISolusi>({
-    idsoal: {
-        type: String,
-        required: true
-    },
-    user: {
-        type: UserSchema
-    },
-    pintar: {
-        type: [String],
-        default: []
-    },
-    komentar: {
-        type: [KomentarSchema],
-        default: []
-    },
-    kode: {
-        type: String,
-        required: true
-    },
-    bahasa: {
-        type: String,
-        required: true
-    }
-}, { timestamps: true });
-
 const DataModel = {
-    AkunModel: mongoose.models.akun || mongoose.model("akun", UserSchema),
-    SoalModel: mongoose.models.soal || mongoose.model("soal", SoalSchema),
+    AkunModel: mongoose.models?.akun || mongoose.model("akun", UserSchema),
+    SoalModel: mongoose.models?.soal || mongoose.model("soal", SoalSchema),
+    SolusiModel: mongoose.models?.solusi || mongoose.model("solusi", SolusiSchema),
+    FavoritModel: mongoose.models?.favorit || mongoose.model("favorit", FavoritSchema),
+    DiskusiModel: mongoose.models?.diskusi || mongoose.model("diskusi", DiskusiSchema),
 }
 
 export { DataModel };

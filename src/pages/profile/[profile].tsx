@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ApakahSudahMasuk, SemenjakWaktu } from "../../../lib/Servis";
+import { ApakahSudahMasuk } from "../../../lib/Servis";
 import Head from "next/head";
 import Navbar from "../../../components/navbar";
 import axios from "axios";
-import { IAkun, WarnaAkun } from "../../../types/tipe";
+import { IAkun, ISoal, WarnaAkun } from "../../../types/tipe";
 import { useState } from "react";
 import { DataModel } from "../../../lib/Model";
 import Image from 'next/image';
@@ -11,7 +11,10 @@ import Image from 'next/image';
 export async function getServerSideProps({ params, req, res }: { params: { profile: string }, req: NextApiRequest, res: NextApiResponse }) {
     const session = await ApakahSudahMasuk(req, res);
     
-    const DataProfile = await DataModel.AkunModel.findOne({ username: params.profile }) as IAkun || null;
+    const DataProfile = await DataModel.AkunModel.findOne({ username: params.profile })
+        .populate({path: "favorit", populate: { path: "user" }})
+        .populate({path: "favorit", populate: { path: "soal" }})
+        .populate({path: "soalselesai", populate: { path: "soal" }}) as IAkun || null;
 
     if(!DataProfile) {
         return {
@@ -19,29 +22,20 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
         }
     }
 
+    const ParseDataProfile = JSON.parse(JSON.stringify(DataProfile)) as IAkun & { soaldibuat: ISoal[] };
+    const SoalDibuat = JSON.parse(JSON.stringify(await DataModel.SoalModel.find({ pembuat: DataProfile._id })));
+    ParseDataProfile.soaldibuat = SoalDibuat
+
     return {
         props: {
-            DataProfile: {
-                username: DataProfile.username,
-                nama: DataProfile.nama,
-                bio: DataProfile.bio,
-                tinggal: DataProfile.tinggal,
-                website: DataProfile.website,
-                githuburl: DataProfile.githuburl,
-                soalselesai: DataProfile.soalselesai,
-                favorit: DataProfile.favorit,
-                gambar: DataProfile.gambar,
-                admin: DataProfile.admin,
-                moderator: DataProfile.moderator,
-                createdAt: JSON.stringify(DataProfile.createdAt),
-            },
+            DataProfile: ParseDataProfile,
             Akun: session.props?.Akun
         }
     }
 }
 
-export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Akun: IAkun | null }) {
-    const [StatusTable, setStatusTable] = useState<"soalselesai" | "solusi" | "favorit">('soalselesai');
+export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun & { soaldibuat: ISoal[] }, Akun: IAkun | null }) {
+    const [StatusTable, setStatusTable] = useState<"soalselesai" | "solusi" | "favorit" | "soaldibuat">('soalselesai');
 
     const namaBulan = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
@@ -83,10 +77,11 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Aku
         return Math.floor(seconds) + " detik lalu";
     }
 
+    const Title = `Profile ${DataProfile.username}`;
     return (
         <>
             <Head>
-                <title>{DataProfile.username}</title>
+                <title>{Title}</title>
                 <meta name="viewport" content="initial-scale=1.0, width=device-width" />
             </Head>
             <Navbar profile={Akun} />
@@ -140,7 +135,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Aku
                         </div>
                         <div className="mb-3">
                             <p className="text-white-50 mb-1">Member sejak</p>
-                            <p className="text-white">{`${namaBulan[new Date(JSON.parse(DataProfile.createdAt as unknown as string)).getMonth()]} ${new Date(JSON.parse(DataProfile.createdAt as unknown as string)).getFullYear()}`}</p>
+                            <p className="text-white">{`${namaBulan[new Date(DataProfile.createdAt).getMonth()]} ${new Date(DataProfile.createdAt).getFullYear()}`}</p>
                         </div>
                         {DataProfile.tinggal &&
                             <div className="mb-3">
@@ -165,7 +160,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Aku
                                     <i className="bi bi-globe2"></i>
                                 </a>
                             }
-                            {DataProfile.admin &&
+                            {(Akun?.admin && !DataProfile.admin) &&
                                 <>
                                     {DataProfile.moderator ?
                                         <button className="btn btn-danger" onClick={() => JadikanModerator(DataProfile.username)}>Turunin moderator</button>
@@ -191,6 +186,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Aku
                                 <button id="tombolsoalselesai" className={StatusTable === "soalselesai" ? "tombol-table-aktif" : "tombol-table"} onClick={() => setStatusTable("soalselesai")}>Soal selesai</button>
                                 <button id="tombolsolusi" className={StatusTable === "solusi" ? "tombol-table-aktif" : "tombol-table"} onClick={() => setStatusTable("solusi")}>Solusi</button>
                                 <button id="tombolfavorit" className={StatusTable === "favorit" ? "tombol-table-aktif" : "tombol-table"} onClick={() => setStatusTable("favorit")}>Favorit</button>
+                                <button id="tombolsoaldibuat" className={StatusTable === "soaldibuat" ? "tombol-table-aktif" : "tombol-table"} onClick={() => setStatusTable("soaldibuat")}>Soal Dibuat</button>
                             </div>
                             {StatusTable === "soalselesai" &&
                                 <div className="d-flex flex-column">
@@ -202,7 +198,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Aku
                                                 return (
                                                     <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                         <a className="text-white text-decoration-none" href={`/soal/${v.soal._id}/latihan`}>{v.soal.namasoal}</a>
-                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.kapan))}</span>
+                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.createdAt))}</span>
                                                     </div>
                                                 )
                                             }).reverse()}
@@ -233,8 +229,8 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Aku
                                             {DataProfile.soalselesai.map((v, i) => {
                                                 return (
                                                     <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
-                                                        <a className="text-white text-decoration-none" href={`/soal/${v.soal._id}/solusi/${v.id}`}>{v.soal.namasoal} - {v.bahasa}</a>
-                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.kapan))}</span>
+                                                        <a className="text-white text-decoration-none" href={`/soal/${v.soal._id}/solusi/${v._id}`}>{v.soal.namasoal} - {v.bahasa}</a>
+                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.createdAt))}</span>
                                                     </div>
                                                 )
                                             }).reverse()}
@@ -251,7 +247,25 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun, Aku
                                             {DataProfile.favorit.map((v, i) => {
                                                 return (
                                                     <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
-                                                        <a className="text-white text-decoration-none" href={`/soal/${v.id}/latihan`}>{v.namasoal}</a>
+                                                        <a className="text-white text-decoration-none" href={`/soal/${v.soal._id}/latihan`}>{v.soal.namasoal}</a>
+                                                    </div>
+                                                )
+                                            }).reverse()}
+                                        </>
+                                    }
+                                </div>
+                            }
+                            {StatusTable === "soaldibuat" &&
+                                <div className="d-flex flex-column">
+                                    {DataProfile.soaldibuat.length <= 0 ?
+                                        <div className="text-center fs-5">{DataProfile.username} tidak pernah membuat satu soal</div>
+                                        :
+                                        <>
+                                            {DataProfile.soaldibuat.map((v, i) => {
+                                                return (
+                                                    <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
+                                                        <a className="text-white text-decoration-none" href={`/soal/${v._id}/solusi`}>{v.namasoal}</a>
+                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.createdAt))}</span>
                                                     </div>
                                                 )
                                             }).reverse()}

@@ -1,0 +1,175 @@
+.tombol-kerjakan {
+    background: rgb(45, 45, 45);
+    border: 1px solid #306634;
+    padding: 5px 10px;
+    color: #408845;
+    transition: .2s;
+}
+
+.tombol-kerjakan:hover {
+    color: #50aa57;
+    border-color: #50aa57;
+}
+
+.tombol-edit {
+    background: rgb(45, 45, 45);
+    border: 1px solid #93a31a;
+    padding: 5px 10px;
+    color: #93a31a;
+    transition: .2s;
+}
+
+.tombol-edit:hover {
+    color: #c5db1f;
+    border-color: #c5db1f;
+}
+
+.tombol-soalberikutnya {
+    background: rgb(45, 45, 45);
+    border: 1px solid #079c96;
+    padding: 5px 10px;
+    color: #079c96;
+    transition: .2s;
+}
+
+.tombol-soalberikutnya:hover {
+    border-color: #09c8c1;
+    color: #09c8c1;
+}
+
+.tombol-puas {
+    background: transparent;
+    border: 1px solid rgb(150, 150, 150);
+    color: white;
+    transition: 2s;
+}
+
+.tombol-keren {
+    background: rgb(50, 50, 50);
+    color: rgb(170, 170, 170);
+    border: 1px solid rgb(150, 150, 150);
+    transition: 0.2s;
+}
+
+.tombol-keren:hover { 
+    color: white !important;
+}
+
+.tombol-lainnya {
+    margin-right: .5rem;
+    padding: 5px;
+    width: 4.5rem;
+    background: transparent;
+    border: 0px solid;
+    color: white;
+}
+
+.tombol-lainnya-aktif {
+    background: rgb(60, 60, 60);
+}
+
+.radio-container {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    color: rgb(200, 200, 200);
+    user-select: none;
+}
+
+.radio-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}              
+
+.checkmark {
+    position: absolute;
+    top: 7px;
+    left: 0px;
+    height: 13px;
+    width: 13px;
+    background-color: rgb(50, 50, 50);
+    border-radius: 50%;
+} 
+
+.radio-container input:checked ~ .checkmark {
+    background-color: #2196F3;
+}
+
+.checkmark:after {
+    position: absolute;
+    display: none;
+}
+
+.radio-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.filter-jawaban {
+    background: rgb(60, 60, 60);
+    position: -webkit-sticky;
+    position: sticky;
+    top: 10px;
+}
+
+.tombol-list {
+    background: transparent;
+}
+
+.bahasaSelect {
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    font-size: 16px;
+    color: #fff;
+    width: 220px;
+    height: 40px;
+    background-color: rgb(48, 48, 48);
+    border: 1px solid rgb(80, 80, 80);
+}
+
+/* Style the indicator (dot/circle) */
+.radio-container .checkmark:after {
+    top: 8px;
+    left: 8px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: white;
+}
+
+.favorit:hover {
+    color: rgb(180, 180, 180);
+    cursor: pointer;
+}
+
+.hapus-solusi:hover {
+    cursor: pointer;
+}
+
+.text-moderator {
+    color: #ed11d3;
+}
+
+.text-moderator:hover {
+    color: #ed11d3;
+}
+
+.text-admin {
+    color: #00b8ff;
+    animation: warnaadmin 2.5s linear;
+    animation-iteration-count: infinite;
+}
+
+.text-admin:hover {
+    color: #00b8ff;
+}
+
+@keyframes warnaadmin {
+    100%, 0%{
+        color: #00b8ff;
+    }
+    50%{
+        color: rgb(0, 234, 255);
+    }
+}

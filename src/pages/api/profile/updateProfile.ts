@@ -1,7 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ApakahSudahMasuk, cloudinary } from "../../../../lib/Servis";
+import { ApakahSudahMasuk, KirimNotifikasi } from "../../../../lib/Servis";
+import cloudinary from "../../../../lib/cloudinary";
 import { DataModel } from "../../../../lib/Model";
 import formidable from 'formidable';
+import { WarnaStatus } from "../../../../types/tipe";
 
 export const config = {
     api: {
@@ -12,7 +14,7 @@ export const config = {
 export default async function updateProfile(req: NextApiRequest, res: NextApiResponse) {
     if(req.method === "POST") {
         const session = await ApakahSudahMasuk(req, res);
-        if(!session.props) return res.redirect("/login");
+        if(!session.props) return res.status(401).send("Belum login");
 
         const form = formidable({ keepExtensions: true, multiples: true, allowEmptyFiles: true });
         form.parse(req, async (err, fields, files: any) => {
@@ -41,6 +43,7 @@ export default async function updateProfile(req: NextApiRequest, res: NextApiRes
         });
 
 
+        KirimNotifikasi(WarnaStatus.biru, "Profile sudah berhasil di update!", { req, res });
         return res.send("sukses");
         // return res.redirect("/profile/edit");
     }

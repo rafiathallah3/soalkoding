@@ -9,8 +9,8 @@ export interface IAkun {
     website: string,
     githuburl: string,
     gambar: string,
-    soalselesai: { id: string, soal: ISoal, kapan: Date, bahasa: string }[],
-    favorit: { id: string, namasoal: string }[],
+    soalselesai: ISolusi[],
+    favorit: IFavorit[],
     MasukDenganGithub: boolean,
     admin: boolean,
     moderator: boolean,
@@ -18,65 +18,48 @@ export interface IAkun {
 }
 
 export interface ISoal {
+    _id: string,
+    createdAt: string,
+    updatedAt: string,
     namasoal: string,
     level: number,
     tags: string[],
     soal: string,
-    _id: string,
-    pembuat: TipeProfile,
+    pembuat: IAkun,
     public: boolean,
-    favorit: { id: number }[],
-    diskusi: Diskusi[]
+    favorit: IFavorit[],
+    diskusi: IDiskusi[]
     bikin: Date,
-    BahasaSoal: {
-        bahasa: string,
-        listjawaban: string,
-        contohjawaban: string,
-        liatankode: string,
-        jawabankode: string
-    }[],
+    BahasaSoal: TipeInfoKode[],
     solusi: ISolusi[],
-    ApakahSudahSelesai: boolean,
-    suka_ngk: boolean
 }
 
-export interface ISolusi {
-    idsoal: string,
-    user: { username: string, admin: boolean, moderator: boolean },
-    pintar: string[],
-    komentar: IKomentar[],
-    kode: string,
-    bahasa: string,
-}
-
-export interface IKomentar {
-    komen: string,
-    user: { username: string, gambarurl: string },
+export interface IDiskusi {
+    _id: string,
+    createdAt: string,
+    updatedAt: string,
+    soal: ISoal,
+    user: IAkun,
+    text: string,
     upvote: string[],
     downvote: string[],
 }
 
-export interface APIProfileGithub {
-    login: string,
-    name: string,
-    avatar_url: string,
-    location: string,
-    bio: string,
-    html_url: string,
+export interface ISolusi {
+    _id: string,
+    createdAt: string,
+    updatedAt: string,
+    soal: ISoal,
+    user: IAkun,
+    pintar: string[],
+    diskusi: IDiskusi[],
+    kode: string,
+    bahasa: string,
 }
 
-export interface APIEmailsGithub {
-    email: string,
-    primary: boolean
-}
-
-export interface Diskusi {
-    id: number,
-    user: TipeProfile & { gambarurl: string },
-    text: string,
-    bikin: Date,
-    upvote: string,
-    downvote: string,
+export interface IFavorit {
+    user: IAkun,
+    soal: ISoal
 }
 
 export interface Notifikasi {
@@ -99,21 +82,16 @@ export interface TipeProfile {
 }
 
 export interface KeperluanKompiler {
-    buat?: string,
+    buat?: { [bahasa: string]: TipeInfoKode },
     idsoal?: string,
     w?: string,
     kode: string,
     bahasa: string,
 }
 
-export interface DataSolusi {
-    profile: string,
-    idsoal: string,
-    idsolusi: string,
+export interface DataSoal {
     suka_ngk: boolean,
     ApakahSudahSelesai: boolean,
-    JumlahSolusi: number,
-    solusi: ISolusi[],
     soal: ISoal
 }
 
