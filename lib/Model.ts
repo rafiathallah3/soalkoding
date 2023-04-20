@@ -175,12 +175,12 @@ const SoalSchema = new Schema<ISoal>({
             listjawaban: {
                 type: String,
                 required: true,
-                maxlength: 500,
+                maxlength: 1000,
             },
             contohjawaban: {
                 type: String,
                 required: true,
-                maxlength: 500,
+                maxlength: 1000,
             },
             liatankode: {
                 type: String,
