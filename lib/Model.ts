@@ -185,12 +185,12 @@ const SoalSchema = new Schema<ISoal>({
             liatankode: {
                 type: String,
                 required: true,
-                maxlength: 500,
+                maxlength: 300,
             },
             jawabankode: {
                 type: String,
                 required: true,
-                maxlength: 500,
+                maxlength: 1000,
             },
             _id: false
         }],
