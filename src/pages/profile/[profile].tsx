@@ -29,7 +29,7 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
     return {
         props: {
             DataProfile: ParseDataProfile,
-            Akun: session.props?.Akun
+            Akun: session.props?.Akun ?? null
         }
     }
 }

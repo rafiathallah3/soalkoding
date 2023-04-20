@@ -1,6 +1,5 @@
 import { Inter } from 'next/font/google'
-import clientPromise from '../../lib/mongodb';
-import { GetServerSidePropsContext, InferGetServerSidePropsType, NextApiRequest } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import Head from 'next/head';
 import Navbar from '../../components/navbar';
 import styles from '../styles/Home.module.css';
@@ -10,9 +9,9 @@ import { IAkun } from '../../types/tipe';
 
 const inter = Inter({ subsets: ['latin'] })
 
-export async function getServerSideProps({ req }: { req: NextApiRequest }) {
-    const session = await ApakahSudahMasuk(req);
-    return session
+export async function getServerSideProps({ req, res }: { req: NextApiRequest, res: NextApiResponse }) {
+    const session = await ApakahSudahMasuk(req, res);
+    return { props: { Akun: session.props?.Akun ?? null } }
 }
 
 export default function Home({ Akun }: { Akun: IAkun | null }) {
