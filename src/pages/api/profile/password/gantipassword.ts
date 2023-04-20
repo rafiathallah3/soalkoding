@@ -11,6 +11,7 @@ export default async function GantiPassword(req: NextApiRequest, res: NextApiRes
 
         const { passwordbaru, konfirmasipassword, password } = req.body;
         if(passwordbaru !== konfirmasipassword) return res.send("Password berbeda dengan konfirmasi");
+        if(password.length < 5) return res.send("Password harus lebih dari 5 karakter!");
 
         const Akun = await DataModel.AkunModel.findOne({ email: session.props.Akun.email }) as IAkun;
 

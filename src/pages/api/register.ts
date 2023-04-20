@@ -13,8 +13,8 @@ export default async function Register(req: NextApiRequest, res: NextApiResponse
         if(email.replace(/\s\s+/g, ' ').trim().length <= 10)
             return res.json({ kondisi: "error", pesan: "Email harus lebih dari 10 karakter!"});
 
-        if(password.replace(/\s\s+/g, ' ').trim().length <= 8) 
-            return res.json({ kondisi: "error", pesan: "Password harus lebih dari 8 karakter!"});
+        if(password.replace(/\s\s+/g, ' ').trim().length < 5) 
+            return res.json({ kondisi: "error", pesan: "Password harus lebih dari 5 karakter!"});
 
         connectDb();
         
