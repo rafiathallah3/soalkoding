@@ -147,7 +147,7 @@ const SoalSchema = new Schema<ISoal>({
     soal: {
         type: String,
         required: true,
-        maxlength: 800
+        maxlength: 2500
     },
     pembuat: {
         type: Schema.Types.ObjectId,
@@ -190,7 +190,7 @@ const SoalSchema = new Schema<ISoal>({
             jawabankode: {
                 type: String,
                 required: true,
-                maxlength: 1000,
+                maxlength: 1500,
             },
             _id: false
         }],
