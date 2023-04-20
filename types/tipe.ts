@@ -138,7 +138,7 @@ export interface TipeNotifikasi {
     pesan: string
 }
 
-export type KumpulanBahasaProgram = "python" | "javascript" | "c++" | "lua";
+export type KumpulanBahasaProgram = "python" | "javascript" | "lua";
 
 export enum WarnaStatus {
     kuning = "warning",

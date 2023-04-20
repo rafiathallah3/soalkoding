@@ -14,9 +14,14 @@ export default async function GantiPassword(req: NextApiRequest, res: NextApiRes
 
         const Akun = await DataModel.AkunModel.findOne({ email: session.props.Akun.email }) as IAkun;
 
-        if(await bcrypt.compare(password, Akun.password)) {
-            await DataModel.AkunModel.updateOne({ email: session.props.Akun.email }, { password: await bcrypt.hash(passwordbaru, await bcrypt.genSalt()) });
+        if(Akun.password === undefined) {
+            await DataModel.AkunModel.findOneAndUpdate({ email: session.props.Akun.email }, { password: await bcrypt.hash(passwordbaru, await bcrypt.genSalt()) });
             return res.status(200).send("sukses");
+        } else {
+            if(await bcrypt.compare(password, Akun.password)) {
+                await DataModel.AkunModel.updateOne({ email: session.props.Akun.email }, { password: await bcrypt.hash(passwordbaru, await bcrypt.genSalt()) });
+                return res.status(200).send("sukses");
+            }
         }
 
         return res.send("Password Salah");

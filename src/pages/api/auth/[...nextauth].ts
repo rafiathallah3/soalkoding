@@ -25,8 +25,7 @@ export const authOptions: NextAuthOptions = {
                 connectDb();
 
                 const akun = await DataModel.AkunModel.findOne({ email }) as IAkun || undefined;
-                if(akun && !akun.MasukDenganGithub && bcrypt.compareSync(password, akun.password)) {
-                    console.log("YEp");
+                if(akun && akun.password && bcrypt.compareSync(password, akun.password)) {
                     return {
                         id: akun._id,
                         email: akun.email,

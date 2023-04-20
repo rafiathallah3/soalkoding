@@ -29,9 +29,9 @@ function ApakahSama(fungsi, parameter, jawaban)
     local success, err = pcall(fungsi, table.unpack(parameter));
     if success then
         local hasil = fungsi(table.unpack(parameter));
-        print('{"hasil": '..hasil..', "jawaban": '..jawaban..', "status": "Sukses", "koreksi": '..tostring(jawaban==hasil)..'}');
+        print('SplitIniUntukTestCase{"hasil": '..hasil..', "jawaban": '..jawaban..', "status": "Sukses", "koreksi": '..tostring(jawaban==hasil)..'}');
     else
-        print('{"hasil": '..err..', "jawaban": '..jawaban..', status: "Error"'..'}');
+        print('SplitIniUntukTestCase{"hasil": '..err..', "jawaban": '..jawaban..', status: "Error"'..'}');
     end
 end
 local waktu = os.clock();

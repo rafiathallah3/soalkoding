@@ -309,7 +309,7 @@ export default function Cari({ data, query, Akun }: { data: (ISoal & { ApakahSud
                                                 <div className="col-6">
                                                     {v.BahasaSoal.map((d, di) => {
                                                         return (
-                                                            <a key={di} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }} href="#">{d.bahasa.charAt(0).toUpperCase() + d.bahasa.slice(1)}</a>
+                                                            <a key={di} className="text-decoration-none me-3" style={{ color: "rgb(200, 200, 200)" }}>{d.bahasa.charAt(0).toUpperCase() + d.bahasa.slice(1)}</a>
                                                         )
                                                     })}
                                                 </div>
@@ -388,6 +388,7 @@ export default function Cari({ data, query, Akun }: { data: (ISoal & { ApakahSud
                                         options={[
                                             { value: "python", label: "Python" },
                                             { value: "javascript", label: "Javascript" },
+                                            { value: "lua", label: "Lua" },
                                         ]}
                                         styles={
                                             {
