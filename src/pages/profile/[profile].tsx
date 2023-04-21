@@ -170,7 +170,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun & { 
                                         <div className="text-center fs-5">{DataProfile.username} tidak pernah menyelesaikan satu soal</div>
                                         :
                                         <>
-                                            {DataProfile.soalselesai.map((v, i) => {
+                                            {DataProfile.soalselesai.filter((v, i, a) => i === a.findIndex((t) => t.soal._id.toString() === v.soal._id.toString())).map((v, i) => {
                                                 return (
                                                     <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                         <a className="text-white text-decoration-none" href={`/soal/${v.soal._id}/latihan`}>{v.soal.namasoal}</a>
