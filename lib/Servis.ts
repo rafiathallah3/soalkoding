@@ -4,7 +4,6 @@ import { IAkun, ISoal, KeperluanKompiler, OutputCompilerGodbolt, OutputCompilerW
 import connectDb from "./mongodb";
 import { getServerSession } from "next-auth";
 import { deleteCookie, setCookie } from "cookies-next";
-import { v2 as cloudinary } from "cloudinary";
 import axios from "axios";
 import { DapatinServisKompiler } from "./TemplateBahasaProgram";
 
@@ -21,7 +20,9 @@ export async function ApakahSudahMasuk(req: NextApiRequest, res: NextApiResponse
 
     connectDb();
 
-    const Akun = await DataModel.AkunModel.findOne({ email: session.user!.email }) as IAkun | null;
+    const Akun = await DataModel.AkunModel.findOne({ email: session.user!.email })
+        .populate({ path: "notifikasi.userDari" })
+        .populate({ path: "notifikasi.userKirim" }) as IAkun | null;
 
     if(!Akun) {
         deleteCookie("next-auth.session-token", { req, res });
@@ -45,7 +46,8 @@ export async function ApakahSudahMasuk(req: NextApiRequest, res: NextApiResponse
                 tinggal: Akun?.tinggal,
                 website: Akun?.website,
                 admin: Akun?.admin,
-                moderator: Akun?.moderator
+                moderator: Akun?.moderator,
+                notifikasi: Akun.notifikasi ? JSON.parse(JSON.stringify(Akun.notifikasi)) : []
             }
         }
     }
@@ -80,8 +82,10 @@ export async function JalaninKompiler(DataKompiler: KeperluanKompiler) {
         }) as ISoal || null;
     
         if(DataSoal === null || StatusJawaban === undefined) return 404;
+        const BahasaSoal = DataSoal.BahasaSoal.find((v) => v.bahasa === bahasa);
+        if(BahasaSoal === undefined) return 404;
         // HasilGabunganKode = 'import json\n' + kode + '\n' + InfoKompiler.FungsiApakahSama + '\n' + (StatusJawaban === "jawaban" ? DataSoal.listjawaban : DataSoal.contohjawaban);
-        HasilGabunganKode = InfoKompiler.GabunganKode + '\n' + (StatusJawaban === "jawaban" ? DataSoal.BahasaSoal[0].listjawaban : DataSoal.BahasaSoal[0].contohjawaban);
+        HasilGabunganKode = InfoKompiler.GabunganKode + '\n' + (StatusJawaban === "jawaban" ? BahasaSoal.listjawaban : BahasaSoal.contohjawaban);
     }
 
     if(bahasa === "javascript") {

@@ -13,8 +13,18 @@ export default async function Moderator(req: NextApiRequest, res: NextApiRespons
         const UserJadikanMod = await DataModel.AkunModel.findOne({ username }) as IAkun || null;
     
         if(UserJadikanMod === null) return res.status(404).send("Error: 404");
-    
-        await DataModel.AkunModel.updateOne({ username }, { moderator: !UserJadikanMod.moderator });
+
+        const UpdateData: {[st: string]: any} = { moderator: !UserJadikanMod.moderator };
+        if(!UserJadikanMod.moderator) {
+            UpdateData["$push"] = {notifikasi: { 
+                userDari: session.props.Akun.id, 
+                userKirim: UserJadikanMod._id.toString(), 
+                konten: `${session.props.Akun.username} membuat kamu menjadi moderator!`, 
+                link: `/profile/${UserJadikanMod.username}`,
+                tipe: "jadi moderator"
+            }}
+        }
+        await DataModel.AkunModel.updateOne({ username }, UpdateData);
 
         return res.send("Sukses");
     }

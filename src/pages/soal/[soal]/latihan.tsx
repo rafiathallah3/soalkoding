@@ -130,6 +130,11 @@ export default function Soal({ DataSoal, Akun }: { DataSoal: ISoal & { suka_ngk:
             w: statusKlik
         }).then(v => v.data);
 
+        if(hasil.error) {
+            setOutput({...Output, ...hasil, statuskompiler: "Sukses"});
+            return;
+        }
+
         if (statusKlik === "jawaban" && hasil.data.length <= hasil.lulus) {
             setKodeBenar(KodeSoal);
         }
@@ -300,7 +305,7 @@ export default function Soal({ DataSoal, Akun }: { DataSoal: ISoal & { suka_ngk:
                                                                             {v.print !== undefined &&
                                                                                 <div className="p-2" style={{ background: "rgb(50, 50, 50)", border: "1px solid rgb(150, 150, 150)", borderRadius: "5px" }}>
                                                                                     Output:
-                                                                                    {v.print.map((d, id) => {
+                                                                                    {v.print && v.print.map((d, id) => {
                                                                                         return (
                                                                                             <div key={id}>{d}</div>
                                                                                         )

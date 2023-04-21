@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ApakahSudahMasuk } from "../../../lib/Servis";
+import { ApakahSudahMasuk, SemenjakWaktu } from "../../../lib/Servis";
 import Head from "next/head";
 import Navbar from "../../../components/navbar";
 import axios from "axios";
@@ -22,9 +22,13 @@ export async function getServerSideProps({ params, req, res }: { params: { profi
         }
     }
 
-    const ParseDataProfile = JSON.parse(JSON.stringify(DataProfile)) as IAkun & { soaldibuat: ISoal[] };
+    let ParseDataProfile = JSON.parse(JSON.stringify(DataProfile)) as IAkun & { soaldibuat: ISoal[] };
     const SoalDibuat = JSON.parse(JSON.stringify(await DataModel.SoalModel.find({ pembuat: DataProfile._id })));
     ParseDataProfile.soaldibuat = SoalDibuat
+    ParseDataProfile = {...ParseDataProfile, 
+        soalselesai: ParseDataProfile.soalselesai.map((v) => ({...v, createdAt: SemenjakWaktu(new Date(v.createdAt))})),
+        soaldibuat: ParseDataProfile.soaldibuat.map((v) => ({...v, createdAt: SemenjakWaktu(new Date(v.createdAt))}))
+    }
 
     return {
         props: {
@@ -47,34 +51,6 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun & { 
         });
 
         window.location.reload();
-    }
-
-    //Sumber: https://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
-    function SemenjakWaktu(date: any) {
-        var seconds = Math.floor((new Date() as any - date) / 1000);
-
-        let interval = seconds / 31536000;
-
-        if (interval >= 1) {
-            return Math.floor(interval) + " tahun lalu";
-        }
-        interval = seconds / 2592000;
-        if (interval >= 1) {
-            return Math.floor(interval) + " bulan lalu";
-        }
-        interval = seconds / 86400;
-        if (interval >= 1) {
-            return Math.floor(interval) + " hari lalu";
-        }
-        interval = seconds / 3600;
-        if (interval >= 1) {
-            return Math.floor(interval) + " jam lalu";
-        }
-        interval = seconds / 60;
-        if (interval >= 1) {
-            return Math.floor(interval) + " menit lalu";
-        }
-        return Math.floor(seconds) + " detik lalu";
     }
 
     const Title = `Profile ${DataProfile.username}`;
@@ -198,7 +174,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun & { 
                                                 return (
                                                     <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                         <a className="text-white text-decoration-none" href={`/soal/${v.soal._id}/latihan`}>{v.soal.namasoal}</a>
-                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.createdAt))}</span>
+                                                        <span className="float-end text-white-50">{v.createdAt}</span>
                                                     </div>
                                                 )
                                             }).reverse()}
@@ -230,7 +206,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun & { 
                                                 return (
                                                     <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                         <a className="text-white text-decoration-none" href={`/soal/${v.soal._id}/solusi/${v._id}`}>{v.soal.namasoal} - {v.bahasa}</a>
-                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.createdAt))}</span>
+                                                        <span className="float-end text-white-50">{v.createdAt}</span>
                                                     </div>
                                                 )
                                             }).reverse()}
@@ -265,7 +241,7 @@ export default function Profile({ DataProfile, Akun }: { DataProfile: IAkun & { 
                                                 return (
                                                     <div key={i} className="p-3" style={{ fontSize: "17px", backgroundColor: i % 2 == 0 ? "#2e2e2e" : "#3b3b3b" }}>
                                                         <a className="text-white text-decoration-none" href={`/soal/${v._id}/solusi`}>{v.namasoal}</a>
-                                                        <span className="float-end text-white-50">{SemenjakWaktu(new Date(v.createdAt))}</span>
+                                                        <span className="float-end text-white-50">{v.createdAt}</span>
                                                     </div>
                                                 )
                                             }).reverse()}

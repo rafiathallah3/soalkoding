@@ -1,9 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { signOut } from 'next-auth/react';
-import { IAkun } from "../types/tipe";
+import { IAkun, INotifikasi } from "../types/tipe";
+import { useState } from "react";
+import { useRouter } from 'next/router';
+import axios from "axios";
 
-export default function Navbar({ profile }: { profile: { username: string, gambar: string } | null }) {
+export default function Navbar({ profile }: { profile: IAkun | null }) {
+    const [DataNotifikasi, setDataNotifikasi] = useState<INotifikasi[]>(profile ? profile.notifikasi : []);
+    const router = useRouter();
+
+    const DapatinNotifikasi = async () => {
+        const HasilNotifikasi = await axios.get("/api/profile/dapatinNotifikasi").then(d => d.data);
+        setDataNotifikasi(HasilNotifikasi.data);
+    }
+    
     return (
         <nav className="navbar navbar-expand-lg navbar-light">
             <style jsx>{`
@@ -62,12 +73,33 @@ export default function Navbar({ profile }: { profile: { username: string, gamba
                     {profile ?
                         <>
                             <li role={"button"} className='nav-item align-self-center me-3'>
+                                <a className="nav-link" id="navbarDropdownMenuLink" role="button" onClick={DapatinNotifikasi} data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                    {DataNotifikasi.filter((v) => !v.SudahLiat).length >= 1 &&
+                                        <span className="d-inline-block float-end align-bottom text-white text-center" style={{ background: "red", width: "20px", height: "20px", fontSize: "15px" }}>
+                                            {DataNotifikasi.filter((v) => !v.SudahLiat).length}
+                                        </span>
+                                    }
+                                    <i className='bi bi-bell-fill text-white fs-2 d-inline-block'></i>
+                                </a>
                                 <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-sm-end py-3" style={{ width: "11%", right: "0.6rem", top: "4rem", backgroundColor: "rgb(41, 41, 41)", border: "0px solid black" }}>
-                                    <li className="p-2 w-100">
-                                        <div className="d-inline-block me-3 align-top" style={{ left: "5px", top: "10px", position: 'relative' }}>
-                                            <Image src={profile.gambar === null || profile.gambar === "" ? "/gambar/profile.png" : profile.gambar} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />
-                                        </div>
-                                    </li>
+                                    <h5 className="px-3">Notifikasi</h5>
+                                    {DataNotifikasi?.map((v, i) => {
+                                        return (
+                                            <>
+                                                <li className="p-2 w-100 komponen-notifikasi" onClick={() => router.push(v.link)}>
+                                                    <div className="d-inline-block me-3 align-top" style={{ left: "5px", top: "10px", position: 'relative' }}>
+                                                        <Image src={v.userDari.gambar} className="rounded text-white" height={45} width={45} alt="Potret seorang wanita cantik" />
+                                                    </div>
+                                                    <div className="d-inline-block align-middle" style={{ width: "75%" }}>
+                                                        {v.konten}
+                                                    </div>
+                                                </li>
+                                                {i >= 2 &&
+                                                    <hr className="my-1" />
+                                                }
+                                            </>
+                                        )
+                                    })}
                                 </ul>
                             </li>
                             <li className="nav-item dropdown-center">

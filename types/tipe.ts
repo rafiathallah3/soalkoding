@@ -14,6 +14,7 @@ export interface IAkun {
     MasukDenganGithub: boolean,
     admin: boolean,
     moderator: boolean,
+    notifikasi: INotifikasi[],
     createdAt: Date,
 }
 
@@ -62,14 +63,14 @@ export interface IFavorit {
     soal: ISoal
 }
 
-export interface Notifikasi {
-    id: number,
-    userDari: { username: string, gambarurl: string },
-    userKirim: { username: string, gambarurl: string },
+export interface INotifikasi {
+    userDari: IAkun,
+    userKirim: IAkun,
     konten: string,
     link: string,
     tipe: string,
-    bikin: string,
+    SudahLiat: boolean,
+    bikin: Date,
 }
 
 export interface TipeProfile {
@@ -77,7 +78,7 @@ export interface TipeProfile {
     gambar: string,
     admin: boolean,
     moderator: boolean,
-    notifikasi: Notifikasi[],
+    notifikasi: INotifikasi[],
     jumlahNotif: number
 }
 

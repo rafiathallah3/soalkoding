@@ -1,5 +1,5 @@
 import mongoose, { model, Schema } from 'mongoose';
-import { IAkun, IDiskusi, IFavorit, ISoal, ISolusi } from '../types/tipe';
+import { IAkun, IDiskusi, IFavorit, ISoal, ISolusi, INotifikasi } from '../types/tipe';
 
 const UserSchema = new Schema<IAkun>({
     username: {
@@ -75,6 +75,33 @@ const UserSchema = new Schema<IAkun>({
         required: true,
         default: false,
     },
+    notifikasi: [{
+        userDari: {
+            type: Schema.Types.ObjectId,
+            ref: "akun"
+        },
+        userKirim: {
+            type: Schema.Types.ObjectId,
+            ref: "akun"
+        },
+        konten: {
+            type: String
+        },
+        link: {
+            type: String
+        },
+        tipe: {
+            type: String
+        },
+        SudahLiat: {
+            type: Boolean,
+            default: false
+        },
+        bikin: {
+            type: Date,
+            default: Date.now()
+        }
+    }]
 }, { timestamps: true });
 
 const SolusiSchema = new Schema<ISolusi>({
