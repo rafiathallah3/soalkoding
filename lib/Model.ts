@@ -161,7 +161,7 @@ const SoalSchema = new Schema<ISoal>({
     namasoal: {
         type: String,
         required: true,
-        maxlength: 30
+        maxlength: 75
     },
     level: {
         type: Number,
@@ -204,7 +204,7 @@ const SoalSchema = new Schema<ISoal>({
             listjawaban: {
                 type: String,
                 required: true,
-                maxlength: 1000,
+                maxlength: 4000,
             },
             contohjawaban: {
                 type: String,

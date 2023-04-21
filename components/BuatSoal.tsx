@@ -45,6 +45,7 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
         waktu: "",
         statuskompiler: ""
     });
+    const [SimpanSoal, setSimpanSoal] = useState(true);
 
     let SoalKodeEditor: ReactAce | undefined = undefined;
     let JawabanKodeEditor: ReactAce | undefined = undefined;
@@ -110,17 +111,22 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
     }
 
     const KirimBuatanSoal = async () => {
+        if(!SimpanSoal) return;
+
         const NamaSoal = (document.getElementById("NamaSoal") as HTMLInputElement).value;
         const Level = (document.getElementById("LevelSoal") as HTMLInputElement).value;
         setKurangData("");
+        setSimpanSoal(false);
         
         if (NamaSoal === "" || Level === "0" || TagsDitambahin.length <= 0) {
             setKurangData("Form tidak boleh kosong");
+            setSimpanSoal(true);
             return
         }
 
         if (Soal.trim() === "") {
             setKurangData("Soal tidak boleh kosong");
+            setSimpanSoal(true);
             return;
         }
 
@@ -132,6 +138,7 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
             infokode: InfoKode,
         }).then(d => d.data);
 
+        console.log(d);
         setSudahDiSave(true);
         if(d.error) {
             setKurangData(d.error);
@@ -139,18 +146,25 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
             router.push(`/soal/${d.id}/edit`);
         }
 
+        setSimpanSoal(true);
     }
 
     const UpdateBuatanSoal = async () => {
+        if(!SimpanSoal) return;
+
         const NamaSoal = (document.getElementById("NamaSoal") as HTMLInputElement).value;
         const Level = (document.getElementById("LevelSoal") as HTMLInputElement).value;
+        setSimpanSoal(false);
+
         if (NamaSoal === "" || Level === "0" || TagsDitambahin.length <= 0) {
             setKurangData("Form tidak boleh kosong");
+            setSimpanSoal(true);
             return
         }
 
         if (Soal === "") {
             setKurangData("Soal tidak boleh kosong");
+            setSimpanSoal(true);
             return;
         }
 
@@ -164,47 +178,53 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
             publicsoal: Public
         }).then(d => d.data) as { error?: string };
 
+        setSudahDiSave(true);
         if (d.error) {
             toast(d.error, { hideProgressBar: true, autoClose: 2000, type: "error", position: "top-right" });
             setPublic(false);
         } else {
-            setSudahDiSave(true);
             router.reload();
         }
+
+        setSimpanSoal(true);
     }
 
     const HapusBuatanSoal = async () => {
-        const DataHapus = await axios.post("/api/soal/buat/hapussoal", {
-            idsoal: data?._id
-        }).then(d => d.data);
-
-        if (DataHapus === "Sukses") router.push("/soal/buat");
+        if(window.confirm("Apa kamu yakin ingin menghapus soal keren ini?")) {
+            const DataHapus = await axios.post("/api/soal/buat/hapussoal", {
+                idsoal: data?._id
+            }).then(d => d.data);
+    
+            if (DataHapus === "Sukses") router.push("/soal/buat");
+        }
     }
 
     const UlangSoal = () => {
-        setInfoKode({
-            ...InfoKode,
-            [BahasaProgram]: {
-                bahasa: BahasaProgram,
-                jawabankode: "",
-                liatankode: "",
-                listjawaban: "",
-                contohjawaban: "",
-            }
-        });
-        setSoal("");
-        setOutputKonfirmasiJawaban({
-            data: [{
-                hasil: "",
-                jawaban: "",
-                koreksi: false,
-                status: "Sukses"
-            }],
-            lulus: 0,
-            gagal: 1,
-            waktu: "",
-            statuskompiler: ""
-        });
+        if(window.confirm("Apa kamu yakin ingin mengulang soal?")) {
+            setInfoKode({
+                ...InfoKode,
+                [BahasaProgram]: {
+                    bahasa: BahasaProgram,
+                    jawabankode: "",
+                    liatankode: "",
+                    listjawaban: "",
+                    contohjawaban: "",
+                }
+            });
+            setSoal("");
+            setOutputKonfirmasiJawaban({
+                data: [{
+                    hasil: "",
+                    jawaban: "",
+                    koreksi: false,
+                    status: "Sukses"
+                }],
+                lulus: 0,
+                gagal: 1,
+                waktu: "",
+                statuskompiler: ""
+            });
+        }
     }
 
     useEffect(() => {
@@ -340,9 +360,9 @@ export default function Buat({ mode, data, profile }: { mode: "buat" | "edit", d
                     <>
                         <div className="mb-4 fs-6">
                             {mode === "edit" ?
-                                <button className="tombol-menu" onClick={UpdateBuatanSoal}><i className="bi bi-download"></i> Update</button>
+                                <button className="tombol-menu" style={{ color: SimpanSoal ? "white" : "grey" }} onClick={UpdateBuatanSoal}><i className="bi bi-download"></i> Update</button>
                                 :
-                                <button className="tombol-menu" onClick={KirimBuatanSoal}><i className="bi bi-download"></i> Simpan</button>
+                                <button className="tombol-menu" style={{ color: SimpanSoal ? "white" : "grey" }} onClick={KirimBuatanSoal}><i className="bi bi-download"></i> Simpan</button>
                             }
                             <button className="tombol-menu" onClick={UlangSoal}><i className="bi bi-arrow-counterclockwise"></i> Ulang</button>
                             {mode === "edit" &&

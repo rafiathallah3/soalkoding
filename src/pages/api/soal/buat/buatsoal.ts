@@ -41,27 +41,30 @@ export default async function BuatSoal(req: NextApiRequest, res: NextApiResponse
 
         if(Object.keys(infokode).length <= 0) return res.json({ error: "Ada kesalahan saat mengambil kode" });
 
-        const DataSoal = await DataModel.SoalModel.create({
-            namasoal, level: parseInt(level), tags, soal, 
-            pembuat: session.props.Akun.id, 
-            public: false, 
-            BahasaSoal: Object.values(infokode), 
-        });
-        
-        const Solusi = [];
-        for(const v of Object.values(infokode)) {
-            Solusi.push(await DataModel.SolusiModel.create({
-                bahasa: v.bahasa,
-                kode: v.jawabankode,
-                user: session.props.Akun.id,
-                idsoal: DataSoal._id,
-                soal: DataSoal
-            }));
+        try {
+            const DataSoal = await DataModel.SoalModel.create({
+                namasoal, level: parseInt(level), tags, soal, 
+                pembuat: session.props.Akun.id, 
+                public: false, 
+                BahasaSoal: Object.values(infokode), 
+            });
+
+            const Solusi = [];
+            for(const v of Object.values(infokode)) {
+                Solusi.push(await DataModel.SolusiModel.create({
+                    bahasa: v.bahasa,
+                    kode: v.jawabankode,
+                    user: session.props.Akun.id,
+                    idsoal: DataSoal._id,
+                    soal: DataSoal
+                }));
+            }
+
+            await DataModel.SoalModel.findByIdAndUpdate(DataSoal._id, { solusi: Solusi })
+            return res.json({ id: DataSoal._id });
+        } catch(e) {
+            return res.json({ error: JSON.stringify((e as any).errors) });
         }
-
-        await DataModel.SoalModel.findByIdAndUpdate(DataSoal._id, { solusi: Solusi })
-
-        return res.json({ id: DataSoal._id });
     }
 
     return res.status(405).send("Method tidak boleh");
