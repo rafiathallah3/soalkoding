@@ -13,7 +13,7 @@ export default function TidakKetemu() {
                 <title>Tidak ketemu</title>
             </Head>
             {Akun ?
-            <Navbar profile={{ username: Akun.user!.name!, gambar: Akun.user!.image! }}></Navbar>
+            <Navbar profile={{ username: Akun.user!.name!, gambar: Akun.user!.image! } as IAkun}></Navbar>
             :
             <Navbar profile={null}></Navbar>
             }
